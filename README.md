@@ -38,3 +38,9 @@ Prompts: (1) ilustração editorial sofisticada de aprendizagem com livros abert
 - Lucide: ISC, https://github.com/lucide-icons/lucide/blob/main/LICENSE . Também usado nos cursores SVG.
 - Phosphor Icons: MIT, https://github.com/phosphor-icons/react .
 - Fontsource: fontes locais sob OFL, licenças distribuídas nos respectivos pacotes.
+
+## GitHub Pages
+
+Execute `npm run build:pages` para gerar `dist-pages/`, com os caminhos preparados para `/escola-do-saber/`. O workflow `.github/workflows/pages.yml` testa, compila e publica automaticamente os envios para `master`. No GitHub, a origem do Pages deve ser **GitHub Actions**.
+
+A publicação utiliza a mesma interface React, com dados locais por navegador. Os dados da prévia local não são transferidos automaticamente para o endereço público.
