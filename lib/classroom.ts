@@ -1,4 +1,4 @@
-export const STORAGE_KEY = 'escola-saber-v2';
+export const STORAGE_KEY = 'aprende-v1';
 export const themes = [
  {id:'sunrise',name:'Pôr do sol',color:'#dd571b',soft:'#fff0e5',swatches:['#f87935','#ffd78e','#f4efe9'],price:0},
  {id:'lavender',name:'Lavanda',color:'#7750c5',soft:'#f0e9fc',swatches:['#8a65d4','#d8c9f6','#f3eefc'],price:100},

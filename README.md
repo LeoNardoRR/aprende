@@ -1,4 +1,4 @@
-# Escola do Saber — Sala do Aluno
+# Aprendê — Sala do Aluno
 
 Interface responsiva de estudo com personalização e dados locais no navegador.
 
@@ -13,7 +13,7 @@ Interface responsiva de estudo com personalização e dados locais no navegador.
 - 3 atividades com 3 questões cada, salvamento das respostas, correção, explicações, notas e recompensa única.
 - Materiais de apoio com impressão / salvar PDF pelo navegador.
 - Calendário navegável com eventos pessoais, lembretes e registro pessoal dos dias estudados.
-- Preferências, saldo, progresso e registros salvos na chave localStorage `escola-saber-v2`.
+- Preferências, saldo, progresso e registros salvos localmente neste navegador.
 
 Não há contas escolares, banco de dados compartilhado, sincronização entre dispositivos ou integração com boletim/chamada oficiais. As moedas são virtuais, sem pagamento real. Ao limpar os dados do navegador, os registros locais são perdidos. Navegadores/origens diferentes têm registros separados. Falhas de armazenamento são informadas no rodapé.
 
@@ -41,6 +41,6 @@ Prompts: (1) ilustração editorial sofisticada de aprendizagem com livros abert
 
 ## GitHub Pages
 
-Execute `npm run build:pages` para gerar `dist-pages/`, com os caminhos preparados para `/escola-do-saber/`. O workflow `.github/workflows/pages.yml` testa, compila e publica automaticamente os envios para `master`. No GitHub, a origem do Pages deve ser **GitHub Actions**.
+Execute `npm run build:pages` para gerar `dist-pages/`, com os caminhos preparados para `/aprende/`. O workflow `.github/workflows/pages.yml` testa, compila e publica automaticamente os envios para `master`. No GitHub, a origem do Pages deve ser **GitHub Actions**.
 
 A publicação utiliza a mesma interface React, com dados locais por navegador. Os dados da prévia local não são transferidos automaticamente para o endereço público.
