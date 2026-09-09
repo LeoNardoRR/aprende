@@ -26,6 +26,10 @@ import {
   friendlySupabaseError,
   normalizeClassCode,
 } from '@/lib/connected-flow';
+import {
+  authReturnUrl,
+  isEmailConfirmationRequired,
+} from '@/lib/auth-flow';
 
 type Profile = {
   id: string;
@@ -58,12 +62,6 @@ type Announcement = {
   message: string;
   created_at: string;
 };
-const PENDING_CLASS_CODE = 'aprende-pending-class-code';
-
-function authReturnUrl() {
-  return 'https://leonardorr.github.io/aprende/?auth=student';
-}
-
 type StudentConnectProps = {
   onClose: () => void;
   allowClose?: boolean;
@@ -95,6 +93,7 @@ export function StudentConnect({
     code: '',
   });
   const [notice, setNotice] = useState('');
+  const [confirmationEmail, setConfirmationEmail] = useState('');
   const [activeAssignment, setActiveAssignment] = useState<Assignment | null>(
     null,
   );
@@ -121,17 +120,6 @@ export function StudentConnect({
       const nextProfile = profileResult.data as Profile | null;
       setProfile(nextProfile);
       if (nextProfile?.role === 'student') {
-        let joinNotice = '';
-        const pendingCode = localStorage.getItem(PENDING_CLASS_CODE);
-        if (pendingCode) {
-          // The code is a one-shot handoff from login/email confirmation. Keeping
-          // an invalid code here would make every later session retry forever.
-          localStorage.removeItem(PENDING_CLASS_CODE);
-          const { error } = await supabase.rpc('join_class_by_code', {
-            code: pendingCode,
-          });
-          if (error) joinNotice = friendlySupabaseError(error.message);
-        }
         const memberResult = await supabase
           .from('memberships')
           .select('classroom_id,classrooms(id,name,subject)')
@@ -173,14 +161,12 @@ export function StudentConnect({
               submissionResult.error;
             setNotice(
               successNotice ||
-                joinNotice ||
                 (loadError ? friendlySupabaseError(loadError.message) : ''),
             );
           } else {
             setSubmissions([]);
             setNotice(
               successNotice ||
-                joinNotice ||
                 (memberResult.error ||
                 assignmentResult.error ||
                 announcementResult.error
@@ -198,7 +184,6 @@ export function StudentConnect({
           setAnnouncements([]);
           setNotice(
             successNotice ||
-              joinNotice ||
               (memberResult.error
                 ? friendlySupabaseError(memberResult.error.message)
                 : ''),
@@ -222,10 +207,16 @@ export function StudentConnect({
   );
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      void loadStudent(data.session);
-    });
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        void loadStudent(data.session);
+      })
+      .catch(() => {
+        setNotice('Não foi possível verificar sua sessão. Tente novamente.');
+        setLoading(false);
+      });
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       void loadStudent(nextSession);
@@ -246,15 +237,14 @@ export function StudentConnect({
     event.preventDefault();
     setBusy(true);
     setNotice('');
-    if (form.code)
-      localStorage.setItem(PENDING_CLASS_CODE, form.code.trim().toUpperCase());
+    setConfirmationEmail('');
     const result = creating
       ? await supabase.auth.signUp({
           email: form.email.trim(),
           password: form.password,
           options: {
             data: { display_name: form.name.trim() },
-            emailRedirectTo: authReturnUrl(),
+            emailRedirectTo: authReturnUrl('student'),
           },
         })
       : await supabase.auth.signInWithPassword({
@@ -263,12 +253,29 @@ export function StudentConnect({
         });
     setBusy(false);
     if (result.error) {
-      localStorage.removeItem(PENDING_CLASS_CODE);
       setNotice(friendlySupabaseError(result.error.message));
+      if (isEmailConfirmationRequired(result.error.message))
+        setConfirmationEmail(form.email.trim());
     } else if (creating && !result.data.session)
       setNotice(
         'Enviamos um e-mail de confirmação. Abra o link para ativar sua conta e voltar ao Aprendê.',
       );
+  }
+
+  async function resendConfirmation() {
+    if (!confirmationEmail) return;
+    setBusy(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: confirmationEmail,
+      options: { emailRedirectTo: authReturnUrl('student') },
+    });
+    setBusy(false);
+    setNotice(
+      error
+        ? friendlySupabaseError(error.message)
+        : 'Enviamos um novo link de confirmação para seu e-mail.',
+    );
   }
 
   async function joinClass(event: React.SubmitEvent<HTMLFormElement>) {
@@ -445,8 +452,9 @@ export function StudentConnect({
               <span className="teacher-kicker">SALA CONECTADA</span>
               <h2>{creating ? 'Primeiro acesso' : 'Entre na sua conta'}</h2>
               <p>
-                Digite o código enviado pelo professor. No primeiro acesso, ele
-                será guardado até você confirmar o e-mail.
+                {creating
+                  ? 'Crie sua conta. Depois de confirmar o e-mail, você poderá entrar em uma turma.'
+                  : 'Entre com seu e-mail e sua senha para acessar sua sala.'}
               </p>
               {onOpenTeacher && !pageMode && (
                 <button
@@ -467,6 +475,7 @@ export function StudentConnect({
                   onClick={() => {
                     setCreating(false);
                     setNotice('');
+                    setConfirmationEmail('');
                   }}
                 >
                   Entrar
@@ -477,6 +486,7 @@ export function StudentConnect({
                   onClick={() => {
                     setCreating(true);
                     setNotice('');
+                    setConfirmationEmail('');
                   }}
                 >
                   Primeiro acesso
@@ -498,24 +508,6 @@ export function StudentConnect({
                     />
                   </label>
                 )}
-                <label>
-                  Código da turma {creating ? '' : '(opcional)'}
-                  <input
-                    required={creating}
-                    minLength={form.code ? 8 : undefined}
-                    maxLength={8}
-                    autoCapitalize="characters"
-                    value={form.code}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        code: normalizeClassCode(e.target.value),
-                      })
-                    }
-                    placeholder="AB12CD34"
-                    className="student-login-code"
-                  />
-                </label>
                 <label>
                   E-mail
                   <input
@@ -546,13 +538,21 @@ export function StudentConnect({
                   />
                 </label>
                 {notice && <output className="teacher-notice">{notice}</output>}
+                {confirmationEmail && (
+                  <button
+                    type="button"
+                    className="teacher-secondary auth-resend-button"
+                    disabled={busy}
+                    onClick={() => void resendConfirmation()}
+                  >
+                    Reenviar confirmação
+                  </button>
+                )}
                 <button className="teacher-primary" disabled={busy}>
                   {busy ? (
                     <LoaderCircle className="spin" />
                   ) : creating ? (
-                    'Criar conta e entrar na turma'
-                  ) : form.code ? (
-                    'Entrar na turma'
+                    'Criar conta'
                   ) : (
                     'Entrar'
                   )}
@@ -560,7 +560,22 @@ export function StudentConnect({
               </form>
             </section>
           </div>
-        ) : profile?.role === 'teacher' ? (
+        ) : !profile ? (
+          <div className="teacher-message">
+            <span>
+              <Users />
+            </span>
+            <h1>Não foi possível abrir seu perfil</h1>
+            <p>{notice || 'Saia da conta e tente entrar novamente.'}</p>
+            <button
+              className="teacher-secondary"
+              onClick={() => void supabase.auth.signOut()}
+            >
+              <LogOut />
+              Sair desta conta
+            </button>
+          </div>
+        ) : profile.role === 'teacher' ? (
           <div className="teacher-message">
             <span>
               <School />

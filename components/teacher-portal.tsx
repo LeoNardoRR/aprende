@@ -21,6 +21,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { friendlySupabaseError } from '@/lib/connected-flow';
+import {
+  authReturnUrl,
+  isEmailConfirmationRequired,
+} from '@/lib/auth-flow';
 import { AccountSettings } from '@/components/account-settings';
 
 type Profile = {
@@ -67,10 +71,6 @@ type Announcement = {
   created_at: string;
 };
 
-function authReturnUrl() {
-  return 'https://leonardorr.github.io/aprende/?auth=teacher';
-}
-
 export function TeacherPortal({ onClose }: { onClose: () => void }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -80,7 +80,11 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     void supabase.auth
       .getSession()
-      .then(({ data }) => setSession(data.session));
+      .then(({ data }) => setSession(data.session))
+      .catch(() => {
+        setMessage('Não foi possível verificar sua sessão. Tente novamente.');
+        setLoading(false);
+      });
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) =>
       setSession(nextSession),
     );
@@ -191,10 +195,12 @@ function TeacherAuth() {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [notice, setNotice] = useState('');
+  const [confirmationEmail, setConfirmationEmail] = useState('');
   async function submit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setNotice('');
+    setConfirmationEmail('');
     const email = form.email.trim().toLowerCase();
     if (creating) {
       const allowed = await supabase.rpc('is_teacher_email_allowed', {
@@ -217,11 +223,15 @@ function TeacherAuth() {
         password: form.password,
         options: {
           data: { display_name: form.name.trim() },
-          emailRedirectTo: authReturnUrl(),
+          emailRedirectTo: authReturnUrl('teacher'),
         },
       });
       setBusy(false);
-      if (result.error) setNotice(friendlySupabaseError(result.error.message));
+      if (result.error) {
+        setNotice(friendlySupabaseError(result.error.message));
+        if (isEmailConfirmationRequired(result.error.message))
+          setConfirmationEmail(email);
+      }
       else if (!result.data.session)
         setNotice(
           'Enviamos um e-mail de confirmação. Abra o link para ativar sua conta e voltar ao Aprendê.',
@@ -233,7 +243,26 @@ function TeacherAuth() {
       password: form.password,
     });
     setBusy(false);
-    if (result.error) setNotice(friendlySupabaseError(result.error.message));
+    if (result.error) {
+      setNotice(friendlySupabaseError(result.error.message));
+      if (isEmailConfirmationRequired(result.error.message))
+        setConfirmationEmail(email);
+    }
+  }
+  async function resendConfirmation() {
+    if (!confirmationEmail) return;
+    setBusy(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: confirmationEmail,
+      options: { emailRedirectTo: authReturnUrl('teacher') },
+    });
+    setBusy(false);
+    setNotice(
+      error
+        ? friendlySupabaseError(error.message)
+        : 'Enviamos um novo link de confirmação para seu e-mail.',
+    );
   }
   return (
     <main className="teacher-auth">
@@ -278,6 +307,7 @@ function TeacherAuth() {
             onClick={() => {
               setCreating(false);
               setNotice('');
+              setConfirmationEmail('');
             }}
           >
             Entrar
@@ -288,6 +318,7 @@ function TeacherAuth() {
             onClick={() => {
               setCreating(true);
               setNotice('');
+              setConfirmationEmail('');
             }}
           >
             Primeiro acesso
@@ -331,6 +362,16 @@ function TeacherAuth() {
             />
           </label>
           {notice && <output className="teacher-notice">{notice}</output>}
+          {confirmationEmail && (
+            <button
+              type="button"
+              className="teacher-secondary auth-resend-button"
+              disabled={busy}
+              onClick={() => void resendConfirmation()}
+            >
+              Reenviar confirmação
+            </button>
+          )}
           <button className="teacher-primary" disabled={busy}>
             {busy ? (
               <LoaderCircle className="spin" />
@@ -378,9 +419,14 @@ function TeacherDashboard({
       .from('classrooms')
       .select('*')
       .order('created_at');
+    let loadError = classResult.error;
     const nextClasses = (classResult.data ?? []) as Classroom[];
     setClasses(nextClasses);
-    setSelected((current) => current || nextClasses[0]?.id || '');
+    setSelected((current) =>
+      nextClasses.some((item) => item.id === current)
+        ? current
+        : nextClasses[0]?.id || '',
+    );
     if (nextClasses.length) {
       const ids = nextClasses.map((item) => item.id);
       const [activityResult, memberResult, announcementResult] =
@@ -404,6 +450,11 @@ function TeacherDashboard({
       setAssignments(nextAssignments);
       setMemberships((memberResult.data ?? []) as unknown as Membership[]);
       setAnnouncements((announcementResult.data ?? []) as Announcement[]);
+      loadError =
+        loadError ||
+        activityResult.error ||
+        memberResult.error ||
+        announcementResult.error;
       if (nextAssignments.length) {
         const submissionResult = await supabase
           .from('submissions')
@@ -417,6 +468,7 @@ function TeacherDashboard({
         setSubmissions(
           (submissionResult.data ?? []) as unknown as Submission[],
         );
+        loadError = loadError || submissionResult.error;
       } else setSubmissions([]);
     } else {
       setAssignments([]);
@@ -425,10 +477,9 @@ function TeacherDashboard({
       setAnnouncements([]);
     }
     setNotice(
-      successNotice ||
-        (classResult.error
-          ? friendlySupabaseError(classResult.error.message)
-          : ''),
+      loadError
+        ? friendlySupabaseError(loadError.message)
+        : successNotice || '',
     );
     setBusy(false);
   }, []);
@@ -774,7 +825,7 @@ function TeacherDashboard({
           <ClassForm
             profile={profile}
             onClose={() => setShowClassForm(false)}
-            onSaved={refresh}
+            onSaved={() => refresh('Turma criada com sucesso.')}
           />
         )}{' '}
         {showActivityForm && currentClass && (
@@ -782,7 +833,7 @@ function TeacherDashboard({
             profile={profile}
             classroom={currentClass}
             onClose={() => setShowActivityForm(false)}
-            onSaved={refresh}
+            onSaved={() => refresh('Atividade publicada para a turma.')}
           />
         )}{' '}
         {showAnnouncementForm && currentClass && (
@@ -790,7 +841,7 @@ function TeacherDashboard({
             profile={profile}
             classroom={currentClass}
             onClose={() => setShowAnnouncementForm(false)}
-            onSaved={refresh}
+            onSaved={() => refresh('Recado enviado para a turma.')}
           />
         )}{' '}
         {grading && (
@@ -800,7 +851,7 @@ function TeacherDashboard({
               (item) => item.id === grading.assignment_id,
             )!}
             onClose={() => setGrading(null)}
-            onSaved={refresh}
+            onSaved={() => refresh('Correção publicada para o aluno.')}
           />
         )}
         {removingStudent && (
