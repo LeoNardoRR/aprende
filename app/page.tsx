@@ -41,7 +41,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AppIcon, type IconName } from '@/components/classroom-icon';
 import { StudentConnect } from '@/components/student-connect';
-import { studentSupabase } from '@/lib/supabase';
+import { studentSupabase, supabase } from '@/lib/supabase';
 import {
   calculateConnectedMetrics,
   connectedSubmissionLabel,
@@ -80,6 +80,68 @@ function LoadingArea({ text }: { text: string }) {
       <span className="spin" aria-hidden="true" />
       <p>{text}</p>
     </div>
+  );
+}
+
+function EmailConfirmationScreen({
+  role,
+  onContinue,
+}: {
+  role: 'teacher' | 'student';
+  onContinue: () => void;
+}) {
+  const [status, setStatus] = useState<'checking' | 'success' | 'error'>('checking');
+  useEffect(() => {
+    let active = true;
+    const client = role === 'teacher' ? supabase : studentSupabase;
+    async function checkConfirmation() {
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        const { data } = await client.auth.getSession();
+        if (data.session?.user) {
+          if (active) setStatus('success');
+          return;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 250));
+      }
+      if (active) setStatus('error');
+    }
+    void checkConfirmation();
+    return () => {
+      active = false;
+    };
+  }, [role]);
+  return (
+    <main className="email-confirmation-page">
+      <section className="email-confirmation-card" aria-live="polite">
+        <span className={status === 'success' ? 'email-confirmation-icon success' : 'email-confirmation-icon'}>
+          <CheckCircle2 size={30} />
+        </span>
+        {status === 'checking' && (
+          <>
+            <span className="teacher-kicker">CONFIRMANDO SEU E-MAIL</span>
+            <h1>Estamos ativando sua conta…</h1>
+            <p>Aguarde um instante enquanto concluímos a confirmação.</p>
+          </>
+        )}
+        {status === 'success' && (
+          <>
+            <span className="teacher-kicker">E-MAIL CONFIRMADO</span>
+            <h1>Sua conta está ativa.</h1>
+            <p>Agora você já pode voltar e entrar como {role === 'teacher' ? 'professor' : 'aluno'}.</p>
+          </>
+        )}
+        {status === 'error' && (
+          <>
+            <span className="teacher-kicker">NÃO FOI POSSÍVEL CONFIRMAR</span>
+            <h1>O link pode ter expirado.</h1>
+            <p>Solicite um novo e-mail de confirmação e abra o link mais recente.</p>
+          </>
+        )}
+        <button className="teacher-primary" onClick={onContinue}>
+          Voltar para entrar
+        </button>
+      </section>
+    </main>
   );
 }
 const navigation: { id: string; label: string; icon: IconName }[] = [
@@ -130,6 +192,9 @@ export default function Home() {
     [month, setMonth] = useState(new Date(2026, 8, 1)),
     [showTeacher, setShowTeacher] = useState(false),
     [showStudentConnect, setShowStudentConnect] = useState(true),
+    [confirmationMode, setConfirmationMode] = useState<
+      'teacher' | 'student' | null
+    >(null),
     [studentAuthReady, setStudentAuthReady] = useState(false),
     [studentSummary, setStudentSummary] = useState<{
       name: string;
@@ -156,6 +221,11 @@ export default function Home() {
     setSelectedDate(localDate(now));
     setMonth(new Date(now.getFullYear(), now.getMonth(), 1));
     setReady(true);
+  }, []);
+  useEffect(() => {
+    const authMode = new URLSearchParams(window.location.search).get('auth');
+    if (authMode === 'teacher' || authMode === 'student')
+      setConfirmationMode(authMode);
   }, []);
   useEffect(() => {
     if (!ready) return;
@@ -678,6 +748,23 @@ export default function Home() {
       </form>
     </section>
   );
+  if (confirmationMode)
+    return (
+      <EmailConfirmationScreen
+        role={confirmationMode}
+        onContinue={() => {
+          window.history.replaceState({}, '', window.location.pathname);
+          setConfirmationMode(null);
+          if (confirmationMode === 'teacher') {
+            setShowStudentConnect(false);
+            setShowTeacher(true);
+          } else {
+            setShowTeacher(false);
+            setShowStudentConnect(true);
+          }
+        }}
+      />
+    );
   if (showTeacher)
     return (
       <Suspense fallback={<LoadingArea text="Abrindo o modo professor..." />}>
