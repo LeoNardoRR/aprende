@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { ArrowLeft, Bell, BookOpen, CheckCircle2, GraduationCap, LoaderCircle, LogOut, School, Send, Trophy, Users, X } from 'lucide-react';
 import { studentSupabase as supabase } from '@/lib/supabase';
+import { calculateConnectedMetrics, canEditSubmission, friendlySupabaseError, normalizeClassCode } from '@/lib/connected-flow';
 
 type Profile = { id: string; display_name: string; role: 'teacher' | 'student' };
 type Classroom = { id: string; name: string; subject: string };
@@ -17,7 +18,14 @@ function authReturnUrl() {
   return window.location.hostname === 'localhost' ? 'http://localhost:3000/?auth=student' : 'https://leonardorr.github.io/aprende/?auth=student';
 }
 
-export function StudentConnect({ onClose }: { onClose: () => void }) {
+type StudentConnectProps = {
+  onClose: () => void;
+  allowClose?: boolean;
+  onOpenTeacher?: () => void;
+  onChanged?: () => void | Promise<void>;
+};
+
+export function StudentConnect({ onClose, allowClose = true, onOpenTeacher, onChanged }: StudentConnectProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [memberships, setMemberships] = useState<Membership[]>([]);
@@ -34,7 +42,7 @@ export function StudentConnect({ onClose }: { onClose: () => void }) {
 
   const loadStudent = useCallback(async (activeSession: Session | null) => {
     if (!activeSession) {
-      setProfile(null); setMemberships([]); setAssignments([]); setSubmissions([]); setAnnouncements([]); setLoading(false); return;
+      setProfile(null); setMemberships([]); setAssignments([]); setSubmissions([]); setAnnouncements([]); setLoading(false); void onChanged?.(); return;
     }
     setLoading(true);
     const profileResult = await supabase.from('profiles').select('id,display_name,role').eq('id', activeSession.user.id).single();
@@ -44,9 +52,11 @@ export function StudentConnect({ onClose }: { onClose: () => void }) {
       let joinNotice = '';
       const pendingCode = localStorage.getItem(PENDING_CLASS_CODE);
       if (pendingCode) {
+        // The code is a one-shot handoff from login/email confirmation. Keeping
+        // an invalid code here would make every later session retry forever.
+        localStorage.removeItem(PENDING_CLASS_CODE);
         const { error } = await supabase.rpc('join_class_by_code', { code: pendingCode });
-        if (!error) localStorage.removeItem(PENDING_CLASS_CODE);
-        else joinNotice = error.message === 'Invalid class code' ? 'O código informado no primeiro acesso é inválido.' : error.message;
+        if (error) joinNotice = friendlySupabaseError(error.message);
       }
       const memberResult = await supabase.from('memberships').select('classroom_id,classrooms(id,name,subject)').eq('user_id', activeSession.user.id).order('joined_at');
       const nextMemberships = (memberResult.data ?? []) as unknown as Membership[];
@@ -63,22 +73,32 @@ export function StudentConnect({ onClose }: { onClose: () => void }) {
         if (nextAssignments.length) {
           const submissionResult = await supabase.from('submissions').select('id,assignment_id,answer,status,score,feedback').in('assignment_id', nextAssignments.map(item => item.id));
           setSubmissions((submissionResult.data ?? []) as Submission[]);
-          setNotice(joinNotice || memberResult.error?.message || assignmentResult.error?.message || announcementResult.error?.message || submissionResult.error?.message || '');
+          const loadError = memberResult.error || assignmentResult.error || announcementResult.error || submissionResult.error;
+          setNotice(joinNotice || (loadError ? friendlySupabaseError(loadError.message) : ''));
         } else setSubmissions([]);
-      } else { setAssignments([]); setSubmissions([]); setAnnouncements([]); setNotice(joinNotice || memberResult.error?.message || ''); }
-    } else { setMemberships([]); setAssignments([]); setSubmissions([]); setAnnouncements([]); }
-    setNotice(current => current || profileResult.error?.message || '');
+      } else {
+        setAssignments([]); setSubmissions([]); setAnnouncements([]);
+        setNotice(joinNotice || (memberResult.error ? friendlySupabaseError(memberResult.error.message) : ''));
+      }
+    } else {
+      setMemberships([]); setAssignments([]); setSubmissions([]); setAnnouncements([]);
+      setNotice(profileResult.error ? friendlySupabaseError(profileResult.error.message) : '');
+    }
     setLoading(false);
-  }, []);
+    void onChanged?.();
+  }, [onChanged]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); loadStudent(data.session); });
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => { setSession(nextSession); loadStudent(nextSession); });
+    void supabase.auth.getSession().then(({ data }) => { setSession(data.session); void loadStudent(data.session); });
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => { setSession(nextSession); void loadStudent(nextSession); });
     return () => data.subscription.unsubscribe();
   }, [loadStudent]);
 
-  const points = useMemo(() => submissions.reduce((total, item) => total + (item.score ?? 0), 0), [submissions]);
-  const possiblePoints = useMemo(() => assignments.reduce((total, item) => total + item.points, 0), [assignments]);
+  const metrics = useMemo(() => calculateConnectedMetrics(assignments, submissions), [assignments, submissions]);
+  const activeSubmission = activeAssignment
+    ? submissions.find(item => item.assignment_id === activeAssignment.id)
+    : undefined;
+  const activeAssignmentLocked = !canEditSubmission(activeSubmission);
 
   async function authenticate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setNotice('');
@@ -89,7 +109,7 @@ export function StudentConnect({ onClose }: { onClose: () => void }) {
     setBusy(false);
     if (result.error) {
       localStorage.removeItem(PENDING_CLASS_CODE);
-      setNotice(result.error.message);
+      setNotice(friendlySupabaseError(result.error.message));
     }
     else if (creating && !result.data.session) setNotice('Enviamos um e-mail de confirmação. Abra o link para ativar sua conta e voltar ao Aprendê.');
   }
@@ -97,7 +117,7 @@ export function StudentConnect({ onClose }: { onClose: () => void }) {
   async function joinClass(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setNotice('');
     const { error } = await supabase.rpc('join_class_by_code', { code: form.code.trim().toUpperCase() });
-    if (error) setNotice(error.message === 'Invalid class code' ? 'Código de turma inválido. Confira e tente novamente.' : error.message);
+    if (error) setNotice(friendlySupabaseError(error.message));
     else { setForm(current => ({ ...current, code: '' })); setNotice('Tudo certo! Você entrou na turma.'); await loadStudent(session); }
     setBusy(false);
   }
@@ -110,17 +130,26 @@ export function StudentConnect({ onClose }: { onClose: () => void }) {
   async function saveAssignment(status: 'draft' | 'submitted') {
     if (!session || !activeAssignment || !answer.trim()) return;
     setBusy(true); setNotice('');
-    const { error } = await supabase.from('submissions').upsert({ assignment_id: activeAssignment.id, student_id: session.user.id, answer: answer.trim(), status, submitted_at: status === 'submitted' ? new Date().toISOString() : null }, { onConflict: 'assignment_id,student_id' });
+    const existing = submissions.find(item => item.assignment_id === activeAssignment.id);
+    if (!canEditSubmission(existing)) {
+      setBusy(false);
+      setNotice('Esta atividade já foi corrigida e não pode mais ser alterada.');
+      return;
+    }
+    const payload = { answer: answer.trim(), status, submitted_at: status === 'submitted' ? new Date().toISOString() : null };
+    const { error } = existing
+      ? await supabase.from('submissions').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', existing.id)
+      : await supabase.from('submissions').insert({ assignment_id: activeAssignment.id, student_id: session.user.id, ...payload });
     setBusy(false);
-    if (error) setNotice(error.message);
+    if (error) setNotice(friendlySupabaseError(error.message));
     else { setNotice(status === 'submitted' ? 'Atividade enviada ao professor.' : 'Rascunho salvo.'); setActiveAssignment(null); await loadStudent(session); }
   }
 
-  return <div className="student-connect-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section className="student-connect" role="dialog" aria-modal="true" aria-label="Área do aluno"><header><a className="teacher-logo" href="./"><span><GraduationCap size={24}/></span><strong>Aprendê</strong></a><button onClick={onClose} aria-label="Fechar"><X/></button></header>
+  return <div className="student-connect-backdrop" role="presentation" onMouseDown={event => { if (allowClose && event.target === event.currentTarget) onClose(); }}><section className="student-connect" role="dialog" aria-modal="true" aria-label="Área do aluno"><header><a className="teacher-logo" href="./"><span><GraduationCap size={24}/></span><strong>Aprendê</strong></a>{allowClose&&<button onClick={onClose} aria-label="Fechar"><X/></button>}</header>
     {loading ? <div className="portal-loading"><LoaderCircle className="spin"/><p>Preparando sua conta...</p></div>
-    : !session ? <div className="student-connect-auth"><div><span className="teacher-kicker">SALA CONECTADA</span><h2>{creating ? 'Primeiro acesso' : 'Entre na sua conta'}</h2><p>Digite o código enviado pelo professor. No primeiro acesso, ele será guardado até você confirmar o e-mail.</p></div><section className="student-login-card"><div className="student-auth-tabs"><button type="button" className={!creating ? 'active' : ''} onClick={() => { setCreating(false); setNotice(''); }}>Entrar</button><button type="button" className={creating ? 'active' : ''} onClick={() => { setCreating(true); setNotice(''); }}>Primeiro acesso</button></div><form onSubmit={authenticate}>{creating && <label>Seu nome<input required minLength={2} maxLength={80} value={form.name} onChange={e => setForm({...form,name:e.target.value})} placeholder="Como o professor verá você"/></label>}<label>Código da turma {creating ? '' : '(opcional)'}<input required={creating} minLength={form.code ? 8 : undefined} maxLength={8} autoCapitalize="characters" value={form.code} onChange={e=>setForm({...form,code:e.target.value.replace(/[^a-z0-9]/gi,'').toUpperCase()})} placeholder="AB12CD34" className="student-login-code"/></label><label>E-mail<input required type="email" autoComplete="email" value={form.email} onChange={e => setForm({...form,email:e.target.value})} placeholder="aluno@exemplo.com"/></label><label>Senha<input required minLength={8} type="password" autoComplete={creating ? 'new-password' : 'current-password'} value={form.password} onChange={e => setForm({...form,password:e.target.value})} placeholder="No mínimo 8 caracteres"/></label>{notice && <p className="teacher-notice" role="status">{notice}</p>}<button className="teacher-primary" disabled={busy}>{busy ? <LoaderCircle className="spin"/> : creating ? 'Criar conta e entrar na turma' : form.code ? 'Entrar na turma' : 'Entrar'}</button></form></section></div>
-    : profile?.role === 'teacher' ? <div className="teacher-message"><span><School/></span><h1>Esta conta é de professor</h1><p>Saia desta conta e entre com o perfil do aluno para usar o código da turma.</p><button className="teacher-secondary" onClick={() => supabase.auth.signOut()}><LogOut/>Sair desta conta</button></div>
-    : <div className="student-connect-body"><div className="student-session-bar"><button className="student-back" onClick={onClose}><ArrowLeft/>Voltar à sala</button><span>{profile?.display_name}<button onClick={() => supabase.auth.signOut()}><LogOut/>Sair</button></span></div><div className="student-connect-intro"><span><Users/></span><div><small>ÁREA CONECTADA</small><h2>Olá, {profile?.display_name.split(' ')[0]}</h2><p>Entre em uma turma e acompanhe tudo que o professor enviou.</p></div></div><section className="student-score-grid"><article><Trophy/><div><strong>{points} de {possiblePoints}</strong><small>pontos conquistados</small></div></article><article><CheckCircle2/><div><strong>{submissions.filter(item => item.status === 'submitted').length} de {assignments.length}</strong><small>atividades entregues</small></div></article></section><form className="student-code-form" onSubmit={joinClass}><label htmlFor="class-code">Código da turma</label><div><input id="class-code" required minLength={8} maxLength={8} autoCapitalize="characters" value={form.code} onChange={e => setForm({...form,code:e.target.value.replace(/[^a-z0-9]/gi,'').toUpperCase()})} placeholder="AB12CD34"/><button className="teacher-primary" disabled={busy}>{busy ? <LoaderCircle className="spin"/> : 'Entrar na turma'}</button></div></form>{notice && <p className="teacher-notice" role="status">{notice}</p>}<section className="student-feed"><div><h3><Bell/>Recados</h3><span>{announcements.length}</span></div>{announcements.length ? announcements.map(item => <article key={item.id}><p>{item.message}</p><small>{memberships.find(member => member.classroom_id === item.classroom_id)?.classrooms?.name} · {new Date(item.created_at).toLocaleDateString('pt-BR')}</small></article>) : <p className="student-empty">Nenhum recado novo.</p>}</section><section className="student-feed"><div><h3><BookOpen/>Atividades do professor</h3><span>{assignments.length}</span></div>{assignments.length ? assignments.map(item => { const submission = submissions.find(current => current.assignment_id === item.id); return <button className="student-assignment" key={item.id} onClick={() => openAssignment(item)}><span><strong>{item.title}</strong><small>{item.subject} · {item.points} pontos{item.due_at ? ` · até ${new Date(item.due_at).toLocaleDateString('pt-BR')}` : ''}</small></span><em className={submission?.status ?? 'pending'}>{submission?.score != null ? `${submission.score}/${item.points}` : submission?.status === 'submitted' ? 'Entregue' : submission?.status === 'draft' ? 'Rascunho' : 'Fazer'}</em></button>; }) : <p className="student-empty">As atividades enviadas aparecerão aqui.</p>}</section><section className="student-classes"><div><h3>Minhas turmas</h3><span>{memberships.length}</span></div>{memberships.length ? memberships.map(item => <article key={item.classroom_id}><span><BookOpen/></span><div><strong>{item.classrooms?.name}</strong><small>{item.classrooms?.subject}</small></div><CheckCircle2/></article>) : <p>Você ainda não entrou em nenhuma turma.</p>}</section></div>}
-    {activeAssignment && <div className="student-task-backdrop"><section className="student-task"><div><span><BookOpen/></span><button type="button" onClick={() => setActiveAssignment(null)} aria-label="Fechar"><X/></button></div><small>{activeAssignment.subject} · {activeAssignment.points} pontos</small><h2>{activeAssignment.title}</h2><p>{activeAssignment.instructions || 'O professor não adicionou orientações.'}</p><label>Sua resposta<textarea required rows={7} maxLength={12000} value={answer} onChange={event => setAnswer(event.target.value)} placeholder="Escreva sua resposta aqui..."/></label>{submissions.find(item => item.assignment_id === activeAssignment.id)?.feedback && <div className="student-feedback"><strong>Comentário do professor</strong><p>{submissions.find(item => item.assignment_id === activeAssignment.id)?.feedback}</p></div>}<div className="student-task-actions"><button type="button" className="teacher-secondary" disabled={busy || !answer.trim()} onClick={() => saveAssignment('draft')}>Salvar rascunho</button><button type="button" className="teacher-primary" disabled={busy || !answer.trim()} onClick={() => saveAssignment('submitted')}><Send/>Enviar ao professor</button></div></section></div>}
+    : !session ? <div className="student-connect-auth"><div><span className="teacher-kicker">SALA CONECTADA</span><h2>{creating ? 'Primeiro acesso' : 'Entre na sua conta'}</h2><p>Digite o código enviado pelo professor. No primeiro acesso, ele será guardado até você confirmar o e-mail.</p>{onOpenTeacher&&<button type="button" className="teacher-secondary student-teacher-link" onClick={onOpenTeacher}><School/>Acessar como professor</button>}</div><section className="student-login-card"><div className="student-auth-tabs"><button type="button" className={!creating ? 'active' : ''} onClick={() => { setCreating(false); setNotice(''); }}>Entrar</button><button type="button" className={creating ? 'active' : ''} onClick={() => { setCreating(true); setNotice(''); }}>Primeiro acesso</button></div><form onSubmit={authenticate}>{creating && <label>Seu nome<input required minLength={2} maxLength={80} value={form.name} onChange={e => setForm({...form,name:e.target.value})} placeholder="Como o professor verá você"/></label>}<label>Código da turma {creating ? '' : '(opcional)'}<input required={creating} minLength={form.code ? 8 : undefined} maxLength={8} autoCapitalize="characters" value={form.code} onChange={e=>setForm({...form,code:normalizeClassCode(e.target.value)})} placeholder="AB12CD34" className="student-login-code"/></label><label>E-mail<input required type="email" autoComplete="email" value={form.email} onChange={e => setForm({...form,email:e.target.value})} placeholder="aluno@exemplo.com"/></label><label>Senha<input required minLength={8} type="password" autoComplete={creating ? 'new-password' : 'current-password'} value={form.password} onChange={e => setForm({...form,password:e.target.value})} placeholder="No mínimo 8 caracteres"/></label>{notice && <p className="teacher-notice" role="status">{notice}</p>}<button className="teacher-primary" disabled={busy}>{busy ? <LoaderCircle className="spin"/> : creating ? 'Criar conta e entrar na turma' : form.code ? 'Entrar na turma' : 'Entrar'}</button></form></section></div>
+    : profile?.role === 'teacher' ? <div className="teacher-message"><span><School/></span><h1>Esta conta é de professor</h1><p>Use o painel do professor ou saia desta conta para entrar como aluno.</p>{onOpenTeacher&&<button className="teacher-primary" onClick={onOpenTeacher}><School/>Abrir painel do professor</button>}<button className="teacher-secondary" onClick={() => supabase.auth.signOut()}><LogOut/>Sair desta conta</button></div>
+    : <div className="student-connect-body"><div className="student-session-bar"><button className="student-back" onClick={onClose}><ArrowLeft/>Voltar à sala</button><span>{profile?.display_name}<button onClick={() => supabase.auth.signOut()}><LogOut/>Sair</button></span></div><div className="student-connect-intro"><span><Users/></span><div><small>ÁREA CONECTADA</small><h2>Olá, {profile?.display_name.split(' ')[0]}</h2><p>Entre em uma turma e acompanhe tudo que o professor enviou.</p></div></div><section className="student-score-grid"><article><Trophy/><div><strong>{metrics.earned} de {metrics.possible}</strong><small>pontos conquistados</small></div></article><article><CheckCircle2/><div><strong>{metrics.delivered} de {metrics.total}</strong><small>atividades entregues</small></div></article></section><form className="student-code-form" onSubmit={joinClass}><label htmlFor="class-code">Código da turma</label><div><input id="class-code" required minLength={8} maxLength={8} autoCapitalize="characters" value={form.code} onChange={e => setForm({...form,code:normalizeClassCode(e.target.value)})} placeholder="AB12CD34"/><button className="teacher-primary" disabled={busy}>{busy ? <LoaderCircle className="spin"/> : 'Entrar na turma'}</button></div></form>{notice && <p className="teacher-notice" role="status">{notice}</p>}<section className="student-feed"><div><h3><Bell/>Recados</h3><span>{announcements.length}</span></div>{announcements.length ? announcements.map(item => <article key={item.id}><p>{item.message}</p><small>{memberships.find(member => member.classroom_id === item.classroom_id)?.classrooms?.name} · {new Date(item.created_at).toLocaleDateString('pt-BR')}</small></article>) : <p className="student-empty">Nenhum recado novo.</p>}</section><section className="student-feed"><div><h3><BookOpen/>Atividades do professor</h3><span>{assignments.length}</span></div>{assignments.length ? assignments.map(item => { const submission = submissions.find(current => current.assignment_id === item.id); return <button className="student-assignment" key={item.id} onClick={() => openAssignment(item)}><span><strong>{item.title}</strong><small>{item.subject} · {item.points} pontos{item.due_at ? ` · até ${new Date(item.due_at).toLocaleDateString('pt-BR')}` : ''}</small></span><em className={submission?.status ?? 'pending'}>{submission?.score != null ? `${submission.score}/${item.points}` : submission?.status === 'submitted' ? 'Entregue' : submission?.status === 'draft' ? 'Rascunho' : 'Fazer'}</em></button>; }) : <p className="student-empty">As atividades enviadas aparecerão aqui.</p>}</section><section className="student-classes"><div><h3>Minhas turmas</h3><span>{memberships.length}</span></div>{memberships.length ? memberships.map(item => <article key={item.classroom_id}><span><BookOpen/></span><div><strong>{item.classrooms?.name}</strong><small>{item.classrooms?.subject}</small></div><CheckCircle2/></article>) : <p>Você ainda não entrou em nenhuma turma.</p>}</section></div>}
+    {activeAssignment && <div className="student-task-backdrop"><section className="student-task"><div><span><BookOpen/></span><button type="button" onClick={() => setActiveAssignment(null)} aria-label="Fechar"><X/></button></div><small>{activeAssignment.subject} · {activeAssignment.points} pontos</small><h2>{activeAssignment.title}</h2><p>{activeAssignment.instructions || 'O professor não adicionou orientações.'}</p><label>Sua resposta<textarea required rows={7} maxLength={12000} value={answer} readOnly={activeAssignmentLocked} aria-readonly={activeAssignmentLocked} onChange={event => setAnswer(event.target.value)} placeholder="Escreva sua resposta aqui..."/></label>{activeAssignmentLocked && <p className="student-task-locked"><CheckCircle2/>Atividade corrigida. A resposta está bloqueada para preservar a nota.</p>}{activeSubmission?.feedback && <div className="student-feedback"><strong>Comentário do professor</strong><p>{activeSubmission.feedback}</p></div>}<div className="student-task-actions"><button type="button" className="teacher-secondary" disabled={busy || !answer.trim() || activeAssignmentLocked} onClick={() => saveAssignment('draft')}>Salvar rascunho</button><button type="button" className="teacher-primary" disabled={busy || !answer.trim() || activeAssignmentLocked} onClick={() => saveAssignment('submitted')}><Send/>Enviar ao professor</button></div></section></div>}
   </section></div>;
 }
