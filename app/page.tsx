@@ -75,6 +75,22 @@ const TeacherPortal = lazy(() =>
   })),
 );
 
+const LAST_AUTH_MODE_KEY = 'aprende-last-auth-mode';
+
+function rememberAuthMode(mode: 'teacher' | 'student') {
+  try {
+    localStorage.setItem(LAST_AUTH_MODE_KEY, mode);
+  } catch {}
+}
+
+function readLastAuthMode() {
+  try {
+    return localStorage.getItem(LAST_AUTH_MODE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 function LoadingArea({ text }: { text: string }) {
   return (
     <div className="portal-loading">
@@ -191,6 +207,7 @@ export default function Home() {
     [today, setToday] = useState('2026-09-08'),
     [selectedDate, setSelectedDate] = useState('2026-09-08'),
     [month, setMonth] = useState(new Date(2026, 8, 1)),
+    [authModeReady, setAuthModeReady] = useState(false),
     [showTeacher, setShowTeacher] = useState(false),
     [showStudentConnect, setShowStudentConnect] = useState(true),
     [confirmationMode, setConfirmationMode] = useState<
@@ -208,10 +225,58 @@ export default function Home() {
     } | null>(null);
   const stateRef = useRef(state);
   const autoCloseStudentConnect = useRef(true);
+  const openTeacherMode = useCallback(() => {
+    rememberAuthMode('teacher');
+    setShowStudentConnect(false);
+    setShowTeacher(true);
+  }, []);
+  const openStudentMode = useCallback(() => {
+    rememberAuthMode('student');
+    setShowTeacher(false);
+    setShowStudentConnect(true);
+  }, []);
   useEffect(() => {
     if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
       void navigator.serviceWorker.register('./sw.js', { scope: './' });
     }
+  }, []);
+  useEffect(() => {
+    let active = true;
+    const authMode = new URLSearchParams(window.location.search).get('auth');
+    if (authMode === 'teacher' || authMode === 'student') {
+      rememberAuthMode(authMode);
+      setAuthModeReady(true);
+      return () => {
+        active = false;
+      };
+    }
+    void Promise.all([
+      studentSupabase.auth.getSession(),
+      supabase.auth.getSession(),
+    ])
+      .then(([studentResult, teacherResult]) => {
+        if (!active) return;
+        const lastMode = readLastAuthMode();
+        const hasStudentSession = !!studentResult.data.session;
+        const hasTeacherSession = !!teacherResult.data.session;
+        if (
+          hasTeacherSession &&
+          (lastMode === 'teacher' || !hasStudentSession)
+        ) {
+          setShowStudentConnect(false);
+          setShowTeacher(true);
+        } else {
+          setShowTeacher(false);
+          setShowStudentConnect(true);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setAuthModeReady(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
   useEffect(() => {
     stateRef.current = state;
@@ -328,11 +393,18 @@ export default function Home() {
     return () => data.subscription.unsubscribe();
   }, [refreshStudentSummary]);
   useEffect(() => {
-    if (autoCloseStudentConnect.current && studentAuthReady && studentSummary) {
+    if (
+      authModeReady &&
+      !showTeacher &&
+      autoCloseStudentConnect.current &&
+      studentAuthReady &&
+      studentSummary
+    ) {
       autoCloseStudentConnect.current = false;
+      rememberAuthMode('student');
       setShowStudentConnect(false);
     }
-  }, [studentAuthReady, studentSummary]);
+  }, [authModeReady, showTeacher, studentAuthReady, studentSummary]);
   useEffect(() => {
     const context = (
       document as Document & {
@@ -763,14 +835,19 @@ export default function Home() {
             window.history.replaceState({}, '', window.location.pathname);
             setConfirmationMode(null);
             if (confirmationMode === 'teacher') {
-              setShowStudentConnect(false);
-              setShowTeacher(true);
+              openTeacherMode();
             } else {
-              setShowTeacher(false);
-              setShowStudentConnect(true);
+              openStudentMode();
             }
           }}
         />
+        <PwaInstall />
+      </>
+    );
+  if (!authModeReady)
+    return (
+      <>
+        <LoadingArea text="Abrindo sua conta..." />
         <PwaInstall />
       </>
     );
@@ -779,10 +856,7 @@ export default function Home() {
       <>
         <Suspense fallback={<LoadingArea text="Abrindo o modo professor..." />}>
           <TeacherPortal
-            onClose={() => {
-              setShowTeacher(false);
-              setShowStudentConnect(true);
-            }}
+            onClose={openStudentMode}
           />
         </Suspense>
         <PwaInstall />
@@ -795,10 +869,7 @@ export default function Home() {
           pageMode
           allowClose={!!studentSummary}
           onClose={() => setShowStudentConnect(false)}
-          onOpenTeacher={() => {
-            setShowStudentConnect(false);
-            setShowTeacher(true);
-          }}
+          onOpenTeacher={openTeacherMode}
           onChanged={refreshStudentSummary}
         />
         <PwaInstall />
@@ -903,7 +974,7 @@ export default function Home() {
               <button
                 className="teacher-mode-button"
                 aria-label="Abrir modo professor"
-                onClick={() => setShowTeacher(true)}
+                onClick={openTeacherMode}
               >
                 <AppIcon name="school" pack={p.icons} size={18} />
                 <span>Modo professor</span>
@@ -1407,10 +1478,7 @@ export default function Home() {
           pageMode
           allowClose={studentAuthReady && !!studentSummary}
           onClose={() => setShowStudentConnect(false)}
-          onOpenTeacher={() => {
-            setShowStudentConnect(false);
-            setShowTeacher(true);
-          }}
+          onOpenTeacher={openTeacherMode}
           onChanged={refreshStudentSummary}
         />
       )}
