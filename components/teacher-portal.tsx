@@ -197,25 +197,45 @@ function TeacherAuth() {
     event.preventDefault();
     setBusy(true);
     setNotice('');
-    const result = creating
-      ? await supabase.auth.signUp({
-          email: form.email.trim(),
-          password: form.password,
-          options: {
-            data: { display_name: form.name.trim() },
-            emailRedirectTo: authReturnUrl(),
-          },
-        })
-      : await supabase.auth.signInWithPassword({
-          email: form.email.trim(),
-          password: form.password,
-        });
+    const email = form.email.trim().toLowerCase();
+    if (creating) {
+      const allowed = await supabase.rpc('is_teacher_email_allowed', {
+        target_email: email,
+      });
+      if (allowed.error) {
+        setNotice(friendlySupabaseError(allowed.error.message));
+        setBusy(false);
+        return;
+      }
+      if (!allowed.data) {
+        setNotice(
+          'Este e-mail ainda não foi autorizado para o modo professor. Peça ao administrador para adicioná-lo antes do cadastro.',
+        );
+        setBusy(false);
+        return;
+      }
+      const result = await supabase.auth.signUp({
+        email,
+        password: form.password,
+        options: {
+          data: { display_name: form.name.trim() },
+          emailRedirectTo: authReturnUrl(),
+        },
+      });
+      setBusy(false);
+      if (result.error) setNotice(friendlySupabaseError(result.error.message));
+      else if (!result.data.session)
+        setNotice(
+          'Enviamos um e-mail de confirmação. Abra o link para ativar sua conta e voltar ao Aprendê.',
+        );
+      return;
+    }
+    const result = await supabase.auth.signInWithPassword({
+      email,
+      password: form.password,
+    });
     setBusy(false);
     if (result.error) setNotice(friendlySupabaseError(result.error.message));
-    else if (creating && !result.data.session)
-      setNotice(
-        'Enviamos um e-mail de confirmação. Abra o link para ativar sua conta e voltar ao Aprendê.',
-      );
   }
   return (
     <main className="teacher-auth">
