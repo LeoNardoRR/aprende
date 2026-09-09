@@ -29,8 +29,8 @@ type Announcement = { id: string; classroom_id: string; message: string; created
 
 function authReturnUrl() {
   return window.location.hostname === 'localhost'
-    ? 'http://localhost:3000/'
-    : 'https://leonardorr.github.io/aprende/';
+    ? 'http://localhost:3000/?auth=teacher'
+    : 'https://leonardorr.github.io/aprende/?auth=teacher';
 }
 
 export function TeacherPortal({ onClose }: { onClose: () => void }) {

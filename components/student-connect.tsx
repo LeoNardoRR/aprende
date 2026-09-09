@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { ArrowLeft, Bell, BookOpen, CheckCircle2, GraduationCap, LoaderCircle, LogOut, School, Send, Trophy, Users, X } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { studentSupabase as supabase } from '@/lib/supabase';
 
 type Profile = { id: string; display_name: string; role: 'teacher' | 'student' };
 type Classroom = { id: string; name: string; subject: string };
@@ -14,7 +14,7 @@ type Announcement = { id: string; classroom_id: string; message: string; created
 const PENDING_CLASS_CODE = 'aprende-pending-class-code';
 
 function authReturnUrl() {
-  return window.location.hostname === 'localhost' ? 'http://localhost:3000/' : 'https://leonardorr.github.io/aprende/';
+  return window.location.hostname === 'localhost' ? 'http://localhost:3000/?auth=student' : 'https://leonardorr.github.io/aprende/?auth=student';
 }
 
 export function StudentConnect({ onClose }: { onClose: () => void }) {
