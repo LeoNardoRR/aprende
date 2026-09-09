@@ -61,9 +61,7 @@ type Announcement = {
 const PENDING_CLASS_CODE = 'aprende-pending-class-code';
 
 function authReturnUrl() {
-  return window.location.hostname === 'localhost'
-    ? 'http://localhost:3000/?auth=student'
-    : 'https://leonardorr.github.io/aprende/?auth=student';
+  return 'https://leonardorr.github.io/aprende/?auth=student';
 }
 
 type StudentConnectProps = {
