@@ -1,11 +1,12 @@
-const CACHE_NAME = 'aprende-shell-v2';
+const CACHE_NAME = 'aprende-shell-v3';
 const APP_SHELL = [
   './',
   './manifest.webmanifest',
   './favicon.svg',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png',
+  './icons/aprende-icon-192.png',
+  './icons/aprende-icon-512.png',
+  './icons/aprende-icon-maskable-512.png',
+  './icons/aprende-apple-touch-icon.png',
 ];
 
 self.addEventListener('install', (event) => {
