@@ -41,6 +41,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AppIcon, type IconName } from '@/components/classroom-icon';
 import { StudentConnect } from '@/components/student-connect';
+import { PwaInstall } from '@/components/pwa-install';
 import { studentSupabase, supabase } from '@/lib/supabase';
 import {
   calculateConnectedMetrics,
@@ -207,6 +208,11 @@ export default function Home() {
     } | null>(null);
   const stateRef = useRef(state);
   const autoCloseStudentConnect = useRef(true);
+  useEffect(() => {
+    if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
+      void navigator.serviceWorker.register('./sw.js', { scope: './' });
+    }
+  }, []);
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
@@ -750,47 +756,57 @@ export default function Home() {
   );
   if (confirmationMode)
     return (
-      <EmailConfirmationScreen
-        role={confirmationMode}
-        onContinue={() => {
-          window.history.replaceState({}, '', window.location.pathname);
-          setConfirmationMode(null);
-          if (confirmationMode === 'teacher') {
-            setShowStudentConnect(false);
-            setShowTeacher(true);
-          } else {
-            setShowTeacher(false);
-            setShowStudentConnect(true);
-          }
-        }}
-      />
+      <>
+        <EmailConfirmationScreen
+          role={confirmationMode}
+          onContinue={() => {
+            window.history.replaceState({}, '', window.location.pathname);
+            setConfirmationMode(null);
+            if (confirmationMode === 'teacher') {
+              setShowStudentConnect(false);
+              setShowTeacher(true);
+            } else {
+              setShowTeacher(false);
+              setShowStudentConnect(true);
+            }
+          }}
+        />
+        <PwaInstall />
+      </>
     );
   if (showTeacher)
     return (
-      <Suspense fallback={<LoadingArea text="Abrindo o modo professor..." />}>
-        <TeacherPortal
-          onClose={() => {
-            setShowTeacher(false);
-            setShowStudentConnect(true);
-          }}
-        />
-      </Suspense>
+      <>
+        <Suspense fallback={<LoadingArea text="Abrindo o modo professor..." />}>
+          <TeacherPortal
+            onClose={() => {
+              setShowTeacher(false);
+              setShowStudentConnect(true);
+            }}
+          />
+        </Suspense>
+        <PwaInstall />
+      </>
     );
   if (showStudentConnect)
     return (
-      <StudentConnect
-        pageMode
-        allowClose={!!studentSummary}
-        onClose={() => setShowStudentConnect(false)}
-        onOpenTeacher={() => {
-          setShowStudentConnect(false);
-          setShowTeacher(true);
-        }}
-        onChanged={refreshStudentSummary}
-      />
+      <>
+        <StudentConnect
+          pageMode
+          allowClose={!!studentSummary}
+          onClose={() => setShowStudentConnect(false)}
+          onOpenTeacher={() => {
+            setShowStudentConnect(false);
+            setShowTeacher(true);
+          }}
+          onChanged={refreshStudentSummary}
+        />
+        <PwaInstall />
+      </>
     );
   return (
     <div className={`school ${editing ? 'is-editing' : ''}`}>
+      <PwaInstall />
       <SidebarProvider>
         <Sidebar collapsible="none" className="school-sidebar">
           <button
