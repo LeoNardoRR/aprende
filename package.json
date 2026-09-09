@@ -10,6 +10,7 @@
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
+    "typecheck": "tsc --noEmit",
     "format": "oxfmt",
     "build:pages": "vite build --config vite.pages.config.ts",
     "test": "node --experimental-strip-types --test tests/*.test.mjs"

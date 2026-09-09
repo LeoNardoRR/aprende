@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { calculateConnectedMetrics, canEditSubmission, friendlySupabaseError, isValidClassCode, normalizeClassCode } from '../lib/connected-flow.ts';
+import {
+  calculateConnectedMetrics,
+  canEditSubmission,
+  connectedSubmissionLabel,
+  friendlySupabaseError,
+  isValidClassCode,
+  normalizeClassCode,
+} from '../lib/connected-flow.ts';
 
 test('class code is normalized and validated before joining', () => {
   assert.equal(normalizeClassCode(' ab-12 cd34! '), 'AB12CD34');
@@ -10,16 +17,53 @@ test('class code is normalized and validated before joining', () => {
 
 test('connected points use teacher scores and assignment totals', () => {
   const metrics = calculateConnectedMetrics(
-    [{ id: 'a', points: 10 }, { id: 'b', points: 20 }],
-    [{ assignment_id: 'a', status: 'submitted', score: 8 }, { assignment_id: 'b', status: 'draft', score: null }],
+    [
+      { id: 'a', points: 10 },
+      { id: 'b', points: 20 },
+    ],
+    [
+      { assignment_id: 'a', status: 'submitted', score: 8 },
+      { assignment_id: 'b', status: 'draft', score: null },
+    ],
   );
-  assert.deepEqual(metrics, { possible: 30, earned: 8, delivered: 1, total: 2 });
+  assert.deepEqual(metrics, {
+    possible: 30,
+    earned: 8,
+    delivered: 1,
+    total: 2,
+  });
 });
 
-test('graded submissions are locked and common backend errors are translated', () => {
+test('only draft submissions remain editable', () => {
   assert.equal(canEditSubmission(), true);
-  assert.equal(canEditSubmission({ score: null }), true);
-  assert.equal(canEditSubmission({ score: 7 }), false);
-  assert.equal(friendlySupabaseError('Invalid login credentials'), 'E-mail ou senha incorretos.');
-  assert.equal(friendlySupabaseError('Invalid class code'), 'Código de turma inválido. Confira os 8 caracteres.');
+  assert.equal(canEditSubmission({ status: 'draft', score: null }), true);
+  assert.equal(canEditSubmission({ status: 'submitted', score: null }), false);
+  assert.equal(canEditSubmission({ status: 'submitted', score: 7 }), false);
+});
+
+test('submission labels stay consistent across screens', () => {
+  assert.equal(connectedSubmissionLabel(), 'Aguardando sua resposta');
+  assert.equal(
+    connectedSubmissionLabel({ status: 'draft', score: null }),
+    'Rascunho',
+  );
+  assert.equal(
+    connectedSubmissionLabel({ status: 'submitted', score: null }),
+    'Enviada',
+  );
+  assert.equal(
+    connectedSubmissionLabel({ status: 'submitted', score: 8 }),
+    'Corrigida',
+  );
+});
+
+test('common backend errors are translated', () => {
+  assert.equal(
+    friendlySupabaseError('Invalid login credentials'),
+    'E-mail ou senha incorretos.',
+  );
+  assert.equal(
+    friendlySupabaseError('Invalid class code'),
+    'Código de turma inválido. Confira os 8 caracteres.',
+  );
 });
