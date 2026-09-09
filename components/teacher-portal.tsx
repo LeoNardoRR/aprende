@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { friendlySupabaseError } from '@/lib/connected-flow';
+import { AccountSettings } from '@/components/account-settings';
 
 type Profile = {
   id: string;
@@ -349,6 +350,9 @@ function TeacherDashboard({
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
   const [grading, setGrading] = useState<Submission | null>(null);
+  const [removingStudent, setRemovingStudent] = useState<Membership | null>(
+    null,
+  );
 
   const refresh = useCallback(async (successNotice?: string) => {
     setBusy(true);
@@ -436,14 +440,14 @@ function TeacherDashboard({
             100,
         )
       : 0;
-  async function removeStudent(member: Membership) {
+  function requestRemoveStudent(member: Membership) {
+    setRemovingStudent(member);
+  }
+
+  async function removeStudent() {
+    if (!removingStudent) return;
+    const member = removingStudent;
     const studentName = member.profiles?.display_name ?? 'este aluno';
-    if (
-      !window.confirm(
-        `Remover ${studentName} da turma ${currentClass?.name ?? ''}? O aluno poderá entrar novamente com o código.`,
-      )
-    )
-      return;
     setBusy(true);
     setNotice('');
     const { error } = await supabase
@@ -455,6 +459,7 @@ function TeacherDashboard({
     else {
       await refresh(`${studentName} foi removido da turma.`);
     }
+    setRemovingStudent(null);
     setBusy(false);
   }
 
@@ -506,6 +511,7 @@ function TeacherDashboard({
           <ArrowLeft />
           Modo aluno
         </button>
+        <AccountSettings role="teacher" />
         <button
           className="teacher-exit"
           onClick={() => void supabase.auth.signOut()}
@@ -728,7 +734,7 @@ function TeacherDashboard({
                         <button
                           className="teacher-secondary teacher-remove-student"
                           disabled={busy}
-                          onClick={() => removeStudent(member)}
+                          onClick={() => requestRemoveStudent(member)}
                         >
                           <UserMinus size={16} />
                           Remover
@@ -778,6 +784,39 @@ function TeacherDashboard({
             onClose={() => setGrading(null)}
             onSaved={refresh}
           />
+        )}
+        {removingStudent && (
+          <Modal
+            title="Remover aluno da turma?"
+            onClose={() => {
+              if (!busy) setRemovingStudent(null);
+            }}
+          >
+            <p className="teacher-confirm-copy">
+              Remover{' '}
+              <strong>{removingStudent.profiles?.display_name ?? 'este aluno'}</strong>{' '}
+              de <strong>{currentClass?.name ?? 'esta turma'}</strong>? Ele poderá
+              entrar novamente usando o código da turma.
+            </p>
+            <div className="teacher-modal-actions">
+              <button
+                type="button"
+                className="teacher-secondary"
+                disabled={busy}
+                onClick={() => setRemovingStudent(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="teacher-danger"
+                disabled={busy}
+                onClick={() => void removeStudent()}
+              >
+                {busy ? <LoaderCircle className="spin" /> : 'Remover aluno'}
+              </button>
+            </div>
+          </Modal>
         )}
       </main>
     </div>

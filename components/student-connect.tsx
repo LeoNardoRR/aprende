@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { studentSupabase as supabase } from '@/lib/supabase';
+import { AccountSettings } from '@/components/account-settings';
 import {
   calculateConnectedMetrics,
   canEditSubmission,
@@ -598,6 +599,7 @@ export function StudentConnect({
               )}
               <span>
                 {profile?.display_name}
+                <AccountSettings role="student" />
                 <button onClick={() => void supabase.auth.signOut()}>
                   <LogOut />
                   Sair
