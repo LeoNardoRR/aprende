@@ -180,7 +180,7 @@ function PortalShell({
           onClick={() => window.location.assign('./')}
         >
           <span className="brand-mark-shell">
-            <BrandLogo />
+            <BrandLogo variant="teacher" />
           </span>
           <strong>Aprendê</strong>
         </button>
@@ -572,7 +572,7 @@ function TeacherDashboard({
           onClick={() => setView('overview')}
         >
           <span className="brand-mark-shell">
-            <BrandLogo />
+            <BrandLogo variant="teacher" />
           </span>
           <strong>Aprendê</strong>
         </button>

@@ -284,7 +284,7 @@
 }
 .teacher-portal,.teacher-app {
   color:#172535;
-  background:#f4f6f8;
+  background:#f7f8fb;
 }
 .teacher-public-header {
   border-color:#dde4ea;
@@ -305,7 +305,7 @@
     linear-gradient(145deg,#f8fafb,#edf2f5);
 }
 .teacher-kicker,.teacher-topbar>div>span,.teacher-panel-title>div>span {
-  color:#876d3c;
+  color:#df6734;
 }
 .teacher-benefits span,.teacher-auth-card {
   border-color:#dfe6eb;
@@ -324,8 +324,9 @@
 }
 .teacher-app {
   background:
-    radial-gradient(circle at 92% 4%,#dce8ef99,transparent 24rem),
-    #f4f6f8;
+    radial-gradient(circle at 88% 5%,#dceafa99,transparent 25rem),
+    radial-gradient(circle,#c7d2df66 1.2px,transparent 1.2px) 0 0/23px 23px,
+    #f7f8fb;
 }
 .teacher-sidebar {
   background:linear-gradient(180deg,#0b2234 0%,#0e2b40 100%);
@@ -358,8 +359,8 @@
 }
 .teacher-sidebar nav button.active {
   color:#fff;
-  background:#1b5b84;
-  box-shadow:inset 3px 0 0 #c7aa72,0 10px 24px #06192738;
+  background:linear-gradient(135deg,#1f628e,#2d7da7);
+  box-shadow:0 9px 24px #06192735;
 }
 .teacher-sidebar>.account-settings-trigger {
   margin-top:auto;
@@ -374,7 +375,7 @@
 }
 .teacher-topbar {
   padding-bottom:22px;
-  border-bottom:1px solid #dfe5ea;
+  border-bottom:0;
 }
 .teacher-topbar h1,.teacher-panel-title h2 {
   color:#132f45;
@@ -385,15 +386,15 @@
   box-shadow:0 5px 18px #102f4708;
 }
 .teacher-primary {
-  background:#174f77;
-  box-shadow:0 8px 18px #174f7724;
+  background:linear-gradient(135deg,#185681,#287ba7);
+  box-shadow:0 9px 20px #174f7728;
 }
 .teacher-primary:hover:not(:disabled) {
   background:#103f61;
   box-shadow:0 12px 24px #174f7730;
 }
 .teacher-send {
-  border-color:#d6e0e7;
+  border-color:transparent;
   background:#fff;
   color:#24475f;
   box-shadow:0 5px 18px #102f4708;
@@ -405,9 +406,21 @@
 .teacher-welcome {
   position:relative;
   overflow:hidden;
-  border:1px solid #244f6d;
-  background:linear-gradient(125deg,#0e3049 0%,#174f75 70%,#1e6087 100%);
-  box-shadow:0 20px 45px #0e304924;
+  border:0;
+  background:linear-gradient(125deg,#154f7c 0%,#266f9d 58%,#6654a9 100%);
+  box-shadow:0 22px 48px #173b612b;
+}
+.teacher-welcome::before {
+  content:"";
+  position:absolute;
+  top:-115px;
+  right:150px;
+  width:280px;
+  height:280px;
+  border-radius:50%;
+  background:radial-gradient(circle,#f28b5947 0 24%,#f6b56d24 25% 48%,transparent 49%);
+  filter:blur(2px);
+  pointer-events:none;
 }
 .teacher-welcome::after {
   content:"";
@@ -426,50 +439,50 @@
   z-index:1;
 }
 .teacher-welcome>div>span {
-  color:#dac595;
+  color:#ffd3ae;
 }
 .teacher-welcome p {
   color:#d7e3eb;
 }
 .teacher-welcome>button {
-  border:1px solid #ffffff6b;
+  border:0;
   background:#fff;
   color:#15364d;
-  box-shadow:0 12px 30px #0619272b;
+  box-shadow:0 14px 32px #06192730;
 }
 .teacher-welcome>button svg {
   color:#1b5b84;
 }
 .teacher-panel,.teacher-stats article {
-  border-color:#dee5ea;
+  border-color:transparent;
   background:#fff;
-  box-shadow:0 9px 28px #102f470a;
+  box-shadow:0 10px 32px #26384d0d;
 }
 .teacher-panel:hover,.teacher-stats article:hover {
-  border-color:#cfdae2;
-  box-shadow:0 13px 34px #102f4711;
+  border-color:transparent;
+  box-shadow:0 15px 38px #26384d16;
 }
 .teacher-stats article>span {
   background:#e8f1f6;
   color:#195477;
 }
 .teacher-stats article:nth-child(2)>span {
-  background:#f4eee2;
-  color:#8c6e34;
+  background:#fff0e8;
+  color:#db6736;
 }
 .teacher-stats article:nth-child(3)>span {
   background:#e5f1ed;
   color:#27715d;
 }
 .teacher-activity-icon,.teacher-count {
-  background:#e8f1f6;
-  color:#195477;
+  background:#fff0e8;
+  color:#db6736;
 }
 .teacher-activity-list article>div small,.teacher-submission-list small,.teacher-grade-answer small {
-  color:#876d3c;
+  color:#dd6735;
 }
 .teacher-announcement-list article {
-  background:#f6f8fa;
+  background:#f2f7fb;
 }
 .teacher-announcement-list article>svg {
   color:#1b5b84;
@@ -486,7 +499,7 @@
   backdrop-filter:blur(7px);
 }
 .teacher-modal,.account-settings-dialog {
-  border:1px solid #e0e6eb;
+  border:0;
   box-shadow:0 30px 90px #0619274f;
 }
 .account-settings-heading>span,.account-avatar-preview {
@@ -494,8 +507,23 @@
   color:#174f77;
 }
 .account-avatar-card {
-  border-color:#dce5eb;
-  background:#f6f9fb;
+  border-color:transparent;
+  background:#eef5f9;
+}
+.account-avatar-input {
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  clip-path:inset(50%);
+  white-space:nowrap;
+}
+.teacher-auth-card .student-auth-tabs button.active {
+  color:#185681;
+}
+.teacher-auth-card .teacher-switch {
+  color:#266f9d;
 }
 .account-settings-backdrop {
   z-index:1000;
@@ -515,7 +543,7 @@
     box-shadow:0 -12px 30px #0619271f;
   }
   .teacher-sidebar nav button.active {
-    box-shadow:inset 0 3px 0 #c7aa72,0 5px 15px #0619272b;
+    box-shadow:0 5px 15px #0619272b;
   }
   .teacher-sidebar>.account-settings-trigger,.teacher-sidebar>.teacher-exit {
     margin:0!important;

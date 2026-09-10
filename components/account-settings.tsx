@@ -55,12 +55,13 @@ export function AccountSettings({ role, avatarUrl = null, onAvatarUpdated }: Acc
 
   async function uploadAvatar(file: File) {
     setAvatarBusy(true);
-    setAvatarNotice('');
+    setAvatarNotice('Preparando sua foto...');
     try {
       const prepared = await prepareAvatar(file);
       const { data: { user } } = await authClient.auth.getUser();
       if (!user) throw new Error('Sua sessão expirou. Entre novamente.');
       const path = `${user.id}/profile.jpg`;
+      setAvatarNotice('Enviando sua foto...');
       const { error: uploadError } = await authClient.storage
         .from('teacher-avatars')
         .upload(path, prepared, { contentType: 'image/jpeg', cacheControl: '3600', upsert: true });
@@ -189,20 +190,26 @@ export function AccountSettings({ role, avatarUrl = null, onAvatarUpdated }: Acc
                   <h3>Foto de perfil</h3>
                   <p>A imagem será cortada ao centro e otimizada automaticamente.</p>
                   <div className="account-avatar-actions">
-                    <label className="teacher-primary compact">
+                    <input
+                      ref={fileInputRef}
+                      className="account-avatar-input"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      disabled={avatarBusy}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void uploadAvatar(file);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="teacher-primary compact"
+                      disabled={avatarBusy}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
                       {avatarBusy ? <LoaderCircle className="spin" size={16} /> : <ImageUp size={16} />}
-                      Escolher foto
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        disabled={avatarBusy}
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          if (file) void uploadAvatar(file);
-                        }}
-                      />
-                    </label>
+                      {avatarBusy ? 'Enviando...' : 'Escolher foto'}
+                    </button>
                     {avatarUrl && (
                       <button type="button" className="teacher-secondary compact" disabled={avatarBusy} onClick={() => void removeAvatar()}>
                         Remover foto
