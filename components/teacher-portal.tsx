@@ -641,17 +641,23 @@ function TeacherDashboard({
           </div>
           <div className="teacher-top-actions">
             {classes.length > 0 && (
-              <select
-                aria-label="Turma atual"
-                value={selected}
-                onChange={(e) => setSelected(e.target.value)}
-              >
-                {classes.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
+              <label className="teacher-class-picker">
+                <span>
+                  <School />
+                  Turma atual
+                </span>
+                <select
+                  aria-label="Turma atual"
+                  value={selected}
+                  onChange={(e) => setSelected(e.target.value)}
+                >
+                  {classes.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
             )}
             {currentClass && (
               <button
@@ -663,7 +669,7 @@ function TeacherDashboard({
               </button>
             )}
             <button
-              className="teacher-primary compact"
+              className="teacher-primary compact teacher-new-class"
               onClick={() => setShowClassForm(true)}
             >
               <Plus />

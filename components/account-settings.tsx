@@ -37,7 +37,10 @@ async function prepareAvatar(file: File) {
     canvas.height = 512;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Não foi possível preparar a imagem.');
-    context.drawImage(image, (image.naturalWidth - side) / 2, (image.naturalHeight - side) / 2, side, side, 0, 0, 512, 512);
+    const sourceX = (image.naturalWidth - side) / 2;
+    const verticalOverflow = image.naturalHeight - side;
+    const sourceY = verticalOverflow > 0 ? verticalOverflow * 0.24 : 0;
+    context.drawImage(image, sourceX, sourceY, side, side, 0, 0, 512, 512);
     return await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
         (blob) => blob ? resolve(blob) : reject(new Error('Não foi possível salvar a imagem.')),
