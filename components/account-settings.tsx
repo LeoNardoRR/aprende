@@ -12,6 +12,14 @@ type AccountSettingsProps = {
   onAvatarUpdated?: (url: string | null) => void;
 };
 
+function avatarStoragePath(url: string | null) {
+  if (!url) return null;
+  const marker = '/storage/v1/object/public/teacher-avatars/';
+  const markerIndex = url.indexOf(marker);
+  if (markerIndex < 0) return null;
+  return decodeURIComponent(url.slice(markerIndex + marker.length).split('?')[0]);
+}
+
 async function prepareAvatar(file: File) {
   if (!file.type.startsWith('image/')) throw new Error('Escolha uma imagem válida.');
   if (file.size > 10 * 1024 * 1024) throw new Error('A imagem deve ter no máximo 10 MB.');
@@ -60,11 +68,12 @@ export function AccountSettings({ role, avatarUrl = null, onAvatarUpdated }: Acc
       const prepared = await prepareAvatar(file);
       const { data: { user } } = await authClient.auth.getUser();
       if (!user) throw new Error('Sua sessão expirou. Entre novamente.');
-      const path = `${user.id}/profile.jpg`;
+      const previousPath = avatarStoragePath(avatarUrl);
+      const path = `${user.id}/profile-${Date.now()}.jpg`;
       setAvatarNotice('Enviando sua foto...');
       const { error: uploadError } = await authClient.storage
         .from('teacher-avatars')
-        .upload(path, prepared, { contentType: 'image/jpeg', cacheControl: '3600', upsert: true });
+        .upload(path, prepared, { contentType: 'image/jpeg', cacheControl: '3600' });
       if (uploadError) throw uploadError;
       const { data } = authClient.storage.from('teacher-avatars').getPublicUrl(path);
       const nextUrl = `${data.publicUrl}?v=${Date.now()}`;
@@ -75,6 +84,9 @@ export function AccountSettings({ role, avatarUrl = null, onAvatarUpdated }: Acc
       if (profileError) throw profileError;
       onAvatarUpdated?.(nextUrl);
       setAvatarNotice('Foto atualizada.');
+      if (previousPath && previousPath !== path) {
+        void authClient.storage.from('teacher-avatars').remove([previousPath]);
+      }
     } catch (uploadError) {
       setAvatarNotice(uploadError instanceof Error ? friendlySupabaseError(uploadError.message) : 'Não foi possível atualizar a foto.');
     } finally {
@@ -92,13 +104,16 @@ export function AccountSettings({ role, avatarUrl = null, onAvatarUpdated }: Acc
       setAvatarBusy(false);
       return;
     }
-    const { error: storageError } = await authClient.storage
-      .from('teacher-avatars')
-      .remove([`${user.id}/profile.jpg`]);
-    if (storageError) {
-      setAvatarNotice(friendlySupabaseError(storageError.message));
-      setAvatarBusy(false);
-      return;
+    const currentPath = avatarStoragePath(avatarUrl);
+    if (currentPath) {
+      const { error: storageError } = await authClient.storage
+        .from('teacher-avatars')
+        .remove([currentPath]);
+      if (storageError) {
+        setAvatarNotice(friendlySupabaseError(storageError.message));
+        setAvatarBusy(false);
+        return;
+      }
     }
     const { error: profileError } = await authClient
       .from('profiles')
