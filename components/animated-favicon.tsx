@@ -6,12 +6,8 @@ const faviconSource = './icons/aprende-favicon-64.png';
 
 export function AnimatedFavicon() {
   useEffect(() => {
-    const link = document.querySelector<HTMLLinkElement>(
-      'link[rel="icon"]',
-    );
-    const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    );
+    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     if (!link || reducedMotion.matches) return;
 
@@ -36,16 +32,17 @@ export function AnimatedFavicon() {
       if (!context) return;
 
       const frames = [
-        { angle: -1.4, offsetY: 1 },
-        { angle: 0, offsetY: 0 },
-        { angle: 1.4, offsetY: 1 },
-        { angle: 0, offsetY: 0 },
-      ].map(({ angle, offsetY }) => {
+        { angle: -1.2, offsetY: 1, scale: 0.96 },
+        { angle: 0, offsetY: 0, scale: 1 },
+        { angle: 1.2, offsetY: -1, scale: 0.97 },
+        { angle: 0, offsetY: 0, scale: 1 },
+      ].map(({ angle, offsetY, scale }) => {
         context.clearRect(0, 0, 64, 64);
         context.save();
         context.translate(32, 32 + offsetY);
         context.rotate((angle * Math.PI) / 180);
-        context.drawImage(image, -30, -30, 60, 60);
+        const size = 58 * scale;
+        context.drawImage(image, -size / 2, -size / 2, size, size);
         context.restore();
         return canvas.toDataURL('image/png');
       });
@@ -57,7 +54,7 @@ export function AnimatedFavicon() {
         timer = window.setInterval(() => {
           frame += 1;
           link.href = frames[frame % frames.length];
-        }, 1100);
+        }, 900);
       };
 
       document.addEventListener('visibilitychange', play);

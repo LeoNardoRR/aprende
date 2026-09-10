@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Session } from '@supabase/supabase-js';
 import {
   ArrowLeft,
@@ -8,12 +9,14 @@ import {
   BookOpen,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   ClipboardCheck,
   Copy,
   GraduationCap,
   LoaderCircle,
   LogOut,
   MessageSquare,
+  Palette,
   Plus,
   School,
   UserMinus,
@@ -72,6 +75,18 @@ type Announcement = {
   classroom_id: string;
   message: string;
   created_at: string;
+};
+
+type TeacherAppearance = {
+  palette: 'ocean' | 'violet' | 'forest';
+  font: 'modern' | 'friendly' | 'editorial';
+  banner: 'flow' | 'aurora' | 'sunset';
+};
+
+const defaultTeacherAppearance: TeacherAppearance = {
+  palette: 'ocean',
+  font: 'modern',
+  banner: 'flow',
 };
 
 export function TeacherPortal({ onClose }: { onClose: () => void }) {
@@ -234,8 +249,7 @@ function TeacherAuth() {
         setNotice(friendlySupabaseError(result.error.message));
         if (isEmailConfirmationRequired(result.error.message))
           setConfirmationEmail(email);
-      }
-      else if (!result.data.session)
+      } else if (!result.data.session)
         setNotice(
           'Enviamos um e-mail de confirmação. Abra o link para ativar sua conta e voltar ao Aprendê.',
         );
@@ -418,11 +432,7 @@ function TeacherAuth() {
   );
 }
 
-function TeacherDashboard({
-  profile,
-}: {
-  profile: Profile;
-}) {
+function TeacherDashboard({ profile }: { profile: Profile }) {
   const [classes, setClasses] = useState<Classroom[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
@@ -438,6 +448,13 @@ function TeacherDashboard({
   const [showClassForm, setShowClassForm] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
+  const [showAppearanceForm, setShowAppearanceForm] = useState(false);
+  const [appearance, setAppearance] = useState<TeacherAppearance>(
+    defaultTeacherAppearance,
+  );
+  const [appearanceDraft, setAppearanceDraft] = useState<TeacherAppearance>(
+    defaultTeacherAppearance,
+  );
   const [grading, setGrading] = useState<Submission | null>(null);
   const [removingStudent, setRemovingStudent] = useState<Membership | null>(
     null,
@@ -517,6 +534,33 @@ function TeacherDashboard({
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(
+      `aprende:teacher-appearance:${profile.id}`,
+    );
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved) as Partial<TeacherAppearance>;
+      const next: TeacherAppearance = {
+        palette: ['ocean', 'violet', 'forest'].includes(parsed.palette ?? '')
+          ? (parsed.palette as TeacherAppearance['palette'])
+          : 'ocean',
+        font: ['modern', 'friendly', 'editorial'].includes(parsed.font ?? '')
+          ? (parsed.font as TeacherAppearance['font'])
+          : 'modern',
+        banner: ['flow', 'aurora', 'sunset'].includes(parsed.banner ?? '')
+          ? (parsed.banner as TeacherAppearance['banner'])
+          : 'flow',
+      };
+      setAppearance(next);
+      setAppearanceDraft(next);
+    } catch {
+      window.localStorage.removeItem(
+        `aprende:teacher-appearance:${profile.id}`,
+      );
+    }
+  }, [profile.id]);
   const currentClass = classes.find((item) => item.id === selected);
   const classActivities = assignments.filter(
     (item) => item.classroom_id === selected,
@@ -563,7 +607,18 @@ function TeacherDashboard({
   }
 
   return (
-    <div className="teacher-app">
+    <div
+      className="teacher-app"
+      data-teacher-palette={
+        showAppearanceForm ? appearanceDraft.palette : appearance.palette
+      }
+      data-teacher-font={
+        showAppearanceForm ? appearanceDraft.font : appearance.font
+      }
+      data-teacher-banner={
+        showAppearanceForm ? appearanceDraft.banner : appearance.banner
+      }
+    >
       <aside className="teacher-sidebar">
         <button
           type="button"
@@ -641,23 +696,11 @@ function TeacherDashboard({
           </div>
           <div className="teacher-top-actions">
             {classes.length > 0 && (
-              <label className="teacher-class-picker">
-                <span>
-                  <School />
-                  Turma atual
-                </span>
-                <select
-                  aria-label="Turma atual"
-                  value={selected}
-                  onChange={(e) => setSelected(e.target.value)}
-                >
-                  {classes.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <ClassPicker
+                classes={classes}
+                selected={selected}
+                onSelect={setSelected}
+              />
             )}
             {currentClass && (
               <button
@@ -674,6 +717,19 @@ function TeacherDashboard({
             >
               <Plus />
               Nova turma
+            </button>
+            <button
+              type="button"
+              className="teacher-appearance-button"
+              aria-label="Personalizar aparência do painel"
+              title="Personalizar aparência"
+              onClick={() => {
+                setAppearanceDraft(appearance);
+                setShowAppearanceForm(true);
+              }}
+            >
+              <Palette />
+              Aparência
             </button>
           </div>
         </header>
@@ -888,6 +944,25 @@ function TeacherDashboard({
             onSaved={() => refresh('Recado enviado para a turma.')}
           />
         )}{' '}
+        {showAppearanceForm && (
+          <TeacherAppearanceForm
+            value={appearanceDraft}
+            onChange={setAppearanceDraft}
+            onClose={() => {
+              setAppearanceDraft(appearance);
+              setShowAppearanceForm(false);
+            }}
+            onSave={() => {
+              setAppearance(appearanceDraft);
+              window.localStorage.setItem(
+                `aprende:teacher-appearance:${profile.id}`,
+                JSON.stringify(appearanceDraft),
+              );
+              setShowAppearanceForm(false);
+              setNotice('Visual do painel atualizado neste dispositivo.');
+            }}
+          />
+        )}{' '}
         {grading && (
           <GradeForm
             submission={grading}
@@ -907,9 +982,11 @@ function TeacherDashboard({
           >
             <p className="teacher-confirm-copy">
               Remover{' '}
-              <strong>{removingStudent.profiles?.display_name ?? 'este aluno'}</strong>{' '}
-              de <strong>{currentClass?.name ?? 'esta turma'}</strong>? Ele poderá
-              entrar novamente usando o código da turma.
+              <strong>
+                {removingStudent.profiles?.display_name ?? 'este aluno'}
+              </strong>{' '}
+              de <strong>{currentClass?.name ?? 'esta turma'}</strong>? Ele
+              poderá entrar novamente usando o código da turma.
             </p>
             <div className="teacher-modal-actions">
               <button
@@ -933,6 +1010,183 @@ function TeacherDashboard({
         )}
       </main>
     </div>
+  );
+}
+
+function ClassPicker({
+  classes,
+  selected,
+  onSelect,
+}: {
+  classes: Classroom[];
+  selected: string;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const current = classes.find((item) => item.id === selected) ?? classes[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('keydown', closeWithEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('keydown', closeWithEscape);
+    };
+  }, [open]);
+
+  return (
+    <div className="teacher-class-picker" ref={root}>
+      <button
+        type="button"
+        className="teacher-class-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>
+          <School />
+          Turma atual
+        </span>
+        <strong>{current?.name ?? 'Escolha uma turma'}</strong>
+        <ChevronDown className={open ? 'open' : ''} />
+      </button>
+      {open && (
+        <div
+          className="teacher-class-options"
+          role="listbox"
+          aria-label="Turmas"
+        >
+          {classes.map((item) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={item.id === selected}
+              className={item.id === selected ? 'selected' : ''}
+              key={item.id}
+              onClick={() => {
+                onSelect(item.id);
+                setOpen(false);
+              }}
+            >
+              <span>
+                <strong>{item.name}</strong>
+                <small>{item.subject}</small>
+              </span>
+              {item.id === selected && <CheckCircle2 />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TeacherAppearanceForm({
+  value,
+  onChange,
+  onClose,
+  onSave,
+}: {
+  value: TeacherAppearance;
+  onChange: (value: TeacherAppearance) => void;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <Modal title="Personalizar painel" onClose={onClose}>
+      <div className="teacher-appearance-form">
+        <p>Escolha um visual confortável para organizar suas turmas.</p>
+        <fieldset>
+          <legend>Cor principal</legend>
+          <div className="teacher-choice-grid teacher-color-choices">
+            {(
+              [
+                ['ocean', 'Azul', '#287ba7'],
+                ['violet', 'Violeta', '#7656b7'],
+                ['forest', 'Verde', '#287966'],
+              ] as const
+            ).map(([id, label, color]) => (
+              <button
+                type="button"
+                className={value.palette === id ? 'selected' : ''}
+                onClick={() => onChange({ ...value, palette: id })}
+                key={id}
+              >
+                <i style={{ background: color }} />
+                {label}
+                {value.palette === id && <CheckCircle2 />}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Fonte</legend>
+          <div className="teacher-choice-grid">
+            {(
+              [
+                ['modern', 'Moderna', 'Aa'],
+                ['friendly', 'Leve', 'Aa'],
+                ['editorial', 'Clássica', 'Aa'],
+              ] as const
+            ).map(([id, label, sample]) => (
+              <button
+                type="button"
+                data-font={id}
+                className={value.font === id ? 'selected' : ''}
+                onClick={() => onChange({ ...value, font: id })}
+                key={id}
+              >
+                <b>{sample}</b>
+                {label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Banner da turma</legend>
+          <div className="teacher-choice-grid teacher-banner-choices">
+            {(
+              [
+                ['flow', 'Fluxo'],
+                ['aurora', 'Aurora'],
+                ['sunset', 'Pôr do sol'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                type="button"
+                data-banner={id}
+                className={value.banner === id ? 'selected' : ''}
+                onClick={() => onChange({ ...value, banner: id })}
+                key={id}
+              >
+                <i />
+                {label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <div className="teacher-modal-actions">
+          <button
+            type="button"
+            className="teacher-secondary"
+            onClick={() => onChange(defaultTeacherAppearance)}
+          >
+            Restaurar padrão
+          </button>
+          <button type="button" className="teacher-primary" onClick={onSave}>
+            Salvar visual
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -1422,7 +1676,8 @@ function Modal({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  return (
+  if (typeof document === 'undefined') return null;
+  return createPortal(
     <div
       className="teacher-modal-backdrop"
       role="presentation"
@@ -1444,6 +1699,7 @@ function Modal({
         </div>
         {children}
       </dialog>
-    </div>
+    </div>,
+    document.body,
   );
 }
