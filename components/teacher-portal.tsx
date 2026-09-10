@@ -78,16 +78,70 @@ type Announcement = {
 };
 
 type TeacherAppearance = {
-  palette: 'ocean' | 'violet' | 'forest';
-  font: 'modern' | 'friendly' | 'editorial';
-  banner: 'flow' | 'aurora' | 'sunset';
+  palette:
+    | 'ocean'
+    | 'violet'
+    | 'forest'
+    | 'coral'
+    | 'rose'
+    | 'graphite'
+    | 'gold'
+    | 'sky';
+  font: 'modern' | 'friendly' | 'editorial' | 'geometric';
+  banner: 'flow' | 'aurora' | 'sunset' | 'midnight' | 'citrus' | 'lavender';
+  background: 'dots' | 'clean' | 'grid' | 'glow';
+  cards: 'balanced' | 'soft' | 'straight';
+  density: 'comfortable' | 'compact';
 };
 
 const defaultTeacherAppearance: TeacherAppearance = {
   palette: 'ocean',
   font: 'modern',
   banner: 'flow',
+  background: 'dots',
+  cards: 'balanced',
+  density: 'comfortable',
 };
+
+const teacherPaletteIds: TeacherAppearance['palette'][] = [
+  'ocean',
+  'violet',
+  'forest',
+  'coral',
+  'rose',
+  'graphite',
+  'gold',
+  'sky',
+];
+const teacherFontIds: TeacherAppearance['font'][] = [
+  'modern',
+  'friendly',
+  'editorial',
+  'geometric',
+];
+const teacherBannerIds: TeacherAppearance['banner'][] = [
+  'flow',
+  'aurora',
+  'sunset',
+  'midnight',
+  'citrus',
+  'lavender',
+];
+const teacherBackgroundIds: TeacherAppearance['background'][] = [
+  'dots',
+  'clean',
+  'grid',
+  'glow',
+];
+const teacherCardIds: TeacherAppearance['cards'][] = [
+  'balanced',
+  'soft',
+  'straight',
+];
+const teacherDensityIds: TeacherAppearance['density'][] = [
+  'comfortable',
+  'compact',
+];
 
 export function TeacherPortal({ onClose }: { onClose: () => void }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -543,15 +597,34 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
     try {
       const parsed = JSON.parse(saved) as Partial<TeacherAppearance>;
       const next: TeacherAppearance = {
-        palette: ['ocean', 'violet', 'forest'].includes(parsed.palette ?? '')
+        palette: teacherPaletteIds.includes(
+          parsed.palette as TeacherAppearance['palette'],
+        )
           ? (parsed.palette as TeacherAppearance['palette'])
           : 'ocean',
-        font: ['modern', 'friendly', 'editorial'].includes(parsed.font ?? '')
+        font: teacherFontIds.includes(parsed.font as TeacherAppearance['font'])
           ? (parsed.font as TeacherAppearance['font'])
           : 'modern',
-        banner: ['flow', 'aurora', 'sunset'].includes(parsed.banner ?? '')
+        banner: teacherBannerIds.includes(
+          parsed.banner as TeacherAppearance['banner'],
+        )
           ? (parsed.banner as TeacherAppearance['banner'])
           : 'flow',
+        background: teacherBackgroundIds.includes(
+          parsed.background as TeacherAppearance['background'],
+        )
+          ? (parsed.background as TeacherAppearance['background'])
+          : 'dots',
+        cards: teacherCardIds.includes(
+          parsed.cards as TeacherAppearance['cards'],
+        )
+          ? (parsed.cards as TeacherAppearance['cards'])
+          : 'balanced',
+        density: teacherDensityIds.includes(
+          parsed.density as TeacherAppearance['density'],
+        )
+          ? (parsed.density as TeacherAppearance['density'])
+          : 'comfortable',
       };
       setAppearance(next);
       setAppearanceDraft(next);
@@ -617,6 +690,15 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
       }
       data-teacher-banner={
         showAppearanceForm ? appearanceDraft.banner : appearance.banner
+      }
+      data-teacher-background={
+        showAppearanceForm ? appearanceDraft.background : appearance.background
+      }
+      data-teacher-cards={
+        showAppearanceForm ? appearanceDraft.cards : appearance.cards
+      }
+      data-teacher-density={
+        showAppearanceForm ? appearanceDraft.density : appearance.density
       }
     >
       <aside className="teacher-sidebar">
@@ -1101,7 +1183,7 @@ function TeacherAppearanceForm({
   onSave: () => void;
 }) {
   return (
-    <Modal title="Personalizar painel" onClose={onClose}>
+    <Modal title="Personalizar painel" onClose={onClose} wide>
       <div className="teacher-appearance-form">
         <p>Escolha um visual confortável para organizar suas turmas.</p>
         <fieldset>
@@ -1112,6 +1194,11 @@ function TeacherAppearanceForm({
                 ['ocean', 'Azul', '#287ba7'],
                 ['violet', 'Violeta', '#7656b7'],
                 ['forest', 'Verde', '#287966'],
+                ['coral', 'Coral', '#d7613b'],
+                ['rose', 'Rosa', '#c24f77'],
+                ['graphite', 'Grafite', '#536273'],
+                ['gold', 'Dourado', '#b47a18'],
+                ['sky', 'Céu', '#2887bc'],
               ] as const
             ).map(([id, label, color]) => (
               <button
@@ -1135,6 +1222,7 @@ function TeacherAppearanceForm({
                 ['modern', 'Moderna', 'Aa'],
                 ['friendly', 'Leve', 'Aa'],
                 ['editorial', 'Clássica', 'Aa'],
+                ['geometric', 'Geométrica', 'Aa'],
               ] as const
             ).map(([id, label, sample]) => (
               <button
@@ -1158,6 +1246,9 @@ function TeacherAppearanceForm({
                 ['flow', 'Fluxo'],
                 ['aurora', 'Aurora'],
                 ['sunset', 'Pôr do sol'],
+                ['midnight', 'Meia-noite'],
+                ['citrus', 'Cítrico'],
+                ['lavender', 'Lavanda'],
               ] as const
             ).map(([id, label]) => (
               <button
@@ -1173,6 +1264,76 @@ function TeacherAppearanceForm({
             ))}
           </div>
         </fieldset>
+        <fieldset>
+          <legend>Fundo do painel</legend>
+          <div className="teacher-choice-grid teacher-background-choices">
+            {(
+              [
+                ['dots', 'Pontilhado'],
+                ['clean', 'Limpo'],
+                ['grid', 'Quadriculado'],
+                ['glow', 'Luz suave'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                type="button"
+                data-background={id}
+                className={value.background === id ? 'selected' : ''}
+                onClick={() => onChange({ ...value, background: id })}
+                key={id}
+              >
+                <i />
+                {label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <div className="teacher-appearance-pair">
+          <fieldset>
+            <legend>Formato dos cartões</legend>
+            <div className="teacher-choice-grid teacher-card-choices">
+              {(
+                [
+                  ['balanced', 'Equilibrado'],
+                  ['soft', 'Arredondado'],
+                  ['straight', 'Reto'],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  type="button"
+                  data-card={id}
+                  className={value.cards === id ? 'selected' : ''}
+                  onClick={() => onChange({ ...value, cards: id })}
+                  key={id}
+                >
+                  <i />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Espaçamento</legend>
+            <div className="teacher-choice-grid teacher-density-choices">
+              {(
+                [
+                  ['comfortable', 'Confortável'],
+                  ['compact', 'Compacto'],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  type="button"
+                  className={value.density === id ? 'selected' : ''}
+                  onClick={() => onChange({ ...value, density: id })}
+                  key={id}
+                >
+                  <i data-density={id} />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        </div>
         <div className="teacher-modal-actions">
           <button
             type="button"
@@ -1671,10 +1832,12 @@ function Modal({
   title,
   onClose,
   children,
+  wide = false,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  wide?: boolean;
 }) {
   if (typeof document === 'undefined') return null;
   return createPortal(
@@ -1687,7 +1850,7 @@ function Modal({
     >
       <dialog
         open
-        className="teacher-modal"
+        className={`teacher-modal${wide ? ' teacher-modal-wide' : ''}`}
         aria-modal="true"
         aria-label={title}
       >
