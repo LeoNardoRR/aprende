@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
+import { BrandLogo } from '@/components/brand-logo';
 import {
   Dialog,
   DialogContent,
@@ -1074,8 +1075,8 @@ export default function Home() {
             aria-label="Aprendê — página inicial"
             onClick={() => changeView('home')}
           >
-            <span className="brand-icon">
-              <AppIcon name="school" pack={p.icons} size={28} />
+            <span className="brand-icon brand-mark-shell">
+              <BrandLogo />
             </span>
             <strong>Aprendê</strong>
           </button>

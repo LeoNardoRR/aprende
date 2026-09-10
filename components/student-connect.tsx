@@ -7,7 +7,6 @@ import {
   Bell,
   BookOpen,
   CheckCircle2,
-  GraduationCap,
   LoaderCircle,
   LogOut,
   School,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react';
 import { studentSupabase as supabase } from '@/lib/supabase';
 import { AccountSettings } from '@/components/account-settings';
+import { BrandLogo } from '@/components/brand-logo';
 import {
   calculateConnectedMetrics,
   canEditSubmission,
@@ -438,8 +438,8 @@ export function StudentConnect({
             aria-label="Recarregar Aprendê"
             onClick={() => window.location.assign('./')}
           >
-            <span>
-              <GraduationCap size={24} />
+            <span className="brand-mark-shell">
+              <BrandLogo />
             </span>
             <strong>Aprendê</strong>
           </button>

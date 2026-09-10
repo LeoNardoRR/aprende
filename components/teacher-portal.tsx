@@ -27,6 +27,7 @@ import {
   passwordRecoveryUrl,
 } from '@/lib/auth-flow';
 import { AccountSettings } from '@/components/account-settings';
+import { BrandLogo } from '@/components/brand-logo';
 
 type Profile = {
   id: string;
@@ -177,8 +178,8 @@ function PortalShell({
           aria-label="Recarregar Aprendê"
           onClick={() => window.location.assign('./')}
         >
-          <span>
-            <GraduationCap size={24} />
+          <span className="brand-mark-shell">
+            <BrandLogo />
           </span>
           <strong>Aprendê</strong>
         </button>
@@ -570,8 +571,8 @@ function TeacherDashboard({
           aria-label="Voltar ao modo aluno"
           onClick={onClose}
         >
-          <span>
-            <GraduationCap size={24} />
+          <span className="brand-mark-shell">
+            <BrandLogo />
           </span>
           <strong>Aprendê</strong>
         </button>

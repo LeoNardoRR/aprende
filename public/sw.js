@@ -1,8 +1,8 @@
-const CACHE_NAME = 'aprende-shell-v4';
+const CACHE_NAME = 'aprende-shell-v5';
 const APP_SHELL = [
   './',
   './manifest.webmanifest',
-  './favicon.svg',
+  './icons/aprende-favicon-64.png',
   './icons/aprende-icon-192.png',
   './icons/aprende-icon-512.png',
   './icons/aprende-icon-maskable-512.png',
