@@ -6,6 +6,10 @@ export function authReturnUrl(role: AuthRole) {
   return `${PUBLIC_APP_URL}?auth=${role}`;
 }
 
+export function passwordRecoveryUrl(role: AuthRole) {
+  return authReturnUrl(role);
+}
+
 export function isEmailConfirmationRequired(message: string) {
   return message.toLowerCase().includes('email not confirmed');
 }

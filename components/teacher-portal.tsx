@@ -24,6 +24,7 @@ import { friendlySupabaseError } from '@/lib/connected-flow';
 import {
   authReturnUrl,
   isEmailConfirmationRequired,
+  passwordRecoveryUrl,
 } from '@/lib/auth-flow';
 import { AccountSettings } from '@/components/account-settings';
 
@@ -264,6 +265,24 @@ function TeacherAuth() {
         : 'Enviamos um novo link de confirmação para seu e-mail.',
     );
   }
+  async function requestPasswordReset() {
+    const email = form.email.trim().toLowerCase();
+    if (!email) {
+      setNotice('Digite seu e-mail para receber o link de recuperação.');
+      return;
+    }
+    setBusy(true);
+    setNotice('');
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: passwordRecoveryUrl('teacher'),
+    });
+    setBusy(false);
+    setNotice(
+      error
+        ? friendlySupabaseError(error.message)
+        : 'Se este e-mail estiver cadastrado, você receberá um link para criar uma nova senha.',
+    );
+  }
   return (
     <main className="teacher-auth">
       <section className="teacher-auth-copy">
@@ -361,6 +380,16 @@ function TeacherAuth() {
               placeholder="No mínimo 8 caracteres"
             />
           </label>
+          {!creating && (
+            <button
+              type="button"
+              className="forgot-password-button"
+              disabled={busy}
+              onClick={() => void requestPasswordReset()}
+            >
+              Esqueci minha senha
+            </button>
+          )}
           {notice && <output className="teacher-notice">{notice}</output>}
           {confirmationEmail && (
             <button

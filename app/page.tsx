@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Flame,
   Users,
+  KeyRound,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -42,7 +43,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AppIcon, type IconName } from '@/components/classroom-icon';
 import { StudentConnect } from '@/components/student-connect';
 import { PwaInstall } from '@/components/pwa-install';
-import { studentSupabase, supabase } from '@/lib/supabase';
+import {
+  initialAuthCallbackType,
+  studentSupabase,
+  supabase,
+} from '@/lib/supabase';
 import {
   calculateConnectedMetrics,
   connectedSubmissionLabel,
@@ -162,6 +167,134 @@ function EmailConfirmationScreen({
     </main>
   );
 }
+
+function PasswordRecoveryScreen({
+  role,
+  onContinue,
+}: {
+  role: 'teacher' | 'student';
+  onContinue: () => void | Promise<void>;
+}) {
+  const [status, setStatus] = useState<
+    'checking' | 'ready' | 'success' | 'error'
+  >('checking');
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  const client = role === 'teacher' ? supabase : studentSupabase;
+
+  useEffect(() => {
+    let active = true;
+    async function checkRecoverySession() {
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const { data } = await client.auth.getSession();
+        if (data.session?.user) {
+          if (active) setStatus('ready');
+          return;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 250));
+      }
+      if (active) setStatus('error');
+    }
+    void checkRecoverySession();
+    return () => {
+      active = false;
+    };
+  }, [client]);
+
+  async function updatePassword(event: React.SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setNotice('');
+    if (password.length < 8) {
+      setNotice('A nova senha precisa ter pelo menos 8 caracteres.');
+      return;
+    }
+    if (password !== confirmation) {
+      setNotice('As senhas não são iguais. Confira e tente novamente.');
+      return;
+    }
+    setBusy(true);
+    const { error } = await client.auth.updateUser({ password });
+    setBusy(false);
+    if (error) setNotice(friendlySupabaseError(error.message));
+    else setStatus('success');
+  }
+
+  return (
+    <main className="email-confirmation-page">
+      <section
+        className="email-confirmation-card password-recovery-card"
+        aria-live="polite"
+      >
+        <span className="email-confirmation-icon">
+          <KeyRound size={30} />
+        </span>
+        {status === 'checking' && (
+          <>
+            <span className="teacher-kicker">RECUPERANDO SUA CONTA</span>
+            <h1>Abrindo o link seguro…</h1>
+            <p>Aguarde enquanto validamos sua solicitação.</p>
+          </>
+        )}
+        {status === 'ready' && (
+          <>
+            <span className="teacher-kicker">NOVA SENHA</span>
+            <h1>Crie uma nova senha.</h1>
+            <p>Use pelo menos 8 caracteres e confirme abaixo.</p>
+            <form onSubmit={updatePassword}>
+              <label>
+                Nova senha
+                <input
+                  required
+                  minLength={8}
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+              </label>
+              <label>
+                Confirmar nova senha
+                <input
+                  required
+                  minLength={8}
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmation}
+                  onChange={(event) => setConfirmation(event.target.value)}
+                />
+              </label>
+              {notice && <output className="teacher-notice">{notice}</output>}
+              <button className="teacher-primary" disabled={busy}>
+                {busy ? 'Salvando...' : 'Salvar nova senha'}
+              </button>
+            </form>
+          </>
+        )}
+        {status === 'success' && (
+          <>
+            <span className="teacher-kicker">SENHA ATUALIZADA</span>
+            <h1>Tudo certo!</h1>
+            <p>Sua nova senha já pode ser usada para entrar no Aprendê.</p>
+          </>
+        )}
+        {status === 'error' && (
+          <>
+            <span className="teacher-kicker">LINK INVÁLIDO</span>
+            <h1>Este link expirou.</h1>
+            <p>Volte ao login e solicite um novo link de recuperação.</p>
+          </>
+        )}
+        {(status === 'success' || status === 'error') && (
+          <button className="teacher-primary" onClick={() => void onContinue()}>
+            Voltar para entrar
+          </button>
+        )}
+      </section>
+    </main>
+  );
+}
 const navigation: { id: string; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Minha sala', icon: 'home' },
   { id: 'tasks', label: 'Atividades', icon: 'tasks' },
@@ -213,6 +346,9 @@ export default function Home() {
     [showTeacher, setShowTeacher] = useState(false),
     [showStudentConnect, setShowStudentConnect] = useState(true),
     [confirmationMode, setConfirmationMode] = useState<
+      'teacher' | 'student' | null
+    >(null),
+    [recoveryMode, setRecoveryMode] = useState<
       'teacher' | 'student' | null
     >(null),
     [studentAuthReady, setStudentAuthReady] = useState(false),
@@ -296,9 +432,16 @@ export default function Home() {
     setReady(true);
   }, []);
   useEffect(() => {
-    const authMode = new URLSearchParams(window.location.search).get('auth');
-    if (authMode === 'teacher' || authMode === 'student')
-      setConfirmationMode(authMode);
+    const params = new URLSearchParams(window.location.search);
+    const authMode = params.get('auth');
+    if (authMode === 'teacher' || authMode === 'student') {
+      if (
+        params.get('recovery') === '1' ||
+        initialAuthCallbackType === 'recovery'
+      )
+        setRecoveryMode(authMode);
+      else setConfirmationMode(authMode);
+    }
   }, []);
   useEffect(() => {
     if (!ready) return;
@@ -852,6 +995,25 @@ export default function Home() {
       </form>
     </section>
   );
+  if (recoveryMode)
+    return (
+      <>
+        <PasswordRecoveryScreen
+          role={recoveryMode}
+          onContinue={async () => {
+            const client =
+              recoveryMode === 'teacher' ? supabase : studentSupabase;
+            await client.auth.signOut();
+            window.history.replaceState({}, '', window.location.pathname);
+            const mode = recoveryMode;
+            setRecoveryMode(null);
+            if (mode === 'teacher') openTeacherMode();
+            else openStudentMode();
+          }}
+        />
+        <PwaInstall />
+      </>
+    );
   if (confirmationMode)
     return (
       <>

@@ -29,6 +29,7 @@ import {
 import {
   authReturnUrl,
   isEmailConfirmationRequired,
+  passwordRecoveryUrl,
 } from '@/lib/auth-flow';
 
 type Profile = {
@@ -275,6 +276,25 @@ export function StudentConnect({
       error
         ? friendlySupabaseError(error.message)
         : 'Enviamos um novo link de confirmação para seu e-mail.',
+    );
+  }
+
+  async function requestPasswordReset() {
+    const email = form.email.trim().toLowerCase();
+    if (!email) {
+      setNotice('Digite seu e-mail para receber o link de recuperação.');
+      return;
+    }
+    setBusy(true);
+    setNotice('');
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: passwordRecoveryUrl('student'),
+    });
+    setBusy(false);
+    setNotice(
+      error
+        ? friendlySupabaseError(error.message)
+        : 'Se este e-mail estiver cadastrado, você receberá um link para criar uma nova senha.',
     );
   }
 
@@ -537,6 +557,16 @@ export function StudentConnect({
                     placeholder="No mínimo 8 caracteres"
                   />
                 </label>
+                {!creating && (
+                  <button
+                    type="button"
+                    className="forgot-password-button"
+                    disabled={busy}
+                    onClick={() => void requestPasswordReset()}
+                  >
+                    Esqueci minha senha
+                  </button>
+                )}
                 {notice && <output className="teacher-notice">{notice}</output>}
                 {confirmationEmail && (
                   <button
