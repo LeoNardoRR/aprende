@@ -228,7 +228,7 @@
 /* Connected classroom feedback and accessible mobile actions. */
 .student-connect>header>.teacher-logo{display:flex;align-items:center;gap:11px;width:auto;height:auto;padding:0;border:0;border-radius:0;background:transparent;color:inherit}
 .student-connect>header>.teacher-logo>span{display:grid;place-items:center;width:42px;height:42px}
-.brand-icon.brand-mark-shell,.teacher-logo>span.brand-mark-shell{overflow:visible;border-radius:0;background:transparent;color:inherit;box-shadow:none;transform:none}
+.brand-icon.brand-mark-shell,.teacher-logo>span.brand-mark-shell{overflow:visible;border-radius:0;background:transparent;color:inherit;box-shadow:none;transform:rotate(-4deg)}
 .official-brand-mark{display:block;width:100%;height:100%;object-fit:contain}
 .teacher-reminders{padding:20px;border:1px solid var(--border);border-radius:21px;background:var(--card)}
 .teacher-reminder-list{display:grid;gap:10px}
@@ -259,3 +259,8 @@
 .progress-indicator,[data-slot=progress-indicator]{transition:width .45s ease}
 
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+
+/* Foto de perfil do professor. */
+.account-avatar-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:15px;padding:16px;margin-bottom:18px;border:1px solid #dfe7f1;border-radius:15px;background:#f7faff}.account-avatar-preview{display:grid;place-items:center;width:76px;height:76px;overflow:hidden;border-radius:22px;background:#e5edf8;color:#1a4f91}.account-avatar-preview img{width:100%;height:100%;object-fit:cover}.account-avatar-card h3{font-size:16px}.account-avatar-card p{margin:4px 0 12px;color:#737b8c;font-size:12px;line-height:1.45}.account-avatar-actions{display:flex;flex-wrap:wrap;gap:8px}.account-avatar-actions label{cursor:pointer}.account-avatar-actions input{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0}.account-avatar-actions .teacher-secondary.compact{min-height:40px;padding:9px 12px;border:1px solid #dfe3ec;border-radius:12px;font-size:12px}.account-avatar-notice{display:block;margin-top:9px;color:#1a4f91;font-size:12px;font-weight:750}.teacher-profile>img{width:38px;height:38px;flex:0 0 auto;border:2px solid #ffffff2b;border-radius:12px;object-fit:cover}
+@media(max-width:680px){.account-avatar-card{grid-template-columns:1fr}.account-avatar-preview{margin:0 auto}.account-avatar-card>div:last-child{text-align:center}.account-avatar-actions{justify-content:center}}

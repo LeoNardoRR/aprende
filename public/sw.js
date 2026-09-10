@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aprende-shell-v6';
+const CACHE_NAME = 'aprende-shell-v7';
 const APP_SHELL = [
   './',
   './manifest.webmanifest',

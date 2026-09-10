@@ -33,6 +33,7 @@ type Profile = {
   id: string;
   display_name: string;
   role: 'teacher' | 'student';
+  avatar_url: string | null;
 };
 type Classroom = {
   id: string;
@@ -104,7 +105,7 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id,display_name,role')
+        .select('id,display_name,role,avatar_url')
         .eq('id', session.user.id)
         .single();
       if (!active) return;
@@ -435,6 +436,7 @@ function TeacherDashboard({
   );
   const [busy, setBusy] = useState(true);
   const [notice, setNotice] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_url);
   const [showClassForm, setShowClassForm] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
@@ -577,7 +579,11 @@ function TeacherDashboard({
           <strong>Aprendê</strong>
         </button>
         <div className="teacher-profile">
-          <div>{profile.display_name.slice(0, 1).toUpperCase()}</div>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={`Foto de ${profile.display_name}`} />
+          ) : (
+            <div>{profile.display_name.slice(0, 1).toUpperCase()}</div>
+          )}
           <span>
             <strong>{profile.display_name}</strong>
             <small>Professor</small>
@@ -617,7 +623,11 @@ function TeacherDashboard({
           <ArrowLeft />
           Modo aluno
         </button>
-        <AccountSettings role="teacher" />
+        <AccountSettings
+          role="teacher"
+          avatarUrl={avatarUrl}
+          onAvatarUpdated={setAvatarUrl}
+        />
         <button
           className="teacher-exit"
           aria-label="Sair da conta"
