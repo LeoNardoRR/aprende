@@ -265,8 +265,288 @@
 .account-avatar-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:15px;padding:16px;margin-bottom:18px;border:1px solid #dfe7f1;border-radius:15px;background:#f7faff}.account-avatar-preview{display:grid;place-items:center;width:76px;height:76px;overflow:hidden;border-radius:22px;background:#e5edf8;color:#1a4f91}.account-avatar-preview img{width:100%;height:100%;object-fit:cover}.account-avatar-card h3{font-size:16px}.account-avatar-card p{margin:4px 0 12px;color:#737b8c;font-size:12px;line-height:1.45}.account-avatar-actions{display:flex;flex-wrap:wrap;gap:8px}.account-avatar-actions label{cursor:pointer}.account-avatar-actions input{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0}.account-avatar-actions .teacher-secondary.compact{min-height:40px;padding:9px 12px;border:1px solid #dfe3ec;border-radius:12px;font-size:12px}.account-avatar-notice{display:block;margin-top:9px;color:#1a4f91;font-size:12px;font-weight:750}.teacher-profile>img{width:38px;height:38px;flex:0 0 auto;border:2px solid #ffffff2b;border-radius:12px;object-fit:cover}
 @media(max-width:680px){.account-avatar-card{grid-template-columns:1fr}.account-avatar-preview{margin:0 auto}.account-avatar-card>div:last-child{text-align:center}.account-avatar-actions{justify-content:center}}
 
-/* Acabamento do painel do professor e correções de sobreposição. */
-.sidebar-profile{display:grid;grid-template-columns:35px minmax(0,1fr) 36px;gap:9px}.sidebar-profile .sidebar-profile-action{display:grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid var(--border);border-radius:11px;background:var(--muted);color:var(--secondary-text)}
-.teacher-app{background:linear-gradient(145deg,#f6f8fc,#f1f5f9)}.teacher-sidebar{background:#132b42;border-right:1px solid #1e415f;box-shadow:10px 0 35px #10283c12}.teacher-sidebar .teacher-logo{align-self:flex-start}.teacher-profile{border:1px solid #ffffff12;background:#ffffff0c}.teacher-sidebar nav button.active{background:#f17832;box-shadow:0 8px 20px #091b2b38}.teacher-sidebar>.account-settings-trigger{margin-top:auto}.teacher-sidebar>.teacher-exit{margin-top:4px!important}.teacher-main{max-width:1500px;width:100%;margin:0 auto}.teacher-topbar>div>span,.teacher-panel-title>div>span{color:#d96528}.teacher-welcome{background:linear-gradient(120deg,#173f67 0%,#255f8c 65%,#e97635 100%);box-shadow:0 18px 42px #173f6726}.teacher-primary{background:#e96f2d}.teacher-panel,.teacher-stats article{border-color:#e1e7ee;box-shadow:0 8px 28px #19354c0a}.teacher-stats article>span{background:#e8f0f7;color:#1c5685}.teacher-stats article:nth-child(2)>span{background:#fff0e5;color:#d96528}.teacher-panel-title h2{color:#1b334a}.teacher-send{border-color:#dce4ec;background:#fff;color:#29445d}
-.account-settings-backdrop{z-index:1000;place-items:center;padding:24px}.account-settings-dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100svh - 32px);margin:auto}
-@media(max-width:700px){.teacher-sidebar{grid-template-columns:repeat(5,minmax(0,1fr))}.teacher-sidebar>.account-settings-trigger,.teacher-sidebar>.teacher-exit{margin:0!important}.account-settings-backdrop{place-items:center;padding:12px}.account-settings-dialog{width:100%;max-height:calc(100svh - 24px);border-radius:20px}.sidebar-profile{grid-template-columns:35px minmax(0,1fr) 40px}.sidebar-profile .sidebar-profile-action{width:40px;height:40px}}
+/* Direção visual premium exclusiva do painel do professor. */
+.sidebar-profile {
+  display:grid;
+  grid-template-columns:35px minmax(0,1fr) 36px;
+  gap:9px;
+}
+.sidebar-profile .sidebar-profile-action {
+  display:grid;
+  place-items:center;
+  width:36px;
+  height:36px;
+  padding:0;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:var(--muted);
+  color:var(--secondary-text);
+}
+.teacher-portal,.teacher-app {
+  color:#172535;
+  background:#f4f6f8;
+}
+.teacher-public-header {
+  border-color:#dde4ea;
+  background:#fff;
+  box-shadow:0 1px 0 #0b22340a;
+}
+.teacher-logo>span.brand-mark-shell {
+  transform:rotate(-4deg);
+  filter:drop-shadow(0 7px 12px #071c2c2b);
+}
+.teacher-logo strong {
+  color:#123c5c;
+  letter-spacing:-1.2px;
+}
+.teacher-auth {
+  background:
+    radial-gradient(circle at 12% 16%,#d7e6f066 0 2px,transparent 3px) 0 0/38px 38px,
+    linear-gradient(145deg,#f8fafb,#edf2f5);
+}
+.teacher-kicker,.teacher-topbar>div>span,.teacher-panel-title>div>span {
+  color:#876d3c;
+}
+.teacher-benefits span,.teacher-auth-card {
+  border-color:#dfe6eb;
+  box-shadow:0 18px 50px #102f4710;
+}
+.teacher-benefits svg,.teacher-card-icon,.portal-loading svg {
+  color:#174f77;
+}
+.teacher-card-icon,.teacher-message>span,.teacher-empty>span {
+  background:#e7f0f6;
+  color:#174f77;
+}
+.teacher-auth-card input:focus,.teacher-form input:focus,.teacher-form textarea:focus,.teacher-top-actions select:focus,.account-settings-label input:focus {
+  border-color:#34739e;
+  box-shadow:0 0 0 3px #34739e20;
+}
+.teacher-app {
+  background:
+    radial-gradient(circle at 92% 4%,#dce8ef99,transparent 24rem),
+    #f4f6f8;
+}
+.teacher-sidebar {
+  background:linear-gradient(180deg,#0b2234 0%,#0e2b40 100%);
+  border-right:1px solid #244257;
+  box-shadow:10px 0 35px #071b2a12;
+}
+.teacher-sidebar .teacher-logo {
+  align-self:flex-start;
+}
+.teacher-sidebar .teacher-logo strong {
+  color:#fff;
+}
+.teacher-profile {
+  border:1px solid #ffffff16;
+  background:#ffffff0a;
+  box-shadow:inset 0 1px 0 #ffffff0b;
+}
+.teacher-profile>div {
+  background:#215f88;
+}
+.teacher-profile small {
+  color:#aebfcc;
+}
+.teacher-sidebar nav button,.teacher-sidebar .account-settings-trigger,.teacher-sidebar .teacher-exit {
+  color:#b8c7d2;
+}
+.teacher-sidebar nav button:hover,.teacher-sidebar .account-settings-trigger:hover,.teacher-sidebar .teacher-exit:hover {
+  background:#ffffff0b;
+  color:#fff;
+}
+.teacher-sidebar nav button.active {
+  color:#fff;
+  background:#1b5b84;
+  box-shadow:inset 3px 0 0 #c7aa72,0 10px 24px #06192738;
+}
+.teacher-sidebar>.account-settings-trigger {
+  margin-top:auto;
+}
+.teacher-sidebar>.teacher-exit {
+  margin-top:4px!important;
+}
+.teacher-main {
+  width:100%;
+  max-width:1500px;
+  margin:0 auto;
+}
+.teacher-topbar {
+  padding-bottom:22px;
+  border-bottom:1px solid #dfe5ea;
+}
+.teacher-topbar h1,.teacher-panel-title h2 {
+  color:#132f45;
+}
+.teacher-top-actions select {
+  border-color:#d8e0e6;
+  background:#fff;
+  box-shadow:0 5px 18px #102f4708;
+}
+.teacher-primary {
+  background:#174f77;
+  box-shadow:0 8px 18px #174f7724;
+}
+.teacher-primary:hover:not(:disabled) {
+  background:#103f61;
+  box-shadow:0 12px 24px #174f7730;
+}
+.teacher-send {
+  border-color:#d6e0e7;
+  background:#fff;
+  color:#24475f;
+  box-shadow:0 5px 18px #102f4708;
+}
+.teacher-send:hover:not(:disabled) {
+  border-color:#b8cad7;
+  background:#f9fbfc;
+}
+.teacher-welcome {
+  position:relative;
+  overflow:hidden;
+  border:1px solid #244f6d;
+  background:linear-gradient(125deg,#0e3049 0%,#174f75 70%,#1e6087 100%);
+  box-shadow:0 20px 45px #0e304924;
+}
+.teacher-welcome::after {
+  content:"";
+  position:absolute;
+  right:-55px;
+  bottom:-95px;
+  width:245px;
+  height:245px;
+  border:1px solid #ffffff18;
+  border-radius:50%;
+  box-shadow:0 0 0 38px #ffffff08,0 0 0 76px #ffffff05;
+  pointer-events:none;
+}
+.teacher-welcome>div,.teacher-welcome>button {
+  position:relative;
+  z-index:1;
+}
+.teacher-welcome>div>span {
+  color:#dac595;
+}
+.teacher-welcome p {
+  color:#d7e3eb;
+}
+.teacher-welcome>button {
+  border:1px solid #ffffff6b;
+  background:#fff;
+  color:#15364d;
+  box-shadow:0 12px 30px #0619272b;
+}
+.teacher-welcome>button svg {
+  color:#1b5b84;
+}
+.teacher-panel,.teacher-stats article {
+  border-color:#dee5ea;
+  background:#fff;
+  box-shadow:0 9px 28px #102f470a;
+}
+.teacher-panel:hover,.teacher-stats article:hover {
+  border-color:#cfdae2;
+  box-shadow:0 13px 34px #102f4711;
+}
+.teacher-stats article>span {
+  background:#e8f1f6;
+  color:#195477;
+}
+.teacher-stats article:nth-child(2)>span {
+  background:#f4eee2;
+  color:#8c6e34;
+}
+.teacher-stats article:nth-child(3)>span {
+  background:#e5f1ed;
+  color:#27715d;
+}
+.teacher-activity-icon,.teacher-count {
+  background:#e8f1f6;
+  color:#195477;
+}
+.teacher-activity-list article>div small,.teacher-submission-list small,.teacher-grade-answer small {
+  color:#876d3c;
+}
+.teacher-announcement-list article {
+  background:#f6f8fa;
+}
+.teacher-announcement-list article>svg {
+  color:#1b5b84;
+}
+.teacher-form-help,.teacher-max-points {
+  background:#eaf1f5;
+  color:#37566b;
+}
+.teacher-max-points small,.teacher-max-points strong {
+  color:#31566f;
+}
+.teacher-modal-backdrop,.account-settings-backdrop {
+  background:#071b2aad;
+  backdrop-filter:blur(7px);
+}
+.teacher-modal,.account-settings-dialog {
+  border:1px solid #e0e6eb;
+  box-shadow:0 30px 90px #0619274f;
+}
+.account-settings-heading>span,.account-avatar-preview {
+  background:#e8f1f6;
+  color:#174f77;
+}
+.account-avatar-card {
+  border-color:#dce5eb;
+  background:#f6f9fb;
+}
+.account-settings-backdrop {
+  z-index:1000;
+  place-items:center;
+  padding:24px;
+}
+.account-settings-dialog {
+  width:min(560px,calc(100vw - 32px));
+  max-height:calc(100svh - 32px);
+  margin:auto;
+}
+@media(max-width:700px) {
+  .teacher-sidebar {
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    border-top:1px solid #29495f;
+    border-right:0;
+    box-shadow:0 -12px 30px #0619271f;
+  }
+  .teacher-sidebar nav button.active {
+    box-shadow:inset 0 3px 0 #c7aa72,0 5px 15px #0619272b;
+  }
+  .teacher-sidebar>.account-settings-trigger,.teacher-sidebar>.teacher-exit {
+    margin:0!important;
+  }
+  .teacher-topbar {
+    padding-bottom:18px;
+  }
+  .teacher-welcome {
+    border-radius:19px;
+  }
+  .teacher-welcome::after {
+    right:-105px;
+    bottom:-120px;
+  }
+  .teacher-stats article {
+    padding:17px;
+  }
+  .account-settings-backdrop {
+    place-items:center;
+    padding:12px;
+  }
+  .account-settings-dialog {
+    width:100%;
+    max-height:calc(100svh - 24px);
+    border-radius:20px;
+  }
+  .sidebar-profile {
+    grid-template-columns:35px minmax(0,1fr) 40px;
+  }
+  .sidebar-profile .sidebar-profile-action {
+    width:40px;
+    height:40px;
+  }
+}
