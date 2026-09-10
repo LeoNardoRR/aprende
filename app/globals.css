@@ -1096,3 +1096,81 @@
     height:40px;
   }
 }
+
+/* Navegacao do aluno no celular. Esta regra fica por ultimo para impedir que
+   estilos do perfil lateral voltem a ocupar a barra inferior. */
+@media(max-width:600px){
+  .school-sidebar{
+    display:block!important;
+    inset:auto 0 0!important;
+    width:100%!important;
+    height:calc(68px + env(safe-area-inset-bottom))!important;
+    min-height:0!important;
+    padding:3px max(5px,env(safe-area-inset-right)) calc(3px + env(safe-area-inset-bottom)) max(5px,env(safe-area-inset-left))!important;
+    overflow:visible!important;
+    border-top:1px solid var(--border)!important;
+    border-right:0!important;
+    background:color-mix(in srgb,var(--card) 94%,transparent)!important;
+    box-shadow:0 -10px 28px #17223c12;
+    backdrop-filter:blur(16px);
+  }
+  .school-sidebar>.brand,
+  .school-sidebar>.sidebar-profile,
+  .school-sidebar .nav-caption,
+  .school-sidebar .sidebar-customize{
+    display:none!important;
+  }
+  .school-sidebar>[data-slot="sidebar-content"]{
+    display:block!important;
+    width:100%;
+    height:62px;
+    min-height:0!important;
+    overflow:visible!important;
+    flex:none!important;
+  }
+  .school-sidebar nav{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    align-items:center;
+    width:100%;
+    height:62px;
+    gap:2px;
+  }
+  .school-sidebar .nav-item{
+    display:flex!important;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    width:100%;
+    min-width:0;
+    height:58px;
+    min-height:58px;
+    margin:0;
+    padding:5px 2px;
+    overflow:hidden;
+    border-radius:12px;
+    text-align:center;
+  }
+  .school-sidebar .nav-item>span{
+    display:block!important;
+    width:100%;
+    overflow:hidden;
+    color:inherit;
+    font-size:clamp(8px,2.25vw,10px);
+    line-height:1.1;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .school-sidebar .nav-item>small{display:none!important}
+  .school-sidebar .nav-item svg{
+    width:21px;
+    height:21px;
+    flex:0 0 auto;
+  }
+  .school-sidebar .nav-item:focus-visible{
+    outline-offset:-2px;
+  }
+  .workspace{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  .toast{bottom:calc(78px + env(safe-area-inset-bottom))}
+}
