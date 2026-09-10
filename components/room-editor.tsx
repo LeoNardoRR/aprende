@@ -48,6 +48,8 @@ export function RoomEditor({
   draft,
   onChange,
   onSave,
+  saving,
+  accountConnected,
   owned,
   coins,
   initialTab = 'theme',
@@ -56,7 +58,9 @@ export function RoomEditor({
   onClose: () => void;
   draft: Preferences;
   onChange: (p: Preferences) => void;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
+  saving: boolean;
+  accountConnected: boolean;
   owned: string[];
   coins: number;
   initialTab?: string;
@@ -372,15 +376,19 @@ export function RoomEditor({
           )}
           <button
             className="primary-button"
-            disabled={cost > coins || !draft.name.trim()}
-            onClick={onSave}
+            disabled={saving || cost > coins || !draft.name.trim()}
+            onClick={() => void onSave()}
           >
-            <Save size={17} /> Salvar minha sala
+            <Save size={17} /> {saving ? 'Salvando...' : 'Salvar minha sala'}
           </button>
           <button className="cancel-editor" onClick={onClose}>
             Cancelar alterações
           </button>
-          <small>Salvo somente neste navegador.</small>
+          <small>
+            {accountConnected
+              ? 'Seu nome fica vinculado à conta; o visual fica neste navegador.'
+              : 'Salvo somente neste navegador.'}
+          </small>
         </footer>
       </SheetContent>
     </Sheet>

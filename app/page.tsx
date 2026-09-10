@@ -46,6 +46,7 @@ import { studentSupabase, supabase } from '@/lib/supabase';
 import {
   calculateConnectedMetrics,
   connectedSubmissionLabel,
+  friendlySupabaseError,
 } from '@/lib/connected-flow';
 import {
   activities,
@@ -193,6 +194,7 @@ export default function Home() {
   const [state, setState] = useState(initialState),
     [ready, setReady] = useState(false),
     [editing, setEditing] = useState(false),
+    [editorSaving, setEditorSaving] = useState(false),
     [draft, setDraft] = useState<Preferences>(state.preferences),
     [editorTab, setEditorTab] = useState('theme'),
     [view, setView] = useState('home'),
@@ -491,13 +493,37 @@ export default function Home() {
     setEditorTab(tab);
     setEditing(true);
   }
-  function saveEditor() {
+  async function saveEditor() {
+    const nextPreferences = { ...draft, name: draft.name.trim() };
     try {
-      setState((s) => applyPreferences(s, draft));
+      const nextState = applyPreferences(stateRef.current, nextPreferences);
+      setEditorSaving(true);
+      if (studentSummary) {
+        const {
+          data: { session },
+        } = await studentSupabase.auth.getSession();
+        if (!session) throw new Error('Sua sessão expirou. Entre novamente.');
+        const { error } = await studentSupabase
+          .from('profiles')
+          .update({ display_name: nextPreferences.name })
+          .eq('id', session.user.id);
+        if (error) throw error;
+      }
+      setState(nextState);
+      setStudentSummary((current) =>
+        current ? { ...current, name: nextPreferences.name } : current,
+      );
       setEditing(false);
-      setNotice('Sua sala foi personalizada!');
+      setNotice(
+        studentSummary
+          ? 'Seu nome e sua sala foram atualizados!'
+          : 'Sua sala foi personalizada!',
+      );
+      if (studentSummary) await refreshStudentSummary();
     } catch (e) {
-      setNotice((e as Error).message);
+      setNotice(friendlySupabaseError((e as Error).message));
+    } finally {
+      setEditorSaving(false);
     }
   }
   function changeView(v: string) {
@@ -1467,6 +1493,8 @@ export default function Home() {
             draft={draft}
             onChange={setDraft}
             onSave={saveEditor}
+            saving={editorSaving}
+            accountConnected={!!studentSummary}
             owned={state.owned}
             coins={state.coins}
             initialTab={editorTab}

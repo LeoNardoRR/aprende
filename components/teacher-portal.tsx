@@ -555,6 +555,7 @@ function TeacherDashboard({
         </div>
         <nav>
           <button
+            aria-label="Visão geral"
             className={view === 'overview' ? 'active' : ''}
             onClick={() => setView('overview')}
           >
@@ -562,6 +563,7 @@ function TeacherDashboard({
             Visão geral
           </button>
           <button
+            aria-label="Atividades"
             className={view === 'activities' ? 'active' : ''}
             onClick={() => setView('activities')}
           >
@@ -569,6 +571,7 @@ function TeacherDashboard({
             Atividades
           </button>
           <button
+            aria-label="Alunos"
             className={view === 'students' ? 'active' : ''}
             onClick={() => setView('students')}
           >
@@ -576,13 +579,18 @@ function TeacherDashboard({
             Alunos
           </button>
         </nav>
-        <button className="teacher-exit" onClick={onClose}>
+        <button
+          className="teacher-exit"
+          aria-label="Voltar ao modo aluno"
+          onClick={onClose}
+        >
           <ArrowLeft />
           Modo aluno
         </button>
         <AccountSettings role="teacher" />
         <button
           className="teacher-exit"
+          aria-label="Sair da conta"
           onClick={() => void supabase.auth.signOut()}
         >
           <LogOut />
