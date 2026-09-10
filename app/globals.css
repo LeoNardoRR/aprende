@@ -268,14 +268,29 @@
 /* Direção visual premium exclusiva do painel do professor. */
 .sidebar-profile {
   display:grid;
-  grid-template-columns:35px minmax(0,1fr) 36px;
-  gap:9px;
+  grid-template-columns:35px minmax(0,1fr) 34px;
+  align-items:center;
+  gap:8px;
+}
+.sidebar-profile>span {
+  min-width:0;
+  overflow:hidden;
+}
+.sidebar-profile small {
+  display:-webkit-box;
+  overflow:hidden;
+  line-height:1.25;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
 }
 .sidebar-profile .sidebar-profile-action {
   display:grid;
   place-items:center;
-  width:36px;
-  height:36px;
+  width:34px;
+  height:34px;
+  justify-self:end;
   padding:0;
   border:1px solid var(--border);
   border-radius:11px;
