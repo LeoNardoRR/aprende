@@ -1,4 +1,4 @@
-# Aprendê — Sala do Aluno
+# Aprendê - Sala do Aluno
 
 Interface responsiva de estudo com personalização e dados locais no navegador.
 

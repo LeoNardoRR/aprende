@@ -77,6 +77,25 @@
 @media print{body{background:#fff;color:#000}.school>div[data-slot=sidebar-wrapper],.room-editor,.toast,[data-slot=dialog-overlay],.material-actions,[data-slot=dialog-close]{display:none!important}.material-dialog{position:static!important;transform:none!important;width:100%!important;max-width:none!important;height:auto!important;max-height:none!important;overflow:visible!important;box-shadow:none!important;border:0!important;padding:0!important}.lesson-content p{font-family:serif!important;font-size:12pt!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
+/* Microinteracoes discretas para aluno, professor e autenticacao. */
+@keyframes gentle-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@keyframes dialog-arrive{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes backdrop-arrive{from{opacity:0}to{opacity:1}}
+.official-brand-mark{animation:gentle-breathe 3.8s ease-in-out infinite}
+.teacher-auth-card,.teacher-welcome,.teacher-panel,.student-connect-auth form,.student-code-form,.student-classroom-banner,.email-confirmation-card,.password-recovery-card{animation:rise-in .4s ease-out both}
+.teacher-stats article,.student-score-grid article,.student-feed>article,.student-classes article,.teacher-activity-list article,.teacher-student-list>div{animation:rise-in .36s ease-out both}
+.teacher-stats article:nth-child(2),.student-score-grid article:nth-child(2),.student-feed>article:nth-child(2){animation-delay:.06s}
+.teacher-stats article:nth-child(3),.student-feed>article:nth-child(3){animation-delay:.12s}
+.teacher-modal-backdrop,.student-task-backdrop,.student-connect-backdrop,.account-settings-backdrop,.pwa-install-backdrop{animation:backdrop-arrive .2s ease-out both}
+.teacher-modal,.student-task,.student-connect,.account-settings-dialog,.pwa-install-dialog{animation:dialog-arrive .24s ease-out both}
+.teacher-primary,.teacher-secondary,.teacher-switch,.teacher-send,.student-assignment,.student-connect-button,.student-leave-class,.account-settings-trigger,.teacher-stats article,.student-score-grid article,.student-feed>article,.student-classes article,.teacher-panel{transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,border-color .18s ease}
+.teacher-primary:hover:not(:disabled),.teacher-send:hover:not(:disabled),.student-assignment:hover:not(:disabled),.student-connect-button:hover:not(:disabled){transform:translateY(-2px)}
+.teacher-stats article:hover,.student-score-grid article:hover,.student-feed>article:hover,.student-classes article:hover{transform:translateY(-2px);box-shadow:0 10px 24px #24283d0d}
+.teacher-sidebar nav button svg,.teacher-top-actions button svg,.student-header-actions button svg{transition:transform .18s ease}
+.teacher-sidebar nav button:hover svg,.teacher-top-actions button:hover svg,.student-header-actions button:hover svg{transform:scale(1.1) rotate(-3deg)}
+
+@media(prefers-reduced-motion:reduce){.official-brand-mark{animation:none!important}}
+
 /* O painel do professor usa seis ações no celular: três áreas, modo aluno,
    configurações e sair. Todas permanecem na mesma barra e respeitam a área
    segura do PWA. */

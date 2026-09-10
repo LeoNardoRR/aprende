@@ -1072,7 +1072,7 @@ export default function Home() {
           <button
             type="button"
             className="brand"
-            aria-label="Aprendê — página inicial"
+            aria-label="Aprendê - página inicial"
             onClick={() => changeView('home')}
           >
             <span className="brand-icon brand-mark-shell">
@@ -1533,7 +1533,7 @@ export default function Home() {
                           <strong className="grade-score">
                             {score(a, state.attempts[a.id])?.toLocaleString(
                               'pt-BR',
-                            ) ?? '—'}
+                            ) ?? '-'}
                           </strong>
                           <button
                             className="text-button"
