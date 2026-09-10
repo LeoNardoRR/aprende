@@ -1125,7 +1125,7 @@ export default function Home() {
               </small>
             </span>
             <button
-              className="icon-button"
+              className="icon-button sidebar-profile-action"
               onClick={() => openEditor('profile')}
               aria-label="Editar meu perfil"
             >

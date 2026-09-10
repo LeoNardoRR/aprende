@@ -96,7 +96,7 @@
 
 @media(prefers-reduced-motion:reduce){.official-brand-mark{animation:none!important}}
 
-/* O painel do professor usa seis ações no celular: três áreas, modo aluno,
+/* O painel do professor usa cinco ações no celular: três áreas,
    configurações e sair. Todas permanecem na mesma barra e respeitam a área
    segura do PWA. */
 @media(max-width:700px){
@@ -104,7 +104,7 @@
   .teacher-app{width:100%;min-width:0}
   .teacher-sidebar{
     height:calc(72px + env(safe-area-inset-bottom));
-    grid-template-columns:repeat(6,minmax(0,1fr));
+    grid-template-columns:repeat(5,minmax(0,1fr));
     gap:2px;
     padding:4px max(4px,env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));
   }
@@ -264,3 +264,9 @@
 /* Foto de perfil do professor. */
 .account-avatar-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:15px;padding:16px;margin-bottom:18px;border:1px solid #dfe7f1;border-radius:15px;background:#f7faff}.account-avatar-preview{display:grid;place-items:center;width:76px;height:76px;overflow:hidden;border-radius:22px;background:#e5edf8;color:#1a4f91}.account-avatar-preview img{width:100%;height:100%;object-fit:cover}.account-avatar-card h3{font-size:16px}.account-avatar-card p{margin:4px 0 12px;color:#737b8c;font-size:12px;line-height:1.45}.account-avatar-actions{display:flex;flex-wrap:wrap;gap:8px}.account-avatar-actions label{cursor:pointer}.account-avatar-actions input{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0}.account-avatar-actions .teacher-secondary.compact{min-height:40px;padding:9px 12px;border:1px solid #dfe3ec;border-radius:12px;font-size:12px}.account-avatar-notice{display:block;margin-top:9px;color:#1a4f91;font-size:12px;font-weight:750}.teacher-profile>img{width:38px;height:38px;flex:0 0 auto;border:2px solid #ffffff2b;border-radius:12px;object-fit:cover}
 @media(max-width:680px){.account-avatar-card{grid-template-columns:1fr}.account-avatar-preview{margin:0 auto}.account-avatar-card>div:last-child{text-align:center}.account-avatar-actions{justify-content:center}}
+
+/* Acabamento do painel do professor e correções de sobreposição. */
+.sidebar-profile{display:grid;grid-template-columns:35px minmax(0,1fr) 36px;gap:9px}.sidebar-profile .sidebar-profile-action{display:grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid var(--border);border-radius:11px;background:var(--muted);color:var(--secondary-text)}
+.teacher-app{background:linear-gradient(145deg,#f6f8fc,#f1f5f9)}.teacher-sidebar{background:#132b42;border-right:1px solid #1e415f;box-shadow:10px 0 35px #10283c12}.teacher-sidebar .teacher-logo{align-self:flex-start}.teacher-profile{border:1px solid #ffffff12;background:#ffffff0c}.teacher-sidebar nav button.active{background:#f17832;box-shadow:0 8px 20px #091b2b38}.teacher-sidebar>.account-settings-trigger{margin-top:auto}.teacher-sidebar>.teacher-exit{margin-top:4px!important}.teacher-main{max-width:1500px;width:100%;margin:0 auto}.teacher-topbar>div>span,.teacher-panel-title>div>span{color:#d96528}.teacher-welcome{background:linear-gradient(120deg,#173f67 0%,#255f8c 65%,#e97635 100%);box-shadow:0 18px 42px #173f6726}.teacher-primary{background:#e96f2d}.teacher-panel,.teacher-stats article{border-color:#e1e7ee;box-shadow:0 8px 28px #19354c0a}.teacher-stats article>span{background:#e8f0f7;color:#1c5685}.teacher-stats article:nth-child(2)>span{background:#fff0e5;color:#d96528}.teacher-panel-title h2{color:#1b334a}.teacher-send{border-color:#dce4ec;background:#fff;color:#29445d}
+.account-settings-backdrop{z-index:1000;place-items:center;padding:24px}.account-settings-dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100svh - 32px);margin:auto}
+@media(max-width:700px){.teacher-sidebar{grid-template-columns:repeat(5,minmax(0,1fr))}.teacher-sidebar>.account-settings-trigger,.teacher-sidebar>.teacher-exit{margin:0!important}.account-settings-backdrop{place-items:center;padding:12px}.account-settings-dialog{width:100%;max-height:calc(100svh - 24px);border-radius:20px}.sidebar-profile{grid-template-columns:35px minmax(0,1fr) 40px}.sidebar-profile .sidebar-profile-action{width:40px;height:40px}}

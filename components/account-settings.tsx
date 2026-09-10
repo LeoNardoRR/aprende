@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ImageUp, LoaderCircle, Settings, ShieldAlert, Trash2, UserRound } from 'lucide-react';
 import { studentSupabase, supabase } from '@/lib/supabase';
 import { friendlySupabaseError } from '@/lib/connected-flow';
@@ -156,7 +157,7 @@ export function AccountSettings({ role, avatarUrl = null, onAvatarUpdated }: Acc
         <Settings size={16} />
         Configurações
       </button>
-      {open && (
+      {open && createPortal(
         <div className="account-settings-backdrop" role="presentation">
           <dialog
             open
@@ -266,7 +267,8 @@ export function AccountSettings({ role, avatarUrl = null, onAvatarUpdated }: Acc
               </button>
             </div>
           </dialog>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

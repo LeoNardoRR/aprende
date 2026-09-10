@@ -160,7 +160,7 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
         />
       </PortalShell>
     );
-  return <TeacherDashboard profile={profile} onClose={onClose} />;
+  return <TeacherDashboard profile={profile} />;
 }
 
 function PortalShell({
@@ -185,7 +185,7 @@ function PortalShell({
           <strong>Aprendê</strong>
         </button>
         <button className="teacher-back" onClick={onClose}>
-          <ArrowLeft size={17} /> Voltar ao modo aluno
+          <ArrowLeft size={17} /> Voltar
         </button>
       </header>
       {children}
@@ -420,10 +420,8 @@ function TeacherAuth() {
 
 function TeacherDashboard({
   profile,
-  onClose,
 }: {
   profile: Profile;
-  onClose: () => void;
 }) {
   const [classes, setClasses] = useState<Classroom[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -570,8 +568,8 @@ function TeacherDashboard({
         <button
           type="button"
           className="teacher-logo"
-          aria-label="Voltar ao modo aluno"
-          onClick={onClose}
+          aria-label="Abrir visão geral"
+          onClick={() => setView('overview')}
         >
           <span className="brand-mark-shell">
             <BrandLogo />
@@ -615,14 +613,6 @@ function TeacherDashboard({
             Alunos
           </button>
         </nav>
-        <button
-          className="teacher-exit"
-          aria-label="Voltar ao modo aluno"
-          onClick={onClose}
-        >
-          <ArrowLeft />
-          Modo aluno
-        </button>
         <AccountSettings
           role="teacher"
           avatarUrl={avatarUrl}
