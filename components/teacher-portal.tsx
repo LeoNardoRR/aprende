@@ -1762,7 +1762,7 @@ function AttendancePanel({
               <strong>{member.profiles?.display_name || 'Aluno'}</strong>
               <span className={present ? '' : 'absent'}>
                 {present ? <CheckCircle2 /> : <X />}
-                {present ? 'Presente' : 'Falta'}
+                {present ? 'Presente' : 'Faltou'}
               </span>
             </button>
           );
