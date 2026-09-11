@@ -27,6 +27,7 @@ import {
   UserMinus,
   UserRoundCheck,
   Users,
+  X,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { friendlySupabaseError } from '@/lib/connected-flow';
@@ -1753,18 +1754,14 @@ function AttendancePanel({
             >
               <small>{String(index + 1).padStart(2, '0')}</small>
               <span
-                className={`attendance-checkbox ${present ? 'checked' : ''}`}
+                className={`attendance-checkbox ${present ? 'checked' : 'absent'}`}
                 aria-hidden="true"
               >
-                {present && <CheckCircle2 />}
+                {present ? <CheckCircle2 /> : <X />}
               </span>
               <strong>{member.profiles?.display_name || 'Aluno'}</strong>
               <span className={present ? '' : 'absent'}>
-                {present ? (
-                  <CheckCircle2 />
-                ) : (
-                  <span className="attendance-empty-check" />
-                )}
+                {present ? <CheckCircle2 /> : <X />}
                 {present ? 'Presente' : 'Falta'}
               </span>
             </button>
