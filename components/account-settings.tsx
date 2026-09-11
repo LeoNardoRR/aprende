@@ -244,6 +244,7 @@ export function AccountSettings({
       <button
         type="button"
         className="account-settings-trigger"
+        aria-label="Configurações"
         onClick={() => {
           setError('');
           setOpen(true);

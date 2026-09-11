@@ -882,7 +882,7 @@ function TeacherDashboard({
           </button>
           <button
             aria-label="Turmas"
-            className={view === 'students' ? 'active' : ''}
+            className={`teacher-mobile-hide ${view === 'students' ? 'active' : ''}`}
             onClick={() => setView('students')}
           >
             <Users />
