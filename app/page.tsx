@@ -36,6 +36,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { BrandLogo } from '@/components/brand-logo';
 import { StudentCharacter } from '@/components/student-character';
 import { StudentHome } from '@/components/student-home';
+import {
+  StudentResourcePage,
+  type ResourceKey,
+} from '@/components/student-resource-page';
 import type { LearningPathStep } from '@/components/student-learning-path';
 import {
   Dialog,
@@ -348,6 +352,7 @@ export default function Home() {
     [draft, setDraft] = useState<Preferences>(state.preferences),
     [editorTab, setEditorTab] = useState('theme'),
     [view, setView] = useState('home'),
+    [resourceView, setResourceView] = useState<ResourceKey | null>(null),
     [connectedActivityId, setConnectedActivityId] = useState<string | null>(
       null,
     ),
@@ -729,6 +734,13 @@ export default function Home() {
     }
   }
   function changeView(v: string) {
+    if (v.startsWith('resource:')) {
+      setResourceView(v.slice('resource:'.length) as ResourceKey);
+      setView('resource');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setResourceView(null);
     setView(v);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -1230,6 +1242,18 @@ export default function Home() {
                     ? `Olá, ${studentName.split(' ')[0]}!`
                     : view === 'materials'
                       ? 'Materiais'
+                      : view === 'resource'
+                        ? resourceView === 'exams'
+                          ? 'Provas'
+                          : resourceView === 'speak'
+                            ? 'Speak'
+                            : resourceView === 'matific'
+                              ? 'Matific'
+                              : resourceView === 'platform'
+                                ? 'Plataforma'
+                                : resourceView === 'books'
+                                  ? 'E-books'
+                                  : 'Recursos'
                       : navigation.find((n) => n.id === view)?.label}
                 </h1>
               </div>
@@ -1689,6 +1713,14 @@ export default function Home() {
                 </p>
               </section>
             </>
+          )}
+          {view === 'resource' && resourceView && (
+            <StudentResourcePage
+              resource={resourceView}
+              hasConnectedClass={!!studentSummary}
+              onBack={() => changeView('home')}
+              onTasks={() => changeView('tasks')}
+            />
           )}
           <footer className="workspace-footer">
             <span>

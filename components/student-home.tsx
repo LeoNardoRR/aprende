@@ -17,11 +17,11 @@ export function StudentHome({ name, preferences, earned, possible, steps, calend
   const firstName = name.split(' ')[0];
   const links = [
     {label:'Tarefas',view:'tasks',Icon:ClipboardTextIcon,tone:'gold'},
-    {label:'Provas',view:'exams',Icon:BookOpenIcon,tone:'purple'},
-    {label:'Speak',view:'speak',Icon:ChatCircleDotsIcon,tone:'blue'},
-    {label:'Matific',view:'matific',Icon:GraduationCapIcon,tone:'green'},
-    {label:'Plataforma',view:'platform',Icon:GameControllerIcon,tone:'indigo'},
-    {label:'E-books',view:'books',Icon:YoutubeLogoIcon,tone:'pink'},
+    {label:'Provas',view:'resource:exams',Icon:BookOpenIcon,tone:'purple'},
+    {label:'Speak',view:'resource:speak',Icon:ChatCircleDotsIcon,tone:'blue'},
+    {label:'Matific',view:'resource:matific',Icon:GraduationCapIcon,tone:'green'},
+    {label:'Plataforma',view:'resource:platform',Icon:GameControllerIcon,tone:'indigo'},
+    {label:'E-books',view:'resource:books',Icon:YoutubeLogoIcon,tone:'pink'},
   ];
   return <div className="student-home-content">
     <header className="student-home-header">

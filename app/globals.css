@@ -1611,6 +1611,13 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .student-inner .topbar h1{font-size:28px;}
 .student-inner .materials-page{max-width:920px;margin:auto;}
 .student-inner .schedule{margin-top:0;}
+.student-resource-page{max-width:860px;margin:0 auto;padding:4px 0 24px;}
+.student-resource-hero{display:flex;align-items:center;gap:18px;padding:24px;border-radius:22px;color:#153858;}
+.student-resource-hero.purple{background:#eee3ff;}.student-resource-hero.blue{background:#d8ebff;}.student-resource-hero.green{background:#d8f4e3;}.student-resource-hero.indigo{background:#dce7ff;}.student-resource-hero.pink{background:#fbe0e9;}
+.student-resource-icon{display:grid;place-items:center;width:64px;height:64px;flex:0 0 auto;border-radius:18px;background:#fff9;color:#7042c7;box-shadow:0 7px 14px #22405c10;}.student-resource-hero.blue .student-resource-icon{color:#277fd6;}.student-resource-hero.green .student-resource-icon{color:#25a665;}.student-resource-hero.indigo .student-resource-icon{color:#526bd1;}.student-resource-hero.pink .student-resource-icon{color:#e05479;}.student-resource-icon svg{width:32px;height:32px;}
+.student-resource-hero .eyebrow{margin-bottom:6px;color:currentColor;opacity:.65;}.student-resource-hero h2{font-size:30px;font-weight:950;letter-spacing:-.6px;}.student-resource-hero p{margin-top:4px;color:#5e7790;font-size:14px;}
+.student-resource-card{display:flex;align-items:flex-start;gap:15px;margin-top:16px;padding:24px;}.student-resource-card-icon{display:grid;place-items:center;width:40px;height:40px;flex:0 0 auto;border-radius:12px;background:#eaf6ef;color:#2b9b68;}.student-resource-card-icon svg{width:21px;height:21px;}.student-resource-card h3{font-size:18px;color:#163e65;}.student-resource-card p{max-width:650px;margin-top:6px;color:#687f95;font-size:14px;line-height:1.55;}
+.student-resource-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;}.student-resource-actions .text-button,.student-resource-actions .primary-button{display:inline-flex;align-items:center;gap:7px;}.student-resource-note{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:18px;color:#7b8c9b;font-size:12px;text-align:center;}.student-resource-note svg{flex:0 0 auto;}
 .student-home-calendar{max-width:820px;margin:24px auto 0;}
 .student-home-calendar .calendar{padding:25px 28px;background:#fff;border:0;border-radius:25px;box-shadow:0 12px 34px #183a5d0b;}
 .student-home-calendar .card-heading{margin-bottom:22px;}
@@ -1774,6 +1781,7 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .student-home-calendar .calendar-grid > button{min-height:37px;border-radius:9px;font-size:12px;}
 .student-home-calendar .weekday{font-size:10px;}
 .student-experience .room-editor{width:100vw!important;border-radius:0;}
+.student-resource-page{padding:0 0 18px;}.student-resource-hero{gap:12px;padding:17px;border-radius:17px;}.student-resource-icon{width:48px;height:48px;border-radius:14px;}.student-resource-icon svg{width:25px;height:25px;}.student-resource-hero h2{font-size:23px;}.student-resource-hero p{font-size:12px;line-height:1.35;}.student-resource-card{gap:11px;margin-top:12px;padding:17px;}.student-resource-card-icon{width:34px;height:34px;border-radius:10px;}.student-resource-card h3{font-size:15px;line-height:1.25;}.student-resource-card p{font-size:12px;line-height:1.45;}.student-resource-actions{align-items:stretch;flex-direction:column-reverse;margin-top:13px;}.student-resource-actions .text-button,.student-resource-actions .primary-button{justify-content:center;min-height:42px;}.student-resource-note{font-size:10px;line-height:1.35;}
 .character-editor-preview{height:185px;}
 .character-editor-preview .student-character{width:215px;}
 .trait-swatches{gap:12px;}
