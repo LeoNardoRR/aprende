@@ -1479,8 +1479,12 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .teacher-sidebar nav button, .teacher-sidebar > .account-settings-trigger, .teacher-sidebar > .teacher-exit{min-width:0;height:58px;padding:6px 2px!important;font-size:8px!important;line-height:1.05;gap:3px;}
 .teacher-sidebar nav button > span, .teacher-sidebar > .account-settings-trigger > span, .teacher-sidebar > .teacher-exit > span{display:none!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .teacher-sidebar nav button svg, .teacher-sidebar > .account-settings-trigger svg, .teacher-sidebar > .teacher-exit svg{width:21px;height:21px;}
-.teacher-class-tabs{grid-auto-columns:104px;gap:7px;margin-bottom:9px;}
+.teacher-sidebar nav button, .teacher-sidebar > .account-settings-trigger, .teacher-sidebar > .teacher-exit{display:flex!important;align-items:center;justify-content:center;}
+.teacher-top-actions .teacher-new-class, .teacher-appearance-button{display:grid;place-items:center;align-content:center;line-height:1;}
+.teacher-class-tabs{display:flex;grid-auto-columns:none;gap:7px;width:100%;min-width:0;margin-bottom:9px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.teacher-class-tabs::-webkit-scrollbar{display:none;}
 .teacher-class-tabs button{min-height:44px;padding:8px 10px;font-size:11px;}
+.teacher-class-tabs button{flex:0 0 104px;scroll-snap-align:start;}
 .teacher-class-summary{padding:12px;}
 .teacher-class-summary h2{font-size:19px;}
 .teacher-class-summary p{font-size:10px;}
