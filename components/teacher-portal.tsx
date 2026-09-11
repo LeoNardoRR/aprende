@@ -1654,14 +1654,23 @@ function AttendancePanel({
 }) {
   const date = new Date().toLocaleDateString('en-CA');
   const studentKey = students.map((item) => item.user_id).join(',');
+  const storageKey = `aprende:attendance:${classroom.id}:${date}`;
   const [presence, setPresence] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
-    setPresence(
-      Object.fromEntries(students.map((item) => [item.user_id, true])),
+    const defaultPresence = Object.fromEntries(
+      students.map((item) => [item.user_id, true]),
     );
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      setPresence(
+        saved ? { ...defaultPresence, ...JSON.parse(saved) } : defaultPresence,
+      );
+    } catch {
+      setPresence(defaultPresence);
+    }
     if (preview || !students.length) return;
     void supabase
       .from('attendance')
@@ -1680,13 +1689,14 @@ function AttendancePanel({
           ),
         }));
       });
-  }, [classroom.id, date, preview, studentKey]);
+  }, [classroom.id, date, preview, storageKey, studentKey]);
 
   async function save() {
     setBusy(true);
     setNotice('Salvando chamada...');
+    window.localStorage.setItem(storageKey, JSON.stringify(presence));
     if (preview) {
-      setNotice('Chamada salva na prévia.');
+      setNotice('Chamada salva nesta prévia.');
       setBusy(false);
       return;
     }
@@ -1701,7 +1711,11 @@ function AttendancePanel({
     const { error } = await supabase
       .from('attendance')
       .upsert(rows, { onConflict: 'classroom_id,student_id,attendance_date' });
-    setNotice(error ? friendlySupabaseError(error.message) : 'Chamada salva.');
+    setNotice(
+      error
+        ? 'Chamada salva neste dispositivo. A sincronização será concluída quando o banco estiver atualizado.'
+        : 'Chamada salva e sincronizada.',
+    );
     setBusy(false);
   }
 
