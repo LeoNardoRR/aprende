@@ -1474,7 +1474,8 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .teacher-top-actions .teacher-send{display:none;}
 .teacher-top-actions .teacher-new-class, .teacher-appearance-button{width:42px;min-width:42px;height:42px;min-height:42px;}
   .teacher-sidebar{grid-template-columns:repeat(7, minmax(0, 1fr));height:72px;padding:5px 6px calc(5px + env(safe-area-inset-bottom));}
-.teacher-sidebar nav button, .teacher-sidebar > .account-settings-trigger, .teacher-sidebar > .teacher-exit{min-width:0;height:58px;padding:7px 2px!important;font-size:0!important;}
+.teacher-sidebar nav button, .teacher-sidebar > .account-settings-trigger, .teacher-sidebar > .teacher-exit{min-width:0;height:58px;padding:6px 2px!important;font-size:8px!important;line-height:1.05;gap:3px;}
+.teacher-sidebar nav button > span, .teacher-sidebar > .account-settings-trigger > span, .teacher-sidebar > .teacher-exit > span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .teacher-sidebar nav button svg, .teacher-sidebar > .account-settings-trigger svg, .teacher-sidebar > .teacher-exit svg{width:21px;height:21px;}
 .teacher-class-tabs{grid-auto-columns:104px;gap:7px;margin-bottom:9px;}
 .teacher-class-tabs button{min-height:44px;padding:8px 10px;font-size:11px;}

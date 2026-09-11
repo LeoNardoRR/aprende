@@ -878,7 +878,7 @@ function TeacherDashboard({
             onClick={() => setView('overview')}
           >
             <School />
-            Início
+            <span>Início</span>
           </button>
           <button
             aria-label="Turmas"
@@ -886,7 +886,7 @@ function TeacherDashboard({
             onClick={() => setView('students')}
           >
             <Users />
-            Turmas
+            <span>Turmas</span>
           </button>
           <button
             aria-label="Provas e avaliações"
@@ -894,7 +894,7 @@ function TeacherDashboard({
             onClick={() => setView('exams')}
           >
             <FileCheck2 />
-            Provas
+            <span>Provas</span>
           </button>
           <button
             aria-label="Lançamento de atividades"
@@ -902,15 +902,15 @@ function TeacherDashboard({
             onClick={() => setView('activities')}
           >
             <ClipboardCheck />
-            Atividades
+            <span>Atividades</span>
           </button>
           <button
-            aria-label="Fechamento de notas"
+            aria-label="Notas"
             className={view === 'grades' ? 'active' : ''}
             onClick={() => setView('grades')}
           >
             <BarChart3 />
-            Fechamento de notas
+            <span>Notas</span>
           </button>
         </nav>
         <AccountSettings
@@ -927,7 +927,7 @@ function TeacherDashboard({
           onClick={() => void supabase.auth.signOut()}
         >
           <LogOut />
-          Sair
+          <span>Sair</span>
         </button>
       </aside>
       <main className="teacher-main">

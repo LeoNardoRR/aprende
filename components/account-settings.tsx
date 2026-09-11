@@ -250,7 +250,7 @@ export function AccountSettings({
         }}
       >
         <Settings size={16} />
-        Configurações
+        <span>Configurações</span>
       </button>
       {open &&
         createPortal(
