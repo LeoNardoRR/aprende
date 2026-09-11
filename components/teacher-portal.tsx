@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import type { Session } from '@supabase/supabase-js';
 import {
   ArrowLeft,
+  BarChart3,
   Bell,
   BookOpen,
   CalendarDays,
@@ -12,14 +13,19 @@ import {
   ChevronDown,
   ClipboardCheck,
   Copy,
+  FileCheck2,
+  Folder,
   GraduationCap,
+  ImageUp,
   LoaderCircle,
   LogOut,
   MessageSquare,
   Palette,
+  Pencil,
   Plus,
   School,
   UserMinus,
+  UserRoundCheck,
   Users,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -44,6 +50,7 @@ type Classroom = {
   subject: string;
   join_code: string;
   created_at: string;
+  image_url: string | null;
 };
 type Assignment = {
   id: string;
@@ -144,12 +151,20 @@ const teacherDensityIds: TeacherAppearance['density'][] = [
 ];
 
 export function TeacherPortal({ onClose }: { onClose: () => void }) {
+  const previewMode =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('qa') ===
+      'teacher-dashboard';
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
+    if (previewMode) {
+      setLoading(false);
+      return;
+    }
     void supabase.auth
       .getSession()
       .then(({ data }) => setSession(data.session))
@@ -161,9 +176,10 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
       setSession(nextSession),
     );
     return () => data.subscription.unsubscribe();
-  }, []);
+  }, [previewMode]);
 
   useEffect(() => {
+    if (previewMode) return;
     let active = true;
     async function readProfile() {
       if (!session) {
@@ -186,7 +202,20 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
     return () => {
       active = false;
     };
-  }, [session]);
+  }, [previewMode, session]);
+
+  if (previewMode)
+    return (
+      <TeacherDashboard
+        profile={{
+          id: 'preview-teacher',
+          display_name: 'Professor Gabriel',
+          role: 'teacher',
+          avatar_url: null,
+        }}
+        preview
+      />
+    );
 
   if (loading)
     return (
@@ -486,23 +515,126 @@ function TeacherAuth() {
   );
 }
 
-function TeacherDashboard({ profile }: { profile: Profile }) {
-  const [classes, setClasses] = useState<Classroom[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [selected, setSelected] = useState<string>('');
-  const [view, setView] = useState<'overview' | 'activities' | 'students'>(
-    'overview',
+const teacherPreviewClasses: Classroom[] = [
+  {
+    id: '6a',
+    name: '6º A',
+    subject: 'Ensino Fundamental II',
+    join_code: '6A2026',
+    created_at: '',
+    image_url: null,
+  },
+  {
+    id: '6b',
+    name: '6º B',
+    subject: 'Ensino Fundamental II',
+    join_code: '6B2026',
+    created_at: '',
+    image_url: null,
+  },
+  {
+    id: '7a',
+    name: '7º A',
+    subject: 'Ensino Fundamental II',
+    join_code: '7A2026',
+    created_at: '',
+    image_url: null,
+  },
+  {
+    id: '8a',
+    name: '8º A',
+    subject: 'Ensino Fundamental II',
+    join_code: '8A2026',
+    created_at: '',
+    image_url: null,
+  },
+];
+const teacherPreviewStudents: Membership[] = [
+  'Ana Beatriz Silva',
+  'Bruno Oliveira',
+  'Carla Mendes',
+  'Daniel Costa',
+  'Eduarda Lima',
+  'Felipe Rodrigues',
+].map((display_name, index) => ({
+  classroom_id: '6a',
+  user_id: `student-${index}`,
+  profiles: { display_name },
+}));
+const teacherPreviewAssignments: Assignment[] = [
+  {
+    id: 'a1',
+    classroom_id: '6a',
+    title: 'Leitura e resumo do texto',
+    subject: 'Português',
+    instructions: 'Ler o texto em sala e preparar um resumo.',
+    due_at: '2026-09-12',
+    points: 10,
+    created_at: '',
+  },
+  {
+    id: 'a2',
+    classroom_id: '6a',
+    title: 'Exercícios de gramática',
+    subject: 'Português',
+    instructions: 'Resolver os exercícios indicados.',
+    due_at: '2026-09-15',
+    points: 20,
+    created_at: '',
+  },
+  {
+    id: 'a3',
+    classroom_id: '6a',
+    title: 'Produção de texto',
+    subject: 'Português',
+    instructions: 'Escrever um pequeno texto sobre sua rotina.',
+    due_at: '2026-09-18',
+    points: 20,
+    created_at: '',
+  },
+];
+const teacherPreviewAnnouncements: Announcement[] = [
+  {
+    id: 'r1',
+    classroom_id: '6a',
+    message: 'Trazer o livro de leitura na próxima aula.',
+    created_at: new Date().toISOString(),
+  },
+];
+
+function TeacherDashboard({
+  profile,
+  preview = false,
+}: {
+  profile: Profile;
+  preview?: boolean;
+}) {
+  const [classes, setClasses] = useState<Classroom[]>(
+    preview ? teacherPreviewClasses : [],
   );
-  const [busy, setBusy] = useState(true);
+  const [assignments, setAssignments] = useState<Assignment[]>(
+    preview ? teacherPreviewAssignments : [],
+  );
+  const [memberships, setMemberships] = useState<Membership[]>(
+    preview ? teacherPreviewStudents : [],
+  );
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(
+    preview ? teacherPreviewAnnouncements : [],
+  );
+  const [selected, setSelected] = useState<string>(preview ? '6a' : '');
+  const [view, setView] = useState<
+    'overview' | 'activities' | 'exams' | 'students' | 'grades'
+  >('overview');
+  const [busy, setBusy] = useState(!preview);
   const [notice, setNotice] = useState('');
+  const [displayName, setDisplayName] = useState(profile.display_name);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_url);
   const [showClassForm, setShowClassForm] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
   const [showAppearanceForm, setShowAppearanceForm] = useState(false);
+  const [showClassSettings, setShowClassSettings] = useState(false);
   const [appearance, setAppearance] = useState<TeacherAppearance>(
     defaultTeacherAppearance,
   );
@@ -514,80 +646,89 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
     null,
   );
 
-  const refresh = useCallback(async (successNotice?: string) => {
-    setBusy(true);
-    const classResult = await supabase
-      .from('classrooms')
-      .select('*')
-      .order('created_at');
-    let loadError = classResult.error;
-    const nextClasses = (classResult.data ?? []) as Classroom[];
-    setClasses(nextClasses);
-    setSelected((current) =>
-      nextClasses.some((item) => item.id === current)
-        ? current
-        : nextClasses[0]?.id || '',
-    );
-    if (nextClasses.length) {
-      const ids = nextClasses.map((item) => item.id);
-      const [activityResult, memberResult, announcementResult] =
-        await Promise.all([
-          supabase
-            .from('assignments')
-            .select('*')
-            .in('classroom_id', ids)
-            .order('created_at', { ascending: false }),
-          supabase
-            .from('memberships')
-            .select('classroom_id,user_id,profiles(display_name)')
-            .in('classroom_id', ids),
-          supabase
-            .from('announcements')
-            .select('*')
-            .in('classroom_id', ids)
-            .order('created_at', { ascending: false }),
-        ]);
-      const nextAssignments = (activityResult.data ?? []) as Assignment[];
-      setAssignments(nextAssignments);
-      setMemberships((memberResult.data ?? []) as unknown as Membership[]);
-      setAnnouncements((announcementResult.data ?? []) as Announcement[]);
-      loadError =
-        loadError ||
-        activityResult.error ||
-        memberResult.error ||
-        announcementResult.error;
-      if (nextAssignments.length) {
-        const submissionResult = await supabase
-          .from('submissions')
-          .select(
-            'id,assignment_id,student_id,answer,status,score,feedback,profiles(display_name)',
-          )
-          .in(
-            'assignment_id',
-            nextAssignments.map((item) => item.id),
+  const refresh = useCallback(
+    async (successNotice?: string) => {
+      if (preview) {
+        if (successNotice) setNotice(successNotice);
+        setBusy(false);
+        return;
+      }
+      setBusy(true);
+      const classResult = await supabase
+        .from('classrooms')
+        .select('*')
+        .order('created_at');
+      let loadError = classResult.error;
+      const nextClasses = (classResult.data ?? []) as Classroom[];
+      setClasses(nextClasses);
+      setSelected((current) =>
+        nextClasses.some((item) => item.id === current)
+          ? current
+          : nextClasses[0]?.id || '',
+      );
+      if (nextClasses.length) {
+        const ids = nextClasses.map((item) => item.id);
+        const [activityResult, memberResult, announcementResult] =
+          await Promise.all([
+            supabase
+              .from('assignments')
+              .select('*')
+              .in('classroom_id', ids)
+              .order('created_at', { ascending: false }),
+            supabase
+              .from('memberships')
+              .select('classroom_id,user_id,profiles(display_name)')
+              .in('classroom_id', ids),
+            supabase
+              .from('announcements')
+              .select('*')
+              .in('classroom_id', ids)
+              .order('created_at', { ascending: false }),
+          ]);
+        const nextAssignments = (activityResult.data ?? []) as Assignment[];
+        setAssignments(nextAssignments);
+        setMemberships((memberResult.data ?? []) as unknown as Membership[]);
+        setAnnouncements((announcementResult.data ?? []) as Announcement[]);
+        loadError =
+          loadError ||
+          activityResult.error ||
+          memberResult.error ||
+          announcementResult.error;
+        if (nextAssignments.length) {
+          const submissionResult = await supabase
+            .from('submissions')
+            .select(
+              'id,assignment_id,student_id,answer,status,score,feedback,profiles(display_name)',
+            )
+            .in(
+              'assignment_id',
+              nextAssignments.map((item) => item.id),
+            );
+          setSubmissions(
+            (submissionResult.data ?? []) as unknown as Submission[],
           );
-        setSubmissions(
-          (submissionResult.data ?? []) as unknown as Submission[],
-        );
-        loadError = loadError || submissionResult.error;
-      } else setSubmissions([]);
-    } else {
-      setAssignments([]);
-      setMemberships([]);
-      setSubmissions([]);
-      setAnnouncements([]);
-    }
-    setNotice(
-      loadError
-        ? friendlySupabaseError(loadError.message)
-        : successNotice || '',
-    );
-    setBusy(false);
-  }, []);
+          loadError = loadError || submissionResult.error;
+        } else setSubmissions([]);
+      } else {
+        setAssignments([]);
+        setMemberships([]);
+        setSubmissions([]);
+        setAnnouncements([]);
+      }
+      setNotice(
+        loadError
+          ? friendlySupabaseError(loadError.message)
+          : successNotice || '',
+      );
+      setBusy(false);
+    },
+    [preview],
+  );
 
   useEffect(() => {
+    if (preview) return;
     void refresh();
-  }, [refresh]);
+  }, [preview, refresh]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(
@@ -656,6 +797,11 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
             100,
         )
       : 0;
+  const today = new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date());
   function requestRemoveStudent(member: Membership) {
     setRemovingStudent(member);
   }
@@ -711,16 +857,16 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
           <span className="brand-mark-shell">
             <BrandLogo variant="teacher" />
           </span>
-          <strong>Aprendê</strong>
+          <strong>Sala do Professor</strong>
         </button>
         <div className="teacher-profile">
           {avatarUrl ? (
-            <img src={avatarUrl} alt={`Foto de ${profile.display_name}`} />
+            <img src={avatarUrl} alt={`Foto de ${displayName}`} />
           ) : (
-            <div>{profile.display_name.slice(0, 1).toUpperCase()}</div>
+            <div>{displayName.slice(0, 1).toUpperCase()}</div>
           )}
           <span>
-            <strong>{profile.display_name}</strong>
+            <strong>{displayName}</strong>
             <small>Professor</small>
           </span>
         </div>
@@ -731,29 +877,48 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
             onClick={() => setView('overview')}
           >
             <School />
-            Visão geral
+            Início
           </button>
           <button
-            aria-label="Atividades"
-            className={view === 'activities' ? 'active' : ''}
-            onClick={() => setView('activities')}
-          >
-            <BookOpen />
-            Atividades
-          </button>
-          <button
-            aria-label="Alunos"
+            aria-label="Turmas"
             className={view === 'students' ? 'active' : ''}
             onClick={() => setView('students')}
           >
             <Users />
-            Alunos
+            Turmas
+          </button>
+          <button
+            aria-label="Provas e avaliações"
+            className={view === 'exams' ? 'active' : ''}
+            onClick={() => setView('exams')}
+          >
+            <FileCheck2 />
+            Provas
+          </button>
+          <button
+            aria-label="Lançamento de atividades"
+            className={view === 'activities' ? 'active' : ''}
+            onClick={() => setView('activities')}
+          >
+            <ClipboardCheck />
+            Atividades
+          </button>
+          <button
+            aria-label="Fechamento de notas"
+            className={view === 'grades' ? 'active' : ''}
+            onClick={() => setView('grades')}
+          >
+            <BarChart3 />
+            Fechamento de notas
           </button>
         </nav>
         <AccountSettings
           role="teacher"
           avatarUrl={avatarUrl}
           onAvatarUpdated={setAvatarUrl}
+          displayName={displayName}
+          onDisplayNameUpdated={setDisplayName}
+          preview={preview}
         />
         <button
           className="teacher-exit"
@@ -766,24 +931,22 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
       </aside>
       <main className="teacher-main">
         <header className="teacher-topbar">
-          <div>
-            <span>PAINEL DO PROFESSOR</span>
-            <h1>
-              {view === 'overview'
-                ? 'Visão geral'
-                : view === 'activities'
-                  ? 'Atividades'
-                  : 'Alunos'}
-            </h1>
+          <div className="teacher-greeting">
+            <h1>Olá, {displayName.replace(/^Professor(a)?\s+/i, '')}!</h1>
+            <p>Aqui você gerencia suas turmas.</p>
+          </div>
+          <div className="teacher-date">
+            <CalendarDays />
+            <span>
+              <strong>{today}</strong>
+              <small>
+                {new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(
+                  new Date(),
+                )}
+              </small>
+            </span>
           </div>
           <div className="teacher-top-actions">
-            {classes.length > 0 && (
-              <ClassPicker
-                classes={classes}
-                selected={selected}
-                onSelect={setSelected}
-              />
-            )}
             {currentClass && (
               <button
                 className="teacher-secondary teacher-send"
@@ -816,6 +979,30 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
           </div>
         </header>
         {notice && <p className="teacher-notice">{notice}</p>}
+        {classes.length > 0 && (
+          <div
+            className="teacher-class-tabs"
+            role="tablist"
+            aria-label="Suas turmas"
+          >
+            {classes.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={item.id === selected}
+                className={item.id === selected ? 'active' : ''}
+                onClick={() => {
+                  setSelected(item.id);
+                  setView('overview');
+                }}
+              >
+                <Folder />
+                {item.name}
+              </button>
+            ))}
+          </div>
+        )}
         {busy ? (
           <div className="portal-loading">
             <LoaderCircle className="spin" />
@@ -827,86 +1014,149 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
           <>
             {view === 'overview' && (
               <>
-                <section className="teacher-welcome">
+                <section className="teacher-class-summary">
                   <div>
-                    <span>{currentClass.subject}</span>
-                    <h2>{currentClass.name}</h2>
-                    <p>
-                      Compartilhe o código para seus alunos entrarem na turma.
-                    </p>
+                    <span
+                      className={`teacher-folder-icon ${currentClass.image_url ? 'has-image' : ''}`}
+                    >
+                      {currentClass.image_url ? (
+                        <img src={currentClass.image_url} alt="" />
+                      ) : (
+                        <Folder />
+                      )}
+                    </span>
+                    <span>
+                      <h2>{currentClass.name}</h2>
+                      <p>
+                        {currentClass.subject} <b>•</b> {classStudents.length}{' '}
+                        alunos
+                      </p>
+                    </span>
                   </div>
+                  <div className="teacher-class-summary-actions">
+                    <button
+                      type="button"
+                      className="teacher-edit-class"
+                      onClick={() => setShowClassSettings(true)}
+                    >
+                      <Pencil />
+                      <span>Editar sala</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard
+                          .writeText(currentClass.join_code)
+                          .then(() => setNotice('Código copiado.'))
+                          .catch(() =>
+                            setNotice(
+                              `Código da turma: ${currentClass.join_code}`,
+                            ),
+                          );
+                      }}
+                    >
+                      <small>Código da turma</small>
+                      <strong>{currentClass.join_code}</strong>
+                      <Copy />
+                    </button>
+                  </div>
+                </section>
+                <nav
+                  className="teacher-module-tabs"
+                  aria-label="Ferramentas da turma"
+                >
+                  <button onClick={() => setView('students')}>
+                    <UserRoundCheck />
+                    Alunos da turma
+                  </button>
+                  <button onClick={() => setView('students')}>
+                    <Users />
+                    Gerenciar turma
+                  </button>
                   <button
                     onClick={() => {
-                      void navigator.clipboard
-                        .writeText(currentClass.join_code)
-                        .then(() => setNotice('Código copiado.'))
-                        .catch(() =>
-                          setNotice(
-                            `Código da turma: ${currentClass.join_code}`,
-                          ),
-                        );
+                      setView('activities');
+                      setShowActivityForm(true);
                     }}
                   >
-                    <small>CÓDIGO DA TURMA</small>
-                    <strong>{currentClass.join_code}</strong>
-                    <Copy />
+                    <ClipboardCheck />
+                    Lançar atividade
                   </button>
-                </section>
-                <section className="teacher-stats">
-                  <Stat
-                    icon={<Users />}
-                    value={classStudents.length}
-                    label="alunos na turma"
-                  />
-                  <Stat
-                    icon={<BookOpen />}
-                    value={classActivities.length}
-                    label="atividades criadas"
-                  />
-                  <Stat
-                    icon={<CheckCircle2 />}
-                    value={`${completion}%`}
-                    label="entregas concluídas"
-                  />
-                </section>
-                <div className="teacher-overview-grid">
-                  <section className="teacher-panel">
+                  <button onClick={() => setShowAnnouncementForm(true)}>
+                    <BookOpen />
+                    Recados e registros
+                  </button>
+                  <button onClick={() => setView('exams')}>
+                    <FileCheck2 />
+                    Provas e avaliações
+                  </button>
+                </nav>
+                <div className="teacher-workspace-grid">
+                  <section className="teacher-panel teacher-roster-panel">
                     <div className="teacher-panel-title">
                       <div>
-                        <span>ACOMPANHAMENTO</span>
-                        <h2>Atividades recentes</h2>
+                        <span>ALUNOS</span>
+                        <h2>Lista de chamada</h2>
                       </div>
-                      <button
-                        className="teacher-primary compact"
-                        onClick={() => setShowActivityForm(true)}
-                      >
-                        <Plus />
-                        Criar
-                      </button>
+                      <strong className="teacher-count">
+                        {classStudents.length}
+                      </strong>
                     </div>
-                    <ActivityList
-                      activities={classActivities}
-                      submissions={submissions}
-                      students={classStudents.length}
+                    <AttendancePanel
+                      classroom={currentClass}
+                      students={classStudents}
+                      profile={profile}
+                      preview={preview}
+                      compact
                     />
                   </section>
                   <section className="teacher-panel">
                     <div className="teacher-panel-title">
                       <div>
-                        <span>COMUNICAÇÃO</span>
-                        <h2>Últimos recados</h2>
+                        <span>ACOMPANHAMENTO</span>
+                        <h2>Resumo da turma</h2>
                       </div>
-                      <button
-                        className="teacher-primary compact"
-                        onClick={() => setShowAnnouncementForm(true)}
-                      >
-                        <MessageSquare />
-                        Enviar
-                      </button>
                     </div>
+                    <section className="teacher-compact-stats">
+                      <Stat
+                        icon={<BookOpen />}
+                        value={classActivities.length}
+                        label="atividades"
+                      />
+                      <Stat
+                        icon={<CheckCircle2 />}
+                        value={`${completion}%`}
+                        label="conclusão"
+                      />
+                      <Stat
+                        icon={<MessageSquare />}
+                        value={classAnnouncements.length}
+                        label="recados"
+                      />
+                    </section>
                     <AnnouncementList announcements={classAnnouncements} />
                   </section>
                 </div>
+                <section className="teacher-panel teacher-task-table-panel">
+                  <div className="teacher-panel-title">
+                    <div>
+                      <span>PLANEJAMENTO</span>
+                      <h2>Tarefas da turma</h2>
+                    </div>
+                    <button
+                      className="teacher-primary compact"
+                      onClick={() => setShowActivityForm(true)}
+                    >
+                      <Plus />
+                      Nova tarefa
+                    </button>
+                  </div>
+                  <ActivityList
+                    activities={classActivities}
+                    submissions={submissions}
+                    students={classStudents.length}
+                  />
+                </section>
               </>
             )}
             {view === 'activities' && (
@@ -948,6 +1198,22 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
                   />
                 </section>
               </>
+            )}
+            {view === 'exams' && (
+              <section className="teacher-panel teacher-submissions">
+                <div className="teacher-panel-title">
+                  <div>
+                    <span>PROVAS E AVALIAÇÕES</span>
+                    <h2>Entregas para corrigir</h2>
+                  </div>
+                  <strong className="teacher-count">{delivered.length}</strong>
+                </div>
+                <SubmissionList
+                  submissions={delivered}
+                  assignments={classActivities}
+                  onGrade={setGrading}
+                />
+              </section>
             )}
             {view === 'students' && (
               <section className="teacher-panel">
@@ -1001,6 +1267,13 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
                 )}
               </section>
             )}
+            {view === 'grades' && (
+              <Gradebook
+                students={classStudents}
+                assignments={classActivities}
+                submissions={submissions}
+              />
+            )}
           </>
         )}
         {showClassForm && (
@@ -1043,6 +1316,22 @@ function TeacherDashboard({ profile }: { profile: Profile }) {
               setShowAppearanceForm(false);
               setNotice('Visual do painel atualizado neste dispositivo.');
             }}
+          />
+        )}{' '}
+        {showClassSettings && currentClass && (
+          <ClassSettingsForm
+            classroom={currentClass}
+            profile={profile}
+            preview={preview}
+            onClose={() => setShowClassSettings(false)}
+            onPreviewSaved={(next) => {
+              setClasses((items) =>
+                items.map((item) => (item.id === next.id ? next : item)),
+              );
+              setShowClassSettings(false);
+              setNotice('Sala atualizada na prévia.');
+            }}
+            onSaved={() => refresh('Sala atualizada com sucesso.')}
           />
         )}{' '}
         {grading && (
@@ -1351,6 +1640,188 @@ function TeacherAppearanceForm({
   );
 }
 
+function AttendancePanel({
+  classroom,
+  students,
+  profile,
+  preview,
+}: {
+  classroom: Classroom;
+  students: Membership[];
+  profile: Profile;
+  preview: boolean;
+  compact?: boolean;
+}) {
+  const date = new Date().toLocaleDateString('en-CA');
+  const studentKey = students.map((item) => item.user_id).join(',');
+  const [presence, setPresence] = useState<Record<string, boolean>>({});
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    setPresence(
+      Object.fromEntries(students.map((item) => [item.user_id, true])),
+    );
+    if (preview || !students.length) return;
+    void supabase
+      .from('attendance')
+      .select('student_id,present')
+      .eq('classroom_id', classroom.id)
+      .eq('attendance_date', date)
+      .then(({ data, error }) => {
+        if (error) {
+          setNotice(friendlySupabaseError(error.message));
+          return;
+        }
+        setPresence((current) => ({
+          ...current,
+          ...Object.fromEntries(
+            (data ?? []).map((item) => [item.student_id, item.present]),
+          ),
+        }));
+      });
+  }, [classroom.id, date, preview, studentKey]);
+
+  async function save() {
+    setBusy(true);
+    setNotice('Salvando chamada...');
+    if (preview) {
+      setNotice('Chamada salva na prévia.');
+      setBusy(false);
+      return;
+    }
+    const rows = students.map((student) => ({
+      classroom_id: classroom.id,
+      student_id: student.user_id,
+      attendance_date: date,
+      present: presence[student.user_id] ?? true,
+      recorded_by: profile.id,
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await supabase
+      .from('attendance')
+      .upsert(rows, { onConflict: 'classroom_id,student_id,attendance_date' });
+    setNotice(error ? friendlySupabaseError(error.message) : 'Chamada salva.');
+    setBusy(false);
+  }
+
+  return (
+    <div className="teacher-attendance">
+      <div className="teacher-attendance-head">
+        <span>
+          <CalendarDays />
+          {new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR')}
+        </span>
+        <button
+          type="button"
+          className="teacher-primary compact"
+          disabled={busy || !students.length}
+          onClick={() => void save()}
+        >
+          {busy ? <LoaderCircle className="spin" /> : 'Salvar chamada'}
+        </button>
+      </div>
+      <div className="teacher-roster-table">
+        {students.slice(0, 10).map((member, index) => {
+          const present = presence[member.user_id] ?? true;
+          return (
+            <button
+              type="button"
+              key={member.user_id}
+              aria-pressed={present}
+              onClick={() =>
+                setPresence((current) => ({
+                  ...current,
+                  [member.user_id]: !present,
+                }))
+              }
+            >
+              <small>{String(index + 1).padStart(2, '0')}</small>
+              <strong>{member.profiles?.display_name || 'Aluno'}</strong>
+              <span className={present ? '' : 'absent'}>
+                {present ? (
+                  <CheckCircle2 />
+                ) : (
+                  <span className="attendance-empty-check" />
+                )}
+                {present ? 'Presente' : 'Falta'}
+              </span>
+            </button>
+          );
+        })}
+        {!students.length && <p>Nenhum aluno conectado.</p>}
+      </div>
+      {notice && (
+        <output className="teacher-attendance-notice">{notice}</output>
+      )}
+    </div>
+  );
+}
+
+function Gradebook({
+  students,
+  assignments,
+  submissions,
+}: {
+  students: Membership[];
+  assignments: Assignment[];
+  submissions: Submission[];
+}) {
+  const possible = assignments.reduce((sum, item) => sum + item.points, 0);
+  return (
+    <section className="teacher-panel teacher-gradebook">
+      <div className="teacher-panel-title">
+        <div>
+          <span>FECHAMENTO</span>
+          <h2>Notas da turma</h2>
+        </div>
+        <strong className="teacher-count">{students.length}</strong>
+      </div>
+      {students.length ? (
+        <div className="teacher-gradebook-table">
+          <div className="teacher-gradebook-row heading">
+            <strong>Aluno</strong>
+            <span>Atividades</span>
+            <span>Nota total</span>
+            <span>Aproveitamento</span>
+          </div>
+          {students.map((student) => {
+            const studentSubmissions = submissions.filter(
+              (item) =>
+                item.student_id === student.user_id &&
+                item.status === 'submitted',
+            );
+            const score = studentSubmissions.reduce(
+              (sum, item) => sum + (item.score ?? 0),
+              0,
+            );
+            const percentage = possible
+              ? Math.round((score / possible) * 100)
+              : 0;
+            return (
+              <div className="teacher-gradebook-row" key={student.user_id}>
+                <strong>{student.profiles?.display_name || 'Aluno'}</strong>
+                <span>
+                  {studentSubmissions.length}/{assignments.length}
+                </span>
+                <span>
+                  {score}/{possible}
+                </span>
+                <span>
+                  <b style={{ width: `${Math.min(percentage, 100)}%` }} />
+                  {percentage}%
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="teacher-empty-line">Nenhum aluno conectado à turma.</p>
+      )}
+    </section>
+  );
+}
+
 function Stat({
   icon,
   value,
@@ -1520,6 +1991,230 @@ function PortalMessage({
       <p>{text}</p>
       {action}
     </main>
+  );
+}
+
+function classroomImagePath(url: string | null) {
+  if (!url) return null;
+  const marker = '/storage/v1/object/public/classroom-images/';
+  const index = url.indexOf(marker);
+  if (index < 0) return null;
+  return decodeURIComponent(url.slice(index + marker.length).split('?')[0]);
+}
+
+async function prepareClassroomImage(file: File) {
+  if (!file.type.startsWith('image/'))
+    throw new Error('Escolha uma imagem válida.');
+  if (file.size > 10 * 1024 * 1024)
+    throw new Error('A imagem deve ter no máximo 10 MB.');
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () =>
+        reject(new Error('Não foi possível ler esta imagem.'));
+      image.src = objectUrl;
+    });
+    const targetWidth = 960;
+    const targetHeight = 540;
+    const targetRatio = targetWidth / targetHeight;
+    const sourceRatio = image.naturalWidth / image.naturalHeight;
+    const sourceWidth =
+      sourceRatio > targetRatio
+        ? image.naturalHeight * targetRatio
+        : image.naturalWidth;
+    const sourceHeight =
+      sourceRatio > targetRatio
+        ? image.naturalHeight
+        : image.naturalWidth / targetRatio;
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Não foi possível preparar a imagem.');
+    context.drawImage(
+      image,
+      (image.naturalWidth - sourceWidth) / 2,
+      (image.naturalHeight - sourceHeight) / 2,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      targetWidth,
+      targetHeight,
+    );
+    const previewUrl = canvas.toDataURL('image/jpeg', 0.86);
+    const blob = await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(
+        (value) =>
+          value
+            ? resolve(value)
+            : reject(new Error('Não foi possível salvar a imagem.')),
+        'image/jpeg',
+        0.86,
+      ),
+    );
+    return { blob, previewUrl };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function ClassSettingsForm({
+  classroom,
+  profile,
+  preview,
+  onClose,
+  onPreviewSaved,
+  onSaved,
+}: {
+  classroom: Classroom;
+  profile: Profile;
+  preview: boolean;
+  onClose: () => void;
+  onPreviewSaved: (classroom: Classroom) => void;
+  onSaved: () => Promise<void>;
+}) {
+  const [name, setName] = useState(classroom.name);
+  const [imageUrl, setImageUrl] = useState<string | null>(classroom.image_url);
+  const [preparedImage, setPreparedImage] = useState<Blob | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+
+  async function chooseImage(file: File) {
+    setNotice('Preparando imagem...');
+    try {
+      const prepared = await prepareClassroomImage(file);
+      setPreparedImage(prepared.blob);
+      setImageUrl(prepared.previewUrl);
+      setRemoveImage(false);
+      setNotice('Imagem pronta para salvar.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Imagem inválida.');
+    }
+  }
+
+  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const cleanName = name.trim();
+    if (cleanName.length < 2) {
+      setNotice('Digite um nome com pelo menos 2 caracteres.');
+      return;
+    }
+    setBusy(true);
+    setNotice('Salvando alterações...');
+    if (preview) {
+      onPreviewSaved({ ...classroom, name: cleanName, image_url: imageUrl });
+      return;
+    }
+    let nextImageUrl = removeImage ? null : classroom.image_url;
+    let uploadedPath: string | null = null;
+    try {
+      if (preparedImage) {
+        uploadedPath = `${profile.id}/${classroom.id}-${Date.now()}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from('classroom-images')
+          .upload(uploadedPath, preparedImage, {
+            contentType: 'image/jpeg',
+            cacheControl: '3600',
+          });
+        if (uploadError) throw uploadError;
+        const { data } = supabase.storage
+          .from('classroom-images')
+          .getPublicUrl(uploadedPath);
+        nextImageUrl = `${data.publicUrl}?v=${Date.now()}`;
+      }
+      const { error } = await supabase
+        .from('classrooms')
+        .update({ name: cleanName, image_url: nextImageUrl })
+        .eq('id', classroom.id)
+        .eq('owner_id', profile.id);
+      if (error) throw error;
+      const previousPath = classroomImagePath(classroom.image_url);
+      if (previousPath && (preparedImage || removeImage)) {
+        void supabase.storage.from('classroom-images').remove([previousPath]);
+      }
+      onClose();
+      await onSaved();
+    } catch (error) {
+      if (uploadedPath)
+        void supabase.storage.from('classroom-images').remove([uploadedPath]);
+      setNotice(
+        error instanceof Error
+          ? friendlySupabaseError(error.message)
+          : 'Não foi possível atualizar a sala.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal title="Personalizar sala" onClose={onClose}>
+      <form className="teacher-form teacher-class-settings" onSubmit={submit}>
+        <div className="teacher-class-image-preview">
+          {imageUrl && !removeImage ? (
+            <img src={imageUrl} alt="Prévia da imagem da sala" />
+          ) : (
+            <span>
+              <Folder />
+              Sua sala
+            </span>
+          )}
+        </div>
+        <label>
+          Nome da sala
+          <input
+            value={name}
+            minLength={2}
+            maxLength={80}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Ex.: 6º A"
+          />
+        </label>
+        <div className="teacher-class-image-actions">
+          <label className="teacher-secondary">
+            <ImageUp />
+            Escolher imagem
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={busy}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void chooseImage(file);
+              }}
+            />
+          </label>
+          {imageUrl && !removeImage && (
+            <button
+              type="button"
+              className="teacher-secondary"
+              disabled={busy}
+              onClick={() => {
+                setPreparedImage(null);
+                setImageUrl(null);
+                setRemoveImage(true);
+                setNotice('A imagem será removida ao salvar.');
+              }}
+            >
+              Remover imagem
+            </button>
+          )}
+        </div>
+        {notice && <output className="teacher-notice">{notice}</output>}
+        <div className="teacher-modal-actions">
+          <button type="button" className="teacher-secondary" onClick={onClose}>
+            Cancelar
+          </button>
+          <button className="teacher-primary" disabled={busy}>
+            {busy ? <LoaderCircle className="spin" /> : 'Salvar sala'}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

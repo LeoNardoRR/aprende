@@ -348,7 +348,9 @@ export default function Home() {
     [draft, setDraft] = useState<Preferences>(state.preferences),
     [editorTab, setEditorTab] = useState('theme'),
     [view, setView] = useState('home'),
-    [connectedActivityId, setConnectedActivityId] = useState<string | null>(null),
+    [connectedActivityId, setConnectedActivityId] = useState<string | null>(
+      null,
+    ),
     [notice, setNotice] = useState(''),
     [storageError, setStorageError] = useState(false),
     [activeTask, setActiveTask] = useState<Activity | null>(null),
@@ -401,7 +403,16 @@ export default function Home() {
   }, []);
   useEffect(() => {
     let active = true;
-    const authMode = new URLSearchParams(window.location.search).get('auth');
+    const params = new URLSearchParams(window.location.search);
+    const authMode = params.get('auth');
+    if (params.get('qa') === 'teacher-dashboard') {
+      setShowStudentConnect(false);
+      setShowTeacher(true);
+      setAuthModeReady(true);
+      return () => {
+        active = false;
+      };
+    }
     if (authMode === 'teacher' || authMode === 'student') {
       rememberAuthMode(authMode);
       setAuthModeReady(true);
@@ -537,7 +548,14 @@ export default function Home() {
       }
     }
     if (session.user.user_metadata?.student_appearance) {
-      setState((current) => ({ ...current, preferences: validPreferences({ ...current.preferences, ...session.user.user_metadata.student_appearance, name: profileResult.data?.display_name ?? current.preferences.name }) }));
+      setState((current) => ({
+        ...current,
+        preferences: validPreferences({
+          ...current.preferences,
+          ...session.user.user_metadata.student_appearance,
+          name: profileResult.data?.display_name ?? current.preferences.name,
+        }),
+      }));
     }
     const metrics = calculateConnectedMetrics(
       connectedAssignments,
@@ -677,10 +695,20 @@ export default function Home() {
           .update({ display_name: nextPreferences.name })
           .eq('id', session.user.id);
         if (error) throw error;
-        const { error: appearanceError } = await studentSupabase.auth.updateUser({ data: { student_appearance: {
-          hair: nextPreferences.hair, hairColor: nextPreferences.hairColor, skin: nextPreferences.skin,
-          eyeColor: nextPreferences.eyeColor, outfit: nextPreferences.outfit, outfitColor: nextPreferences.outfitColor, banner: nextPreferences.banner,
-        } } });
+        const { error: appearanceError } =
+          await studentSupabase.auth.updateUser({
+            data: {
+              student_appearance: {
+                hair: nextPreferences.hair,
+                hairColor: nextPreferences.hairColor,
+                skin: nextPreferences.skin,
+                eyeColor: nextPreferences.eyeColor,
+                outfit: nextPreferences.outfit,
+                outfitColor: nextPreferences.outfitColor,
+                banner: nextPreferences.banner,
+              },
+            },
+          });
         if (appearanceError) throw appearanceError;
       }
       setState(nextState);
@@ -1117,7 +1145,9 @@ export default function Home() {
       </>
     );
   return (
-    <div className={`school student-experience ${view === 'home' ? 'student-home' : 'student-inner'} ${editing ? 'is-editing' : ''}`}>
+    <div
+      className={`school student-experience ${view === 'home' ? 'student-home' : 'student-inner'} ${editing ? 'is-editing' : ''}`}
+    >
       <PwaInstall />
       <SidebarProvider>
         <Sidebar collapsible="none" className="school-sidebar">
@@ -1187,74 +1217,87 @@ export default function Home() {
           </div>
         </Sidebar>
         <main className="workspace">
-          {view !== 'home' && <header className="topbar">
-            <div>
-              <span className="mobile-wordmark">Aprendê</span>
-              <span className="breadcrumb">
-                Sala do Aluno <ChevronRight size={13} />{' '}
-                {navigation.find((n) => n.id === view)?.label}
-              </span>
-              <h1>
-                {view === 'home'
-                  ? `Olá, ${studentName.split(' ')[0]}!`
-                  : view === 'materials'
-                    ? 'Materiais'
-                    : navigation.find((n) => n.id === view)?.label}
-              </h1>
-            </div>
-            <div className="header-actions">
-              <button
-                className="student-connect-button"
-                aria-label={
-                  studentSummary ? 'Abrir minha turma' : 'Entrar em uma turma'
-                }
-                onClick={() => setShowStudentConnect(true)}
-              >
-                <Users size={18} />
-                <span>
-                  {studentSummary ? 'Minha turma' : 'Entrar na turma'}
+          {view !== 'home' && (
+            <header className="topbar">
+              <div>
+                <span className="mobile-wordmark">Aprendê</span>
+                <span className="breadcrumb">
+                  Sala do Aluno <ChevronRight size={13} />{' '}
+                  {navigation.find((n) => n.id === view)?.label}
                 </span>
-              </button>
-              <button
-                className="teacher-mode-button"
-                aria-label="Abrir modo professor"
-                onClick={openTeacherMode}
-              >
-                <AppIcon name="school" pack={p.icons} size={18} />
-                <span>Modo professor</span>
-              </button>
-              <span
-                className="coin-wallet"
-                title={
-                  studentSummary
-                    ? 'Pontos recebidos do professor'
-                    : 'Moedas das missões locais'
-                }
-              >
-                <Coins size={20} />
-                <strong>
-                  {studentSummary
-                    ? `${studentSummary.earned}/${studentSummary.possible} pts`
-                    : state.coins.toLocaleString('pt-BR')}
-                </strong>
-              </span>
-              <button
-                className="edit-button"
-                aria-label="Personalizar minha sala"
-                onClick={() => openEditor()}
-              >
-                <SlidersHorizontal size={17} />
-                <span>Personalizar</span>
-              </button>
-            </div>
-          </header>}
-          {view === 'home' && <StudentHome
-            name={studentName} preferences={p}
-            earned={studentSummary?.earned ?? 0} possible={studentSummary?.possible ?? 0}
-            steps={learningPathSteps} onNavigate={changeView}
-            onClassroom={() => { setConnectedActivityId(null); setShowStudentConnect(true); }}
-            onTeacher={openTeacherMode} onCustomize={openEditor} onActivity={openConnectedActivity}
-          />}
+                <h1>
+                  {view === 'home'
+                    ? `Olá, ${studentName.split(' ')[0]}!`
+                    : view === 'materials'
+                      ? 'Materiais'
+                      : navigation.find((n) => n.id === view)?.label}
+                </h1>
+              </div>
+              <div className="header-actions">
+                <button
+                  className="student-connect-button"
+                  aria-label={
+                    studentSummary ? 'Abrir minha turma' : 'Entrar em uma turma'
+                  }
+                  onClick={() => setShowStudentConnect(true)}
+                >
+                  <Users size={18} />
+                  <span>
+                    {studentSummary ? 'Minha turma' : 'Entrar na turma'}
+                  </span>
+                </button>
+                <button
+                  className="teacher-mode-button"
+                  aria-label="Abrir modo professor"
+                  onClick={openTeacherMode}
+                >
+                  <AppIcon name="school" pack={p.icons} size={18} />
+                  <span>Modo professor</span>
+                </button>
+                <span
+                  className="coin-wallet"
+                  title={
+                    studentSummary
+                      ? 'Pontos recebidos do professor'
+                      : 'Moedas das missões locais'
+                  }
+                >
+                  <Coins size={20} />
+                  <strong>
+                    {studentSummary
+                      ? `${studentSummary.earned}/${studentSummary.possible} pts`
+                      : state.coins.toLocaleString('pt-BR')}
+                  </strong>
+                </span>
+                <button
+                  className="edit-button"
+                  aria-label="Personalizar minha sala"
+                  onClick={() => openEditor()}
+                >
+                  <SlidersHorizontal size={17} />
+                  <span>Personalizar</span>
+                </button>
+              </div>
+            </header>
+          )}
+          {view === 'home' && (
+            <StudentHome
+              name={studentName}
+              preferences={p}
+              earned={studentSummary?.earned ?? 0}
+              possible={studentSummary?.possible ?? 0}
+              steps={learningPathSteps}
+              calendar={calendar}
+              onNavigate={changeView}
+              onClassroom={() => {
+                setConnectedActivityId(null);
+                setShowStudentConnect(true);
+              }}
+              onTeacher={openTeacherMode}
+              onCustomize={openEditor}
+              onActivity={openConnectedActivity}
+            />
+          )}
           {view === 'tasks' && (
             <div className="dashboard">
               <div className="main-column">
@@ -1262,9 +1305,7 @@ export default function Home() {
                   <div className="section-heading">
                     <div>
                       <span className="eyebrow">SEU PRÓXIMO DESAFIO</span>
-                      <h2>
-                        Todas as atividades
-                      </h2>
+                      <h2>Todas as atividades</h2>
                     </div>
                   </div>
                   <div className="task-grid">
@@ -1365,23 +1406,57 @@ export default function Home() {
             <div className="materials-page">
               <div className="page-intro">
                 <h2>Materiais de estudo</h2>
-                <p>{studentSummary ? 'Conteúdos enviados pelo seu professor.' : 'Conteúdos para aprender no seu ritmo.'}</p>
+                <p>
+                  {studentSummary
+                    ? 'Conteúdos enviados pelo seu professor.'
+                    : 'Conteúdos para aprender no seu ritmo.'}
+                </p>
               </div>
               <section className="schedule" id="student-materials">
                 <div className="schedule-list">
-                  {studentSummary ? teacherAssignments.length ? teacherAssignments.map((a) => (
-                    <button key={a.id} className="schedule-row blue" onClick={() => openConnectedActivity(a.id)}>
-                      <span className="schedule-book"><AppIcon name="tasks" pack={p.icons} size={23} /></span>
-                      <span className="schedule-details"><strong>{a.title}</strong><small>{a.subject} · {a.points} pontos</small></span>
-                      <ArrowUpRight size={18} />
-                    </button>
-                  )) : <p className="empty-note">O professor ainda não enviou materiais.</p> : activities.map((a) => (
-                    <button key={a.id} className={`schedule-row ${a.color}`} onClick={() => setMaterial(a)}>
-                      <span className="schedule-book"><AppIcon name="tasks" pack={p.icons} size={23} /></span>
-                      <span className="schedule-details"><strong>{a.title}</strong><small>{a.subject} · Material de apoio</small></span>
-                      <ArrowUpRight size={18} />
-                    </button>
-                  ))}
+                  {studentSummary ? (
+                    teacherAssignments.length ? (
+                      teacherAssignments.map((a) => (
+                        <button
+                          key={a.id}
+                          className="schedule-row blue"
+                          onClick={() => openConnectedActivity(a.id)}
+                        >
+                          <span className="schedule-book">
+                            <AppIcon name="tasks" pack={p.icons} size={23} />
+                          </span>
+                          <span className="schedule-details">
+                            <strong>{a.title}</strong>
+                            <small>
+                              {a.subject} · {a.points} pontos
+                            </small>
+                          </span>
+                          <ArrowUpRight size={18} />
+                        </button>
+                      ))
+                    ) : (
+                      <p className="empty-note">
+                        O professor ainda não enviou materiais.
+                      </p>
+                    )
+                  ) : (
+                    activities.map((a) => (
+                      <button
+                        key={a.id}
+                        className={`schedule-row ${a.color}`}
+                        onClick={() => setMaterial(a)}
+                      >
+                        <span className="schedule-book">
+                          <AppIcon name="tasks" pack={p.icons} size={23} />
+                        </span>
+                        <span className="schedule-details">
+                          <strong>{a.title}</strong>
+                          <small>{a.subject} · Material de apoio</small>
+                        </span>
+                        <ArrowUpRight size={18} />
+                      </button>
+                    ))
+                  )}
                 </div>
               </section>
             </div>

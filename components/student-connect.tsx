@@ -69,6 +69,7 @@ type StudentConnectProps = {
   pageMode?: boolean;
   onOpenTeacher?: () => void;
   onChanged?: () => void | Promise<void>;
+  initialAssignmentId?: string | null;
 };
 
 export function StudentConnect({
@@ -77,6 +78,7 @@ export function StudentConnect({
   pageMode = false,
   onOpenTeacher,
   onChanged,
+  initialAssignmentId,
 }: StudentConnectProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -224,6 +226,13 @@ export function StudentConnect({
     });
     return () => data.subscription.unsubscribe();
   }, [loadStudent]);
+
+  useEffect(() => {
+    if (!loading && initialAssignmentId) {
+      const item = assignments.find((assignment) => assignment.id === initialAssignmentId);
+      if (item) { setActiveAssignment(item); setAnswer(submissions.find((submission) => submission.assignment_id === item.id)?.answer ?? ''); }
+    }
+  }, [loading, initialAssignmentId, assignments, submissions]);
 
   const metrics = useMemo(
     () => calculateConnectedMetrics(assignments, submissions),
