@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Session } from '@supabase/supabase-js';
 import {
@@ -10,7 +10,6 @@ import {
   BookOpen,
   CalendarDays,
   CheckCircle2,
-  ChevronDown,
   ClipboardCheck,
   Copy,
   FileCheck2,
@@ -58,6 +57,7 @@ type Assignment = {
   classroom_id: string;
   title: string;
   subject: string;
+  kind?: 'task' | 'exam';
   instructions: string;
   due_at: string | null;
   points: number;
@@ -1205,13 +1205,13 @@ function TeacherDashboard({
                 <div className="teacher-panel-title">
                   <div>
                     <span>PROVAS E AVALIAÇÕES</span>
-                    <h2>Entregas para corrigir</h2>
+                    <h2>Provas da turma</h2><button className="teacher-primary" onClick={()=>setShowActivityForm(true)}>Publicar avaliação</button>
                   </div>
                   <strong className="teacher-count">{delivered.length}</strong>
                 </div>
                 <SubmissionList
-                  submissions={delivered}
-                  assignments={classActivities}
+                  submissions={delivered.filter(s=>classActivities.some(a=>a.id===s.assignment_id&&a.kind==='exam'))}
+                  assignments={classActivities.filter(a=>a.kind==='exam')}
                   onGrade={setGrading}
                 />
               </section>
@@ -1381,82 +1381,6 @@ function TeacherDashboard({
           </Modal>
         )}
       </main>
-    </div>
-  );
-}
-
-function ClassPicker({
-  classes,
-  selected,
-  onSelect,
-}: {
-  classes: Classroom[];
-  selected: string;
-  onSelect: (id: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-  const current = classes.find((item) => item.id === selected) ?? classes[0];
-
-  useEffect(() => {
-    if (!open) return;
-    const closeOutside = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const closeWithEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('pointerdown', closeOutside);
-    document.addEventListener('keydown', closeWithEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeOutside);
-      document.removeEventListener('keydown', closeWithEscape);
-    };
-  }, [open]);
-
-  return (
-    <div className="teacher-class-picker" ref={root}>
-      <button
-        type="button"
-        className="teacher-class-trigger"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <span>
-          <School />
-          Turma atual
-        </span>
-        <strong>{current?.name ?? 'Escolha uma turma'}</strong>
-        <ChevronDown className={open ? 'open' : ''} />
-      </button>
-      {open && (
-        <div
-          className="teacher-class-options"
-          role="listbox"
-          aria-label="Turmas"
-        >
-          {classes.map((item) => (
-            <button
-              type="button"
-              role="option"
-              aria-selected={item.id === selected}
-              className={item.id === selected ? 'selected' : ''}
-              key={item.id}
-              onClick={() => {
-                onSelect(item.id);
-                setOpen(false);
-              }}
-            >
-              <span>
-                <strong>{item.name}</strong>
-                <small>{item.subject}</small>
-              </span>
-              {item.id === selected && <CheckCircle2 />}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -2308,6 +2232,7 @@ function ActivityForm({
   onSaved: () => Promise<void>;
 }) {
   const [form, setForm] = useState({
+    kind: 'task',
     title: '',
     subject: classroom.subject,
     instructions: '',
@@ -2320,6 +2245,7 @@ function ActivityForm({
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.from('assignments').insert({
+      ...(form.kind === 'exam' ? { kind: 'exam' } : {}),
       classroom_id: classroom.id,
       created_by: profile.id,
       title: form.title.trim(),
@@ -2338,6 +2264,7 @@ function ActivityForm({
   return (
     <Modal title="Nova atividade" onClose={onClose}>
       <form className="teacher-form" onSubmit={submit}>
+        <label>Tipo<select value={form.kind} onChange={e=>setForm({...form,kind:e.target.value})}><option value="task">Tarefa</option><option value="exam">Prova</option></select></label>
         <label>
           Título
           <input

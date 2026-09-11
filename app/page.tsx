@@ -13,7 +13,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Coins,
   Plus,
   X,
@@ -25,17 +24,17 @@ import {
   Flame,
   Users,
   KeyRound,
+  LogOut,
 } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
   SidebarContent,
 } from '@/components/ui/sidebar';
-import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BrandLogo } from '@/components/brand-logo';
-import { StudentCharacter } from '@/components/student-character';
 import { StudentHome } from '@/components/student-home';
+import { StudentTaskRoute } from '@/components/student-task-route';
 import {
   StudentResourcePage,
   type ResourceKey,
@@ -58,7 +57,6 @@ import {
 } from '@/lib/supabase';
 import {
   calculateConnectedMetrics,
-  connectedSubmissionLabel,
   friendlySupabaseError,
 } from '@/lib/connected-flow';
 import {
@@ -318,10 +316,10 @@ function PasswordRecoveryScreen({
 }
 const navigation: { id: string; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Minha sala', icon: 'home' },
-  { id: 'tasks', label: 'Atividades', icon: 'tasks' },
+  { id: 'tasks', label: 'Trilha de tarefas', icon: 'tasks' },
   { id: 'calendar', label: 'Calendário', icon: 'calendar' },
   { id: 'grades', label: 'Meu boletim', icon: 'grades' },
-  { id: 'attendance', label: 'Meu estudo', icon: 'attendance' },
+  { id: 'resource:exams', label: 'Provas', icon: 'tasks' },
 ];
 type ConnectedAssignment = {
   id: string;
@@ -331,6 +329,7 @@ type ConnectedAssignment = {
   due_at: string | null;
   points: number;
   created_at: string;
+  kind?: 'task' | 'exam';
 };
 type ConnectedSubmission = {
   assignment_id: string;
@@ -353,6 +352,8 @@ export default function Home() {
     [editorTab, setEditorTab] = useState('theme'),
     [view, setView] = useState('home'),
     [resourceView, setResourceView] = useState<ResourceKey | null>(null),
+    [attendanceRecords,setAttendanceRecords] = useState<{present:boolean;attendance_date:string}[]|null>(null),
+    [calendarExpanded,setCalendarExpanded] = useState(false),
     [connectedActivityId, setConnectedActivityId] = useState<string | null>(
       null,
     ),
@@ -513,6 +514,8 @@ export default function Home() {
       setStudentAuthReady(true);
       return;
     }
+    const attendanceResult = await studentSupabase.from('attendance').select('present,attendance_date').eq('student_id',session.user.id);
+    setAttendanceRecords(attendanceResult.error ? null : attendanceResult.data);
     const membershipResult = await studentSupabase
       .from('memberships')
       .select('classroom_id')
@@ -527,7 +530,7 @@ export default function Home() {
       const [assignmentResult, announcementResult] = await Promise.all([
         studentSupabase
           .from('assignments')
-          .select('id,title,subject,instructions,due_at,points,created_at')
+          .select('*')
           .in('classroom_id', classIds)
           .order('created_at', { ascending: false }),
         studentSupabase
@@ -761,7 +764,7 @@ export default function Home() {
     (item) => item.status === 'submitted',
   ).length;
   const learningPathSteps: LearningPathStep[] = studentSummary
-    ? [...teacherAssignments].reverse().map((assignment) => ({
+    ? [...teacherAssignments].filter(a => a.kind !== 'exam').sort((a,b)=>a.created_at.localeCompare(b.created_at)).map((assignment) => ({
         id: assignment.id,
         title: assignment.title,
         completed: teacherSubmissions.some(
@@ -819,93 +822,6 @@ export default function Home() {
       setNotice((e as Error).message);
     }
   }
-  const taskCard = (a: Activity) => {
-    const attempt = state.attempts[a.id];
-    const done = attempt?.submitted,
-      progress = done
-        ? 100
-        : Math.round(
-            ((attempt?.answers.filter((x) => x !== null).length ?? 0) /
-              a.questions.length) *
-              100,
-          );
-    return (
-      <article className={`task-card card ${a.color}`} key={a.id}>
-        <div className="task-top">
-          <span className="subject-tag">{a.subject}</span>
-          <span>
-            <Clock size={13} />
-            {a.minutes} min
-          </span>
-        </div>
-        <h3>{a.title}</h3>
-        <p>{a.description}</p>
-        <div className="task-progress">
-          <span>
-            {done
-              ? 'Concluída'
-              : progress
-                ? 'Em andamento'
-                : 'Pronta para começar'}
-          </span>
-          <strong>{progress}%</strong>
-        </div>
-        <Progress value={progress} aria-label={`Progresso: ${a.title}`} />
-        <button
-          className={done ? 'task-button completed' : 'task-button'}
-          onClick={() => setActiveTask(a)}
-        >
-          {done
-            ? 'Ver resultado'
-            : progress
-              ? 'Continuar atividade'
-              : 'Começar atividade'}
-          {done ? <CheckCircle2 size={17} /> : <ArrowRight size={17} />}
-        </button>
-      </article>
-    );
-  };
-  const teacherTaskCard = (a: ConnectedAssignment) => {
-    const submission = teacherSubmissions.find(
-        (item) => item.assignment_id === a.id,
-      ),
-      submitted = submission?.status === 'submitted',
-      submissionLabel = connectedSubmissionLabel(submission),
-      due = a.due_at
-        ? new Date(a.due_at).toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-          })
-        : 'Sem prazo';
-    return (
-      <article className="task-card card blue" key={a.id}>
-        <div className="task-top">
-          <span className="subject-tag">{a.subject}</span>
-          <span>
-            <Clock size={13} />
-            {due}
-          </span>
-        </div>
-        <h3>{a.title}</h3>
-        <p>{a.instructions || 'Atividade enviada pelo seu professor.'}</p>
-        <div className="task-progress">
-          <span>{submissionLabel}</span>
-          <strong>
-            {submitted && submission?.score != null
-              ? `${submission.score}/${a.points}`
-              : `${a.points} pts`}
-          </strong>
-        </div>
-        <button
-          className={submitted ? 'task-button completed' : 'task-button'}
-          onClick={() => openConnectedActivity(a.id)}
-        >
-          {submitted ? 'Ver na sala' : 'Abrir na sala'}
-          <ArrowRight size={17} />
-        </button>
-      </article>
-    );
-  };
   const calendar = (
     <section className="calendar card">
       <div className="card-heading">
@@ -977,7 +893,7 @@ export default function Home() {
               onClick={() => setSelectedDate(d)}
             >
               {i + 1}
-              {state.events.some((e) => e.date === d) && <i />}
+              {(state.events.some((e) => e.date === d) || teacherAssignments.some(a=>a.due_at && localDate(new Date(a.due_at))===d)) && <i />}
             </button>
           );
         })}
@@ -998,6 +914,7 @@ export default function Home() {
             <Plus size={17} />
           </button>
         </div>
+        {teacherAssignments.filter(a=>a.due_at && localDate(new Date(a.due_at))===selectedDate).map(a=><button key={a.id} className="student-calendar-deadline" onClick={()=>openConnectedActivity(a.id)}><strong>{a.kind==='exam'?'Prova':'Tarefa'}: {a.title}</strong><span>{a.subject} · Abrir <ArrowRight size={14}/></span></button>)}
         {dayEvents.length ? (
           dayEvents.map((e) => (
             <div className="event-row" key={e.id}>
@@ -1019,7 +936,7 @@ export default function Home() {
             </div>
           ))
         ) : (
-          <p className="empty-note">Dia livre para novas descobertas.</p>
+          <p className="empty-note">Nenhum compromisso pessoal neste dia.</p>
         )}
       </div>
     </section>
@@ -1181,8 +1098,8 @@ export default function Home() {
                 <button
                   key={n.id}
                   aria-label={n.label}
-                  className={`nav-item ${view === n.id ? 'active' : ''}`}
-                  aria-current={view === n.id ? 'page' : undefined}
+                  className={`nav-item ${(view === n.id || (n.id === 'resource:exams' && resourceView === 'exams')) ? 'active' : ''}`}
+                  aria-current={(view === n.id || (n.id === 'resource:exams' && resourceView === 'exams')) ? 'page' : undefined}
                   onClick={() => changeView(n.id)}
                 >
                   <AppIcon name={n.icon} pack={p.icons} size={23} />
@@ -1196,6 +1113,7 @@ export default function Home() {
                   )}
                 </button>
               ))}
+            <button className="nav-item" aria-label="Sair da plataforma" onClick={async()=>{await studentSupabase.auth.signOut();setShowStudentConnect(true);}}><LogOut size={23}/><span>Sair</span></button>
             </nav>
             <div className="sidebar-customize">
               <span className="customize-illustration">
@@ -1270,14 +1188,6 @@ export default function Home() {
                     {studentSummary ? 'Minha turma' : 'Entrar na turma'}
                   </span>
                 </button>
-                <button
-                  className="teacher-mode-button"
-                  aria-label="Abrir modo professor"
-                  onClick={openTeacherMode}
-                >
-                  <AppIcon name="school" pack={p.icons} size={18} />
-                  <span>Modo professor</span>
-                </button>
                 <span
                   className="coin-wallet"
                   title={
@@ -1311,7 +1221,7 @@ export default function Home() {
               earned={studentSummary?.earned ?? 0}
               possible={studentSummary?.possible ?? 0}
               steps={learningPathSteps}
-              calendar={calendar}
+              calendar={<><button className="student-expand-calendar" onClick={()=>setCalendarExpanded(true)}>Expandir calendário <ArrowUpRight size={18}/></button>{calendar}</>}
               onNavigate={changeView}
               onClassroom={() => {
                 setConnectedActivityId(null);
@@ -1322,110 +1232,8 @@ export default function Home() {
               onActivity={openConnectedActivity}
             />
           )}
-          {view === 'tasks' && (
-            <div className="dashboard">
-              <div className="main-column">
-                <section>
-                  <div className="section-heading">
-                    <div>
-                      <span className="eyebrow">SEU PRÓXIMO DESAFIO</span>
-                      <h2>Todas as atividades</h2>
-                    </div>
-                  </div>
-                  <div className="task-grid">
-                    {studentSummary ? (
-                      teacherAssignments.length ? (
-                        teacherAssignments.map(teacherTaskCard)
-                      ) : (
-                        <p className="empty-note">
-                          Nenhuma atividade foi enviada pelo professor ainda.
-                        </p>
-                      )
-                    ) : (
-                      activities.map(taskCard)
-                    )}
-                  </div>
-                </section>
-                {studentSummary ? (
-                  <section className="schedule" id="student-materials">
-                    <div className="section-heading">
-                      <div>
-                        <span className="eyebrow">MATERIAIS DA TURMA</span>
-                        <h2>Conteúdos enviados</h2>
-                      </div>
-                      <span className="small-label">Pelo professor</span>
-                    </div>
-                    <div className="schedule-list">
-                      {teacherAssignments.length ? (
-                        teacherAssignments.map((a) => (
-                          <div key={a.id} className="schedule-row blue">
-                            <span className="schedule-number">•</span>
-                            <span className="schedule-book">
-                              <AppIcon name="tasks" pack={p.icons} size={23} />
-                            </span>
-                            <span className="schedule-details">
-                              <strong>{a.title}</strong>
-                              <small>
-                                {a.subject} · {a.points} pontos
-                              </small>
-                            </span>
-                            <ArrowUpRight size={18} />
-                          </div>
-                        ))
-                      ) : (
-                        <p className="empty-note">
-                          Os materiais aparecerão aqui quando o professor enviar
-                          uma atividade.
-                        </p>
-                      )}
-                    </div>
-                  </section>
-                ) : (
-                  <section className="schedule" id="student-materials">
-                    <div className="section-heading">
-                      <div>
-                        <span className="eyebrow">PARA IR MAIS LONGE</span>
-                        <h2>Conteúdos para explorar</h2>
-                      </div>
-                      <span className="small-label">No seu ritmo</span>
-                    </div>
-                    <div className="schedule-list">
-                      {activities.map((a, i) => (
-                        <button
-                          key={a.id}
-                          className={`schedule-row ${a.color}`}
-                          onClick={() => setMaterial(a)}
-                        >
-                          <span className="schedule-number">0{i + 1}</span>
-                          <span className="schedule-book">
-                            <AppIcon name="tasks" pack={p.icons} size={23} />
-                          </span>
-                          <span className="schedule-details">
-                            <strong>{a.title}</strong>
-                            <small>{a.subject} · Material de apoio</small>
-                          </span>
-                          <span className="schedule-time">{a.minutes} min</span>
-                          <ArrowUpRight size={18} />
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                )}
-                <div className="encouragement">
-                  <Sparkles size={18} />
-                  <p>
-                    {studentSummary
-                      ? 'Novas atividades e recados aparecerão quando o professor enviar.'
-                      : 'Curiosidade ligada? Então você já começou.'}
-                  </p>
-                </div>
-              </div>
-              <aside className="secondary-column">
-                {calendar}
-                {!studentSummary && reminders}
-              </aside>
-            </div>
-          )}
+          {view === 'tasks' && <StudentTaskRoute name={studentName} preferences={p} work={teacherAssignments} results={teacherSubmissions} onOpen={openConnectedActivity}/>}
+          {view === 'resource' && resourceView === 'exams' && <StudentTaskRoute exams name={studentName} preferences={p} work={teacherAssignments} results={teacherSubmissions} onOpen={openConnectedActivity}/>}
           {view === 'materials' && (
             <div className="materials-page">
               <div className="page-intro">
@@ -1552,6 +1360,7 @@ export default function Home() {
           )}
           {view === 'grades' && (
             <>
+              <section className="student-report-summary"><article><strong>{attendanceRecords===null?'Indisponível':attendanceRecords.length?`${Math.round(attendanceRecords.filter(a=>a.present).length/attendanceRecords.length*100)}%`:'Sem registros'}</strong><span>Presença registrada pelo professor</span></article><article><strong>{teacherAssignments.length?Math.round(teacherDelivered/teacherAssignments.length*100):0}%</strong><span>Atividades entregues</span></article></section>
               <div className="page-intro">
                 <h2>Cada descoberta conta.</h2>
                 <p>
@@ -1714,7 +1523,7 @@ export default function Home() {
               </section>
             </>
           )}
-          {view === 'resource' && resourceView && (
+          {view === 'resource' && resourceView && resourceView !== 'exams' && (
             <StudentResourcePage
               resource={resourceView}
               hasConnectedClass={!!studentSummary}
@@ -1763,6 +1572,7 @@ export default function Home() {
           initialAssignmentId={connectedActivityId}
         />
       )}
+      <Dialog open={calendarExpanded} onOpenChange={setCalendarExpanded}><DialogContent className="student-calendar-dialog"><DialogTitle>Calendário da minha sala</DialogTitle><DialogDescription>Seus compromissos e prazos publicados pelo professor.</DialogDescription>{calendar}</DialogContent></Dialog>
       <Dialog
         open={!!activeTask}
         onOpenChange={(v) => {
