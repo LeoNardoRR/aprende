@@ -12,13 +12,17 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Copy,
+  Download,
   FileCheck2,
+  FileText,
+  FileUp,
   Folder,
   GraduationCap,
   ImageUp,
   LoaderCircle,
   LogOut,
   MessageSquare,
+  NotebookPen,
   Palette,
   Pencil,
   Plus,
@@ -78,10 +82,27 @@ type Submission = {
   feedback: string | null;
   profiles: { display_name: string } | null;
 };
-type Announcement = {
+type LessonRecord = {
   id: string;
   classroom_id: string;
-  message: string;
+  teacher_id: string;
+  lesson_date: string;
+  title: string;
+  content: string;
+  observations: string;
+  created_at: string;
+};
+type LessonMaterial = {
+  id: string;
+  classroom_id: string;
+  teacher_id: string;
+  lesson_record_id: string | null;
+  title: string;
+  file_name: string;
+  storage_path: string;
+  file_type: string;
+  file_size: number;
+  source: 'government' | 'teacher';
   created_at: string;
 };
 
@@ -594,11 +615,32 @@ const teacherPreviewAssignments: Assignment[] = [
     created_at: '',
   },
 ];
-const teacherPreviewAnnouncements: Announcement[] = [
+const teacherPreviewLessonRecords: LessonRecord[] = [
   {
-    id: 'r1',
+    id: 'lesson-preview-1',
     classroom_id: '6a',
-    message: 'Trazer o livro de leitura na próxima aula.',
+    teacher_id: 'teacher-preview',
+    lesson_date: new Date().toLocaleDateString('en-CA'),
+    title: 'Leitura e interpretação de texto',
+    content:
+      'Leitura guiada do texto, identificação das ideias principais e atividade em duplas para produção de um resumo.',
+    observations:
+      'A turma participou bem. Retomar inferência textual na próxima aula.',
+    created_at: new Date().toISOString(),
+  },
+];
+const teacherPreviewLessonMaterials: LessonMaterial[] = [
+  {
+    id: 'material-preview-1',
+    classroom_id: '6a',
+    teacher_id: 'teacher-preview',
+    lesson_record_id: 'lesson-preview-1',
+    title: 'Leitura e interpretação - material oficial',
+    file_name: 'aula-leitura-interpretacao.pdf',
+    storage_path: 'preview/aula-leitura-interpretacao.pdf',
+    file_type: 'application/pdf',
+    file_size: 1860000,
+    source: 'government',
     created_at: new Date().toISOString(),
   },
 ];
@@ -620,8 +662,11 @@ function TeacherDashboard({
     preview ? teacherPreviewStudents : [],
   );
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>(
-    preview ? teacherPreviewAnnouncements : [],
+  const [lessonRecords, setLessonRecords] = useState<LessonRecord[]>(
+    preview ? teacherPreviewLessonRecords : [],
+  );
+  const [lessonMaterials, setLessonMaterials] = useState<LessonMaterial[]>(
+    preview ? teacherPreviewLessonMaterials : [],
   );
   const [selected, setSelected] = useState<string>(preview ? '6a' : '');
   const [view, setView] = useState<
@@ -634,6 +679,7 @@ function TeacherDashboard({
   const [showClassForm, setShowClassForm] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
+  const [showLessonRecordForm, setShowLessonRecordForm] = useState(false);
   const [showAppearanceForm, setShowAppearanceForm] = useState(false);
   const [showClassSettings, setShowClassSettings] = useState(false);
   const [appearance, setAppearance] = useState<TeacherAppearance>(
@@ -669,7 +715,12 @@ function TeacherDashboard({
       );
       if (nextClasses.length) {
         const ids = nextClasses.map((item) => item.id);
-        const [activityResult, memberResult, announcementResult] =
+        const [
+          activityResult,
+          memberResult,
+          lessonRecordResult,
+          lessonMaterialResult,
+        ] =
           await Promise.all([
             supabase
               .from('assignments')
@@ -681,7 +732,13 @@ function TeacherDashboard({
               .select('classroom_id,user_id,profiles(display_name)')
               .in('classroom_id', ids),
             supabase
-              .from('announcements')
+              .from('lesson_records')
+              .select('*')
+              .in('classroom_id', ids)
+              .order('lesson_date', { ascending: false })
+              .order('created_at', { ascending: false }),
+            supabase
+              .from('lesson_materials')
               .select('*')
               .in('classroom_id', ids)
               .order('created_at', { ascending: false }),
@@ -689,12 +746,19 @@ function TeacherDashboard({
         const nextAssignments = (activityResult.data ?? []) as Assignment[];
         setAssignments(nextAssignments);
         setMemberships((memberResult.data ?? []) as unknown as Membership[]);
-        setAnnouncements((announcementResult.data ?? []) as Announcement[]);
+        setLessonRecords((lessonRecordResult.data ?? []) as LessonRecord[]);
+        setLessonMaterials(
+          (lessonMaterialResult.data ?? []) as LessonMaterial[],
+        );
         loadError =
           loadError ||
           activityResult.error ||
-          memberResult.error ||
-          announcementResult.error;
+          memberResult.error;
+        if (lessonRecordResult.error || lessonMaterialResult.error) {
+          setNotice(
+            'O Registro de aula precisa da atualização mais recente do banco de dados.',
+          );
+        }
         if (nextAssignments.length) {
           const submissionResult = await supabase
             .from('submissions')
@@ -714,13 +778,11 @@ function TeacherDashboard({
         setAssignments([]);
         setMemberships([]);
         setSubmissions([]);
-        setAnnouncements([]);
+        setLessonRecords([]);
+        setLessonMaterials([]);
       }
-      setNotice(
-        loadError
-          ? friendlySupabaseError(loadError.message)
-          : successNotice || '',
-      );
+      if (loadError) setNotice(friendlySupabaseError(loadError.message));
+      else if (successNotice) setNotice(successNotice);
       setBusy(false);
     },
     [preview],
@@ -788,16 +850,12 @@ function TeacherDashboard({
       classActivities.some((activity) => activity.id === item.assignment_id) &&
       item.status === 'submitted',
   );
-  const classAnnouncements = announcements.filter(
+  const classLessonRecords = lessonRecords.filter(
     (item) => item.classroom_id === selected,
   );
-  const completion =
-    classActivities.length && classStudents.length
-      ? Math.round(
-          (delivered.length / (classActivities.length * classStudents.length)) *
-            100,
-        )
-      : 0;
+  const classLessonMaterials = lessonMaterials.filter(
+    (item) => item.classroom_id === selected,
+  );
   const today = new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -805,6 +863,25 @@ function TeacherDashboard({
   }).format(new Date());
   function requestRemoveStudent(member: Membership) {
     setRemovingStudent(member);
+  }
+
+  async function openLessonMaterial(material: LessonMaterial) {
+    if (preview) {
+      setNotice('Na versão publicada, o arquivo será aberto por um link seguro.');
+      return;
+    }
+    const { data, error } = await supabase.storage
+      .from('lesson-materials')
+      .createSignedUrl(material.storage_path, 60);
+    if (error || !data?.signedUrl) {
+      setNotice(
+        error
+          ? friendlySupabaseError(error.message)
+          : 'Não foi possível abrir este material.',
+      );
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
   }
 
   async function removeStudent() {
@@ -1083,9 +1160,15 @@ function TeacherDashboard({
                     <ClipboardCheck />
                     Lançar atividade
                   </button>
-                  <button onClick={() => setShowAnnouncementForm(true)}>
-                    <BookOpen />
-                    Recados e registros
+                  <button
+                    onClick={() =>
+                      document
+                        .getElementById('teacher-lesson-register')
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }
+                  >
+                    <NotebookPen />
+                    Registro da aula
                   </button>
                   <button onClick={() => setView('exams')}>
                     <FileCheck2 />
@@ -1111,31 +1194,18 @@ function TeacherDashboard({
                       compact
                     />
                   </section>
-                  <section className="teacher-panel">
-                    <div className="teacher-panel-title">
-                      <div>
-                        <span>ACOMPANHAMENTO</span>
-                        <h2>Resumo da turma</h2>
-                      </div>
-                    </div>
-                    <section className="teacher-compact-stats">
-                      <Stat
-                        icon={<BookOpen />}
-                        value={classActivities.length}
-                        label="atividades"
-                      />
-                      <Stat
-                        icon={<CheckCircle2 />}
-                        value={`${completion}%`}
-                        label="conclusão"
-                      />
-                      <Stat
-                        icon={<MessageSquare />}
-                        value={classAnnouncements.length}
-                        label="recados"
-                      />
-                    </section>
-                    <AnnouncementList announcements={classAnnouncements} />
+                  <section
+                    className="teacher-panel teacher-lesson-panel"
+                    id="teacher-lesson-register"
+                  >
+                    <LessonRegister
+                      records={classLessonRecords}
+                      materials={classLessonMaterials}
+                      onNewRecord={() => setShowLessonRecordForm(true)}
+                      onOpenMaterial={(material) =>
+                        void openLessonMaterial(material)
+                      }
+                    />
                   </section>
                 </div>
                 <section className="teacher-panel teacher-task-table-panel">
@@ -1298,6 +1368,21 @@ function TeacherDashboard({
             classroom={currentClass}
             onClose={() => setShowAnnouncementForm(false)}
             onSaved={() => refresh('Recado enviado para a turma.')}
+          />
+        )}{' '}
+        {showLessonRecordForm && currentClass && (
+          <LessonRecordForm
+            profile={profile}
+            classroom={currentClass}
+            preview={preview}
+            onClose={() => setShowLessonRecordForm(false)}
+            onPreviewSaved={(record, materials) => {
+              setLessonRecords((items) => [record, ...items]);
+              setLessonMaterials((items) => [...materials, ...items]);
+              setShowLessonRecordForm(false);
+              setNotice('Registro de aula salvo nesta prévia.');
+            }}
+            onSaved={() => refresh('Registro de aula salvo com sucesso.')}
           />
         )}{' '}
         {showAppearanceForm && (
@@ -1565,6 +1650,354 @@ function TeacherAppearanceForm({
   );
 }
 
+function LessonRegister({
+  records,
+  materials,
+  onNewRecord,
+  onOpenMaterial,
+}: {
+  records: LessonRecord[];
+  materials: LessonMaterial[];
+  onNewRecord: () => void;
+  onOpenMaterial: (material: LessonMaterial) => void;
+}) {
+  return (
+    <div className="teacher-lesson-register">
+      <div className="teacher-panel-title">
+        <div>
+          <span>DOCUMENTAÇÃO PEDAGÓGICA</span>
+          <h2>Registro da aula</h2>
+        </div>
+        <button
+          type="button"
+          className="teacher-primary compact"
+          onClick={onNewRecord}
+        >
+          <Plus />
+          Novo registro
+        </button>
+      </div>
+      <p className="teacher-lesson-intro">
+        Registre o que foi trabalhado e mantenha os arquivos da aula reunidos
+        com a data correta.
+      </p>
+      {records.length ? (
+        <div className="teacher-lesson-list">
+          {records.slice(0, 6).map((record) => {
+            const attachments = materials.filter(
+              (material) => material.lesson_record_id === record.id,
+            );
+            return (
+              <details key={record.id}>
+                <summary>
+                  <span className="teacher-lesson-date">
+                    <CalendarDays />
+                    {new Date(`${record.lesson_date}T12:00:00`).toLocaleDateString(
+                      'pt-BR',
+                    )}
+                  </span>
+                  <strong>{record.title}</strong>
+                  <small>
+                    {attachments.length}{' '}
+                    {attachments.length === 1 ? 'arquivo' : 'arquivos'}
+                  </small>
+                </summary>
+                <div className="teacher-lesson-details">
+                  <section>
+                    <span>O que foi feito</span>
+                    <p>{record.content}</p>
+                  </section>
+                  {record.observations && (
+                    <section>
+                      <span>Observações</span>
+                      <p>{record.observations}</p>
+                    </section>
+                  )}
+                  {attachments.length > 0 && (
+                    <div className="teacher-lesson-files">
+                      {attachments.map((material) => (
+                        <button
+                          type="button"
+                          key={material.id}
+                          onClick={() => onOpenMaterial(material)}
+                        >
+                          <FileText />
+                          <span>
+                            <strong>{material.title}</strong>
+                            <small>
+                              {material.file_name} ·{' '}
+                              {formatFileSize(material.file_size)}
+                            </small>
+                          </span>
+                          <Download />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="teacher-lesson-empty"
+          onClick={onNewRecord}
+        >
+          <NotebookPen />
+          <strong>Registre a primeira aula desta turma</strong>
+          <span>Inclua a data, o relato e os arquivos utilizados.</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function safeLessonFileName(name: string) {
+  const parts = name.split('.');
+  const extension = parts.length > 1 ? `.${parts.pop()!.toLowerCase()}` : '';
+  const base = parts
+    .join('.')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 100);
+  return `${base || 'arquivo'}${extension}`;
+}
+
+function LessonRecordForm({
+  profile,
+  classroom,
+  preview,
+  onClose,
+  onPreviewSaved,
+  onSaved,
+}: {
+  profile: Profile;
+  classroom: Classroom;
+  preview: boolean;
+  onClose: () => void;
+  onPreviewSaved: (
+    record: LessonRecord,
+    materials: LessonMaterial[],
+  ) => void;
+  onSaved: () => Promise<void>;
+}) {
+  const [lessonDate, setLessonDate] = useState(
+    new Date().toLocaleDateString('en-CA'),
+  );
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [observations, setObservations] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+
+  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const normalizedContent = content.trim();
+    const normalizedTitle =
+      title.trim() || normalizedContent.split(/\n|[.!?]/)[0].slice(0, 160);
+    if (files.some((file) => file.size > 20 * 1024 * 1024)) {
+      setNotice('Cada arquivo pode ter no máximo 20 MB.');
+      return;
+    }
+    setBusy(true);
+    setNotice('Salvando o registro e os arquivos...');
+    const timestamp = new Date().toISOString();
+    if (preview) {
+      const recordId = `lesson-preview-${Date.now()}`;
+      const record: LessonRecord = {
+        id: recordId,
+        classroom_id: classroom.id,
+        teacher_id: profile.id,
+        lesson_date: lessonDate,
+        title: normalizedTitle,
+        content: normalizedContent,
+        observations: observations.trim(),
+        created_at: timestamp,
+      };
+      const previewMaterials = files.map((file, index) => ({
+        id: `material-preview-${Date.now()}-${index}`,
+        classroom_id: classroom.id,
+        teacher_id: profile.id,
+        lesson_record_id: recordId,
+        title: file.name.slice(0, 160),
+        file_name: file.name,
+        storage_path: `preview/${safeLessonFileName(file.name)}`,
+        file_type: file.type || 'application/octet-stream',
+        file_size: file.size,
+        source: 'teacher' as const,
+        created_at: timestamp,
+      }));
+      onPreviewSaved(record, previewMaterials);
+      return;
+    }
+
+    const { data: createdRecord, error: recordError } = await supabase
+      .from('lesson_records')
+      .insert({
+        classroom_id: classroom.id,
+        teacher_id: profile.id,
+        lesson_date: lessonDate,
+        title: normalizedTitle,
+        content: normalizedContent,
+        observations: observations.trim(),
+      })
+      .select('*')
+      .single();
+    if (recordError || !createdRecord) {
+      setNotice(
+        friendlySupabaseError(
+          recordError?.message || 'Não foi possível criar o registro.',
+        ),
+      );
+      setBusy(false);
+      return;
+    }
+
+    const uploadedPaths: string[] = [];
+    for (const file of files) {
+      const path = `${classroom.id}/${createdRecord.id}/${crypto.randomUUID()}-${safeLessonFileName(file.name)}`;
+      const { error: uploadError } = await supabase.storage
+        .from('lesson-materials')
+        .upload(path, file, {
+          contentType: file.type || 'application/octet-stream',
+          upsert: false,
+        });
+      if (uploadError) {
+        if (uploadedPaths.length)
+          await supabase.storage.from('lesson-materials').remove(uploadedPaths);
+        await supabase.from('lesson_records').delete().eq('id', createdRecord.id);
+        setNotice(friendlySupabaseError(uploadError.message));
+        setBusy(false);
+        return;
+      }
+      uploadedPaths.push(path);
+      const { error: materialError } = await supabase
+        .from('lesson_materials')
+        .insert({
+          classroom_id: classroom.id,
+          teacher_id: profile.id,
+          lesson_record_id: createdRecord.id,
+          title: file.name.replace(/\.[^.]+$/, '').slice(0, 160),
+          file_name: file.name,
+          storage_path: path,
+          file_type: file.type || 'application/octet-stream',
+          file_size: file.size,
+          source: 'teacher',
+        });
+      if (materialError) {
+        await supabase.storage.from('lesson-materials').remove(uploadedPaths);
+        await supabase.from('lesson_records').delete().eq('id', createdRecord.id);
+        setNotice(friendlySupabaseError(materialError.message));
+        setBusy(false);
+        return;
+      }
+    }
+    await onSaved();
+    onClose();
+  }
+
+  return (
+    <Modal title="Novo registro da aula" onClose={onClose} wide>
+      <form className="teacher-form teacher-lesson-form" onSubmit={submit}>
+        <p className="teacher-form-help">
+          Este registro ficará salvo em <strong>{classroom.name}</strong> e
+          vinculado ao seu login de professor.
+        </p>
+        <div className="teacher-form-row teacher-lesson-form-heading">
+          <label>
+            Data da aula
+            <input
+              required
+              type="date"
+              value={lessonDate}
+              onChange={(event) => setLessonDate(event.target.value)}
+            />
+          </label>
+          <label>
+            Título ou tema (opcional)
+            <input
+              maxLength={160}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Ex.: Leitura e interpretação"
+            />
+          </label>
+        </div>
+        <label>
+          O que foi feito na aula
+          <textarea
+            required
+            minLength={2}
+            maxLength={12000}
+            rows={7}
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            placeholder="Descreva conteúdos, atividades, metodologia e o andamento da aula."
+          />
+        </label>
+        <label>
+          Observações para acompanhamento
+          <textarea
+            maxLength={8000}
+            rows={4}
+            value={observations}
+            onChange={(event) => setObservations(event.target.value)}
+            placeholder="Ex.: pontos que precisam ser retomados na próxima aula."
+          />
+        </label>
+        <label className="teacher-lesson-upload">
+          <span>
+            <FileUp />
+            <strong>Anexar arquivos da aula</strong>
+            <small>
+              PDF, PowerPoint, Word, Pages e outros formatos · até 20 MB cada
+            </small>
+          </span>
+          <input
+            type="file"
+            multiple
+            onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
+          />
+        </label>
+        {files.length > 0 && (
+          <div className="teacher-lesson-selected-files">
+            {files.map((file) => (
+              <span key={`${file.name}-${file.lastModified}`}>
+                <FileText />
+                <strong>{file.name}</strong>
+                <small>{formatFileSize(file.size)}</small>
+              </span>
+            ))}
+          </div>
+        )}
+        {notice && <p className="teacher-notice">{notice}</p>}
+        <div className="teacher-modal-actions">
+          <button type="button" className="teacher-secondary" onClick={onClose}>
+            Cancelar
+          </button>
+          <button
+            className="teacher-primary"
+            disabled={busy}
+          >
+            {busy ? <LoaderCircle className="spin" /> : <NotebookPen />}
+            {busy ? 'Salvando...' : 'Salvar registro da aula'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 function AttendancePanel({
   classroom,
   students,
@@ -1764,25 +2197,6 @@ function Gradebook({
   );
 }
 
-function Stat({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: string | number;
-  label: string;
-}) {
-  return (
-    <article>
-      <span>{icon}</span>
-      <div>
-        <strong>{value}</strong>
-        <small>{label}</small>
-      </div>
-    </article>
-  );
-}
 function ActivityList({
   activities,
   submissions,
@@ -1828,33 +2242,6 @@ function ActivityList({
           </article>
         );
       })}
-    </div>
-  );
-}
-function AnnouncementList({
-  announcements,
-}: {
-  announcements: Announcement[];
-}) {
-  if (!announcements.length)
-    return (
-      <p className="teacher-empty-line">
-        Envie orientações, lembretes e novidades para a turma.
-      </p>
-    );
-  return (
-    <div className="teacher-announcement-list">
-      {announcements.slice(0, 5).map((item) => (
-        <article key={item.id}>
-          <Bell />
-          <div>
-            <p>{item.message}</p>
-            <small>
-              {new Date(item.created_at).toLocaleDateString('pt-BR')}
-            </small>
-          </div>
-        </article>
-      ))}
     </div>
   );
 }

@@ -707,6 +707,9 @@ export default function Home() {
           await studentSupabase.auth.updateUser({
             data: {
               student_appearance: {
+                presentation: nextPreferences.presentation,
+                accessory: nextPreferences.accessory,
+                accessoryColor: nextPreferences.accessoryColor,
                 hair: nextPreferences.hair,
                 hairColor: nextPreferences.hairColor,
                 skin: nextPreferences.skin,

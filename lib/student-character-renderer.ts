@@ -31,26 +31,15 @@ function rgb(h: number, s: number, v: number) {
 function hexHsv(hex: string) { return hsv(parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)); }
 
 export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences, fullBody = false) {
-  const bodyName = p.outfit === 'jacket' ? 'character-jacket.png' : p.outfit === 'tee' ? 'character-tee.png' : 'character-original.png';
-  const hairName = p.hair === 'short' ? 'character-short.png' : p.hair === 'curls' ? 'character-curls.png' : 'character-original.png';
-  const [body, hair] = await Promise.all([
-    loadImage(fullBody ? characterSource(true) : base + bodyName),
-    fullBody || hairName === bodyName ? Promise.resolve(null) : loadImage(base + hairName),
-  ]);
+  const hairSource:Record<string,string>={long:p.presentation==='feminine'?'character-feminine-long.png':'character-long.png',bob:'character-bob.png',ponytail:'character-ponytail-v2.png',bun:'character-bun.png'};
+  // Every option keeps the approved face, pose, framing and body proportions.
+  const body = await loadImage(fullBody ? characterSource(true) : base+(hairSource[p.hair]??'character-original.png'));
   const width = fullBody ? 240 : 680;
   canvas.width = width;
   canvas.height = Math.round(width * body.naturalHeight / body.naturalWidth);
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return;
   ctx.drawImage(body, 0, 0, canvas.width, canvas.height);
-  // The alternate portraits retain the same framing and neck position. Their upper
-  // portion is composed with the selected outfit; color changes are applied afterwards.
-  if (hair && !fullBody) {
-    const split = Math.round(canvas.height * .60);
-    ctx.clearRect(0, 0, canvas.width, split);
-    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, canvas.width, split); ctx.clip();
-    ctx.drawImage(hair, 0, 0, canvas.width, canvas.height); ctx.restore();
-  }
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
   // Remove the neutral exterior matte at render time, preserving enclosed whites
   // (eyes, shirt highlights). The uploaded original already has an alpha channel.
@@ -66,6 +55,13 @@ export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences,
   for(let x=0;x<w;x++){enqueue(x);enqueue((h-1)*w+x);}
   for(let y=0;y<h;y++){enqueue(y*w);enqueue(y*w+w-1);}
   while(head<tail){const index=queue[head++];pixels[index*4+3]=0;const x=index%w;if(x>0)enqueue(index-1);if(x<w-1)enqueue(index+1);enqueue(index-w);enqueue(index+w);}
+  // Build a connected mask from the hair at the top of the portrait. This keeps
+  // similarly colored backpack straps and clothing outside the recolored region.
+  const hairMask=new Uint8Array(w*h),hairQueue=new Int32Array(w*h);let hairHead=0,hairTail=0;
+  function hairCandidate(index:number){if(index<0||index>=hairMask.length||hairMask[index])return false;const n=index*4,[hh,ss,vv]=hsv(pixels[n],pixels[n+1],pixels[n+2]);return pixels[n+3]>8&&hh<.14&&ss>.18&&vv<.67;}
+  function addHair(index:number){if(!hairCandidate(index))return;hairMask[index]=1;hairQueue[hairTail++]=index;}
+  for(let y=0;y<Math.round(h*.3);y++)for(let x=0;x<w;x++)addHair(y*w+x);
+  while(hairHead<hairTail){const index=hairQueue[hairHead++],x=index%w;if(x>0)addHair(index-1);if(x<w-1)addHair(index+1);if(index>=w)addHair(index-w);if(index<w*(h-1))addHair(index+w);}
   const colors = { hair:hexHsv(p.hairColor), skin:hexHsv(p.skin), eye:hexHsv(p.eyeColor), outfit:hexHsv(p.outfitColor) };
   for (let i = 0; i < data.data.length; i += 4) {
     if (data.data[i + 3] < 8) continue;
@@ -73,16 +69,16 @@ export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences,
     const [h,s,v] = hsv(data.data[i],data.data[i+1],data.data[i+2]);
     let kind: keyof typeof colors | null = null;
     if (fullBody) {
-      if (y < .29 && h < .12 && v < .46) kind = 'hair';
+      if (hairMask[i/4]) kind = 'hair';
       else if (y < .39 && h > .025 && h < .14 && s > .3 && v > .5) kind = 'skin';
       else if (y > .29 && y < .68 && h > .48 && h < .78 && s > .2) kind = 'outfit';
     } else {
       const leftEye = ((x-.543)/.025)**2 + ((y-.337)/.028)**2 < 1;
       const rightEye = ((x-.68)/.024)**2 + ((y-.365)/.032)**2 < 1;
       if ((leftEye || rightEye) && v > .07 && v < .55 && s > .12) kind = 'eye';
-      else if (y < .56 && h < .13 && v < .48 && !(leftEye || rightEye)) kind = 'hair';
+      else if (hairMask[i/4] && !(leftEye || rightEye)) kind = 'hair';
       else if (y < .78 && h > .025 && h < .14 && s > .33 && v > .53) kind = 'skin';
-      else if (y > .51 && s > .25 && ((h > .52 && h < .79) || (p.outfit === 'jacket' && h > .32 && h < .58) || (p.outfit === 'tee' && h > .015 && h < .13))) kind = 'outfit';
+      else if (y > .51 && s > .25 && h > .52 && h < .79) kind = 'outfit';
     }
     if (!kind) continue;
     // The initial look uses the original pixels exactly. Shading and highlights are
