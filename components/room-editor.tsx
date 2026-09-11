@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AppIcon } from '@/components/classroom-icon';
+import { StudentCharacter } from '@/components/student-character';
 import {
   themes,
   fonts,
@@ -311,7 +312,7 @@ export function RoomEditor({
             <TabsContent value="profile">
               <div className="category-title">
                 <h3>Prazer, você!</h3>
-                <p>Escolha seu avatar e como quer aparecer na sala.</p>
+                <p>Monte seu personagem e veja as mudanças na hora.</p>
               </div>
               <label className="form-label" htmlFor="profile-name">
                 Seu nome
@@ -323,32 +324,85 @@ export function RoomEditor({
                 value={draft.name}
                 onChange={(e) => select('name', e.target.value)}
               />
-              <h4 className="avatar-label">Escolha um avatar</h4>
-              <div className="avatar-choices">
-                {Array.from({ length: 8 }, (_, i) => (
-                  <button
-                    key={i}
-                    className={`avatar-choice ${draft.avatar === i ? 'chosen' : ''}`}
-                    aria-label={`Selecionar avatar ${i + 1}`}
-                    aria-pressed={draft.avatar === i}
-                    onClick={() => select('avatar', i)}
-                  >
-                    <img src={`./avatars/avatar-${i}.svg`} alt="" />
-                    {mark(draft.avatar === i)}
-                  </button>
-                ))}
+              <div className="character-editor-preview">
+                <StudentCharacter preferences={draft} size="preview" />
+                <span>
+                  <strong>{draft.name || 'Seu personagem'}</strong>
+                  <small>
+                    Este personagem aparece no banner e na sua trilha.
+                  </small>
+                </span>
               </div>
-              <p className="asset-credit">
-                Adventurer por Lisa Wischofsky, via{' '}
-                <a
-                  href="https://www.dicebear.com/styles/adventurer/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  DiceBear
-                </a>{' '}
-                · CC BY 4.0.
-              </p>
+              <div className="character-options">
+                <CharacterButtons
+                  label="Cabelo"
+                  value={draft.hair}
+                  options={[
+                    ['waves', 'Ondulado'],
+                    ['short', 'Curto'],
+                    ['curls', 'Cacheado'],
+                    ['ponytail', 'Rabo'],
+                  ]}
+                  onSelect={(value) => select('hair', value)}
+                />
+                <CharacterSwatches
+                  label="Cor do cabelo"
+                  value={draft.hairColor}
+                  colors={[
+                    '#3b241d',
+                    '#171717',
+                    '#8a4d25',
+                    '#d6a23e',
+                    '#7a3f78',
+                  ]}
+                  onSelect={(value) => select('hairColor', value)}
+                />
+                <CharacterButtons
+                  label="Olhos"
+                  value={draft.eyes}
+                  options={[
+                    ['bright', 'Brilhante'],
+                    ['calm', 'Calmo'],
+                    ['happy', 'Feliz'],
+                  ]}
+                  onSelect={(value) => select('eyes', value)}
+                />
+                <CharacterSwatches
+                  label="Tom de pele"
+                  value={draft.skin}
+                  colors={[
+                    '#f6c49b',
+                    '#f2a06b',
+                    '#d98251',
+                    '#b8643e',
+                    '#7c422d',
+                  ]}
+                  onSelect={(value) => select('skin', value)}
+                />
+                <CharacterButtons
+                  label="Roupa"
+                  value={draft.outfit}
+                  options={[
+                    ['hoodie', 'Moletom'],
+                    ['jacket', 'Jaqueta'],
+                    ['tee', 'Camiseta'],
+                    ['overalls', 'Jardineira'],
+                  ]}
+                  onSelect={(value) => select('outfit', value)}
+                />
+                <CharacterSwatches
+                  label="Cor da roupa"
+                  value={draft.outfitColor}
+                  colors={[
+                    '#244b82',
+                    '#7a4eb3',
+                    '#248069',
+                    '#d95736',
+                    '#cc4778',
+                  ]}
+                  onSelect={(value) => select('outfitColor', value)}
+                />
+              </div>
             </TabsContent>
             <button
               className="reset-style"
@@ -392,5 +446,69 @@ export function RoomEditor({
         </footer>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function CharacterButtons({
+  label,
+  value,
+  options,
+  onSelect,
+}: {
+  label: string;
+  value: string;
+  options: [string, string][];
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <fieldset className="character-option-row">
+      <legend>{label}</legend>
+      <div className="trait-buttons">
+        {options.map(([id, name]) => (
+          <button
+            type="button"
+            key={id}
+            className={value === id ? 'chosen' : ''}
+            aria-pressed={value === id}
+            onClick={() => onSelect(id)}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function CharacterSwatches({
+  label,
+  value,
+  colors,
+  onSelect,
+}: {
+  label: string;
+  value: string;
+  colors: string[];
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <fieldset className="character-option-row">
+      <legend>{label}</legend>
+      <div className="trait-swatches">
+        {colors.map((color) => (
+          <button
+            type="button"
+            key={color}
+            className={value === color ? 'chosen' : ''}
+            style={{ background: color }}
+            aria-label={`${label}: ${color}`}
+            aria-pressed={value === color}
+            onClick={() => onSelect(color)}
+          >
+            {value === color && <Check size={13} />}
+          </button>
+        ))}
+      </div>
+    </fieldset>
   );
 }

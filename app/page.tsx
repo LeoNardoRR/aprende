@@ -34,6 +34,8 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BrandLogo } from '@/components/brand-logo';
+import { StudentCharacter } from '@/components/student-character';
+import { StudentLearningPath } from '@/components/student-learning-path';
 import {
   Dialog,
   DialogContent,
@@ -114,7 +116,9 @@ function EmailConfirmationScreen({
   role: 'teacher' | 'student';
   onContinue: () => void;
 }) {
-  const [status, setStatus] = useState<'checking' | 'success' | 'error'>('checking');
+  const [status, setStatus] = useState<'checking' | 'success' | 'error'>(
+    'checking',
+  );
   useEffect(() => {
     let active = true;
     const client = role === 'teacher' ? supabase : studentSupabase;
@@ -137,7 +141,13 @@ function EmailConfirmationScreen({
   return (
     <main className="email-confirmation-page">
       <section className="email-confirmation-card" aria-live="polite">
-        <span className={status === 'success' ? 'email-confirmation-icon success' : 'email-confirmation-icon'}>
+        <span
+          className={
+            status === 'success'
+              ? 'email-confirmation-icon success'
+              : 'email-confirmation-icon'
+          }
+        >
           <CheckCircle2 size={30} />
         </span>
         {status === 'checking' && (
@@ -151,14 +161,19 @@ function EmailConfirmationScreen({
           <>
             <span className="teacher-kicker">E-MAIL CONFIRMADO</span>
             <h1>Sua conta está ativa.</h1>
-            <p>Agora você já pode voltar e entrar como {role === 'teacher' ? 'professor' : 'aluno'}.</p>
+            <p>
+              Agora você já pode voltar e entrar como{' '}
+              {role === 'teacher' ? 'professor' : 'aluno'}.
+            </p>
           </>
         )}
         {status === 'error' && (
           <>
             <span className="teacher-kicker">NÃO FOI POSSÍVEL CONFIRMAR</span>
             <h1>O link pode ter expirado.</h1>
-            <p>Solicite um novo e-mail de confirmação e abra o link mais recente.</p>
+            <p>
+              Solicite um novo e-mail de confirmação e abra o link mais recente.
+            </p>
           </>
         )}
         <button className="teacher-primary" onClick={onContinue}>
@@ -349,9 +364,9 @@ export default function Home() {
     [confirmationMode, setConfirmationMode] = useState<
       'teacher' | 'student' | null
     >(null),
-    [recoveryMode, setRecoveryMode] = useState<
-      'teacher' | 'student' | null
-    >(null),
+    [recoveryMode, setRecoveryMode] = useState<'teacher' | 'student' | null>(
+      null,
+    ),
     [studentAuthReady, setStudentAuthReady] = useState(false),
     [studentSummary, setStudentSummary] = useState<{
       name: string;
@@ -375,7 +390,10 @@ export default function Home() {
     setShowStudentConnect(true);
   }, []);
   useEffect(() => {
-    if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
+    if (
+      'serviceWorker' in navigator &&
+      window.location.hostname !== 'localhost'
+    ) {
       void navigator.serviceWorker.register('./sw.js', { scope: './' });
     }
   }, []);
@@ -633,7 +651,10 @@ export default function Home() {
     root.style.setProperty('--room-font', font.family);
   }, [p.theme, p.cursor, theme, font]);
   function openEditor(tab = 'theme') {
-    setDraft({ ...state.preferences });
+    setDraft({
+      ...state.preferences,
+      name: studentSummary?.name || state.preferences.name,
+    });
     setEditorTab(tab);
     setEditing(true);
   }
@@ -674,6 +695,16 @@ export default function Home() {
     setView(v);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+  function openMaterials() {
+    setView('home');
+    window.setTimeout(
+      () =>
+        document
+          .getElementById('student-materials')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      0,
+    );
+  }
   const completed = activities.filter((a) => state.attempts[a.id]?.submitted),
     attendanceToday = state.attendance.includes(today);
   const teacherAssignments = studentSummary?.assignments ?? [];
@@ -682,6 +713,21 @@ export default function Home() {
   const teacherDelivered = teacherSubmissions.filter(
     (item) => item.status === 'submitted',
   ).length;
+  const learningPathSteps = studentSummary
+    ? teacherAssignments.slice(0, 5).map((assignment) => ({
+        id: assignment.id,
+        title: assignment.title,
+        completed: teacherSubmissions.some(
+          (submission) =>
+            submission.assignment_id === assignment.id &&
+            submission.status === 'submitted',
+        ),
+      }))
+    : activities.slice(0, 5).map((activity) => ({
+        id: activity.id,
+        title: activity.title,
+        completed: !!state.attempts[activity.id]?.submitted,
+      }));
   const dayEvents = state.events
     .filter((e) => e.date === selectedDate)
     .sort((a, b) => a.time.localeCompare(b.time));
@@ -1044,9 +1090,7 @@ export default function Home() {
     return (
       <>
         <Suspense fallback={<LoadingArea text="Abrindo o modo professor..." />}>
-          <TeacherPortal
-            onClose={openStudentMode}
-          />
+          <TeacherPortal onClose={openStudentMode} />
         </Suspense>
         <PwaInstall />
       </>
@@ -1204,6 +1248,9 @@ export default function Home() {
                     fetchPriority="high"
                   />
                 )}
+                <div className="student-character-hero-wrap">
+                  <StudentCharacter preferences={p} />
+                </div>
                 <div className="welcome-copy">
                   <span className="hero-eyebrow">
                     <span /> PARTIU DESCOBRIR COISAS NOVAS?
@@ -1227,6 +1274,70 @@ export default function Home() {
                 >
                   <SlidersHorizontal size={17} />
                 </button>
+              </section>
+              <section
+                className="student-quick-links"
+                aria-label="Atalhos da sala"
+              >
+                {[
+                  {
+                    label: 'Atividades',
+                    detail: 'Missões da turma',
+                    icon: 'tasks' as IconName,
+                    tone: 'gold',
+                    action: () => changeView('tasks'),
+                  },
+                  {
+                    label: 'Meu boletim',
+                    detail: 'Notas e devolutivas',
+                    icon: 'grades' as IconName,
+                    tone: 'purple',
+                    action: () => changeView('grades'),
+                  },
+                  {
+                    label: 'Calendário',
+                    detail: 'Prazos e recados',
+                    icon: 'calendar' as IconName,
+                    tone: 'blue',
+                    action: () => changeView('calendar'),
+                  },
+                  {
+                    label: 'Minha turma',
+                    detail: 'Sala e professor',
+                    icon: 'school' as IconName,
+                    tone: 'green',
+                    action: () => setShowStudentConnect(true),
+                  },
+                  {
+                    label: 'Materiais',
+                    detail: 'Conteúdos de apoio',
+                    icon: 'attendance' as IconName,
+                    tone: 'indigo',
+                    action: openMaterials,
+                  },
+                  {
+                    label: 'Meu personagem',
+                    detail: 'Crie seu estilo',
+                    icon: 'palette' as IconName,
+                    tone: 'pink',
+                    action: () => openEditor('profile'),
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    className={`student-quick-link ${item.tone}`}
+                    onClick={item.action}
+                  >
+                    <span>
+                      <AppIcon name={item.icon} pack={p.icons} size={28} />
+                    </span>
+                    <span>
+                      <strong>{item.label}</strong>
+                      <small>{item.detail}</small>
+                    </span>
+                    <ArrowRight size={18} />
+                  </button>
+                ))}
               </section>
               <div className="overview-stats">
                 <div>
@@ -1281,6 +1392,11 @@ export default function Home() {
                   </span>
                 </div>
               </div>
+              <StudentLearningPath
+                preferences={p}
+                steps={learningPathSteps}
+                onOpen={() => changeView('tasks')}
+              />
             </>
           )}
           {(view === 'home' || view === 'tasks') && (
@@ -1325,7 +1441,7 @@ export default function Home() {
                   </div>
                 </section>
                 {studentSummary ? (
-                  <section className="schedule">
+                  <section className="schedule" id="student-materials">
                     <div className="section-heading">
                       <div>
                         <span className="eyebrow">MATERIAIS DA TURMA</span>
@@ -1359,7 +1475,7 @@ export default function Home() {
                     </div>
                   </section>
                 ) : (
-                  <section className="schedule">
+                  <section className="schedule" id="student-materials">
                     <div className="section-heading">
                       <div>
                         <span className="eyebrow">PARA IR MAIS LONGE</span>
