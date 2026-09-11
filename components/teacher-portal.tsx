@@ -890,7 +890,7 @@ function TeacherDashboard({
           </button>
           <button
             aria-label="Provas e avaliações"
-            className={view === 'exams' ? 'active' : ''}
+            className={`teacher-mobile-hide ${view === 'exams' ? 'active' : ''}`}
             onClick={() => setView('exams')}
           >
             <FileCheck2 />
@@ -898,7 +898,7 @@ function TeacherDashboard({
           </button>
           <button
             aria-label="Lançamento de atividades"
-            className={view === 'activities' ? 'active' : ''}
+            className={`teacher-mobile-hide ${view === 'activities' ? 'active' : ''}`}
             onClick={() => setView('activities')}
           >
             <ClipboardCheck />
