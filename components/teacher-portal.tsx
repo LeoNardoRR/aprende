@@ -1729,6 +1729,7 @@ function AttendancePanel({
               type="button"
               key={member.user_id}
               aria-pressed={present}
+              aria-label={`${present ? 'Marcar falta para' : 'Marcar presença para'} ${member.profiles?.display_name || 'Aluno'}`}
               onClick={() =>
                 setPresence((current) => ({
                   ...current,
@@ -1737,6 +1738,12 @@ function AttendancePanel({
               }
             >
               <small>{String(index + 1).padStart(2, '0')}</small>
+              <span
+                className={`attendance-checkbox ${present ? 'checked' : ''}`}
+                aria-hidden="true"
+              >
+                {present && <CheckCircle2 />}
+              </span>
               <strong>{member.profiles?.display_name || 'Aluno'}</strong>
               <span className={present ? '' : 'absent'}>
                 {present ? (
