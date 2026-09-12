@@ -2034,11 +2034,12 @@ to{opacity:1;transform:translateY(0) scale(1);}
 
 /* Keep every hairstyle framed correctly, including long hair, in short windows. */
 .avatar-preview-stage{min-height:360px;height:calc(100svh - 350px);max-height:420px;}
-.avatar-preview-stage .student-character{position:absolute;top:48px;width:min(300px,82%);margin:0;}
-.avatar-preview-stage .avatar-preview-actions{margin-top:auto;padding:5px;border-radius:16px;background:#c8e8f8e8;backdrop-filter:blur(4px);}
+.avatar-preview-stage .student-character{position:absolute;top:auto;bottom:0;width:min(300px,82%);margin:0;}
+.avatar-preview-stage .avatar-preview-actions{position:absolute;top:60px;left:22px;right:22px;width:auto;margin:0;padding:5px;border-radius:16px;background:#c8e8f8e8;backdrop-filter:blur(4px);}
 @media(max-width:760px){
  .avatar-preview-stage{min-height:230px;height:30svh;max-height:270px;}
- .avatar-preview-stage .student-character{top:31px;width:min(205px,66%);margin:0;}
+ .avatar-preview-stage .student-character{top:auto;bottom:0;width:min(165px,58%);margin:0;}
+ .avatar-preview-stage .avatar-preview-actions{top:52px;left:12px;right:12px;}
 }
 
 /* The character stays still in both the room banner and the editor preview. */
