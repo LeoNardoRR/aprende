@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, X, Save, Sparkles, Image, UserRound, Dices, RotateCcw, Scissors, Eye, Shirt, Palette, Type, Shapes, MousePointer2, Star, Heart, ArrowUpRight } from 'lucide-react';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -27,6 +27,8 @@ export function RoomEditor({open,onClose,draft,onChange,onSave,saving,accountCon
 }){
  const allowedTabs=['profile','theme','banner','font','icons','cursor'];
  const [tab,setTab]=useState(allowedTabs.includes(initialTab)?initialTab:'profile');
+ const tabListRef=useRef<HTMLDivElement>(null);
+ useEffect(()=>{if(open&&tab==='profile')tabListRef.current?.scrollTo({left:0,behavior:'auto'});},[open,tab]);
  const [category,setCategory]=useState<'identity'|'face'|'hair'|'clothes'>('identity');
  const select=(key:keyof Preferences,value:string)=>onChange({...draft,[key]:value});
  const cost=preferenceCost(draft,owned);
@@ -39,7 +41,7 @@ export function RoomEditor({open,onClose,draft,onChange,onSave,saving,accountCon
  return <Sheet open={open} onOpenChange={value=>{if(!value)onClose()}} modal>
   <SheetContent className="room-editor student-character-editor" showCloseButton={false}>
    <header className="editor-heading"><div className="editor-kicker"><Sparkles size={17}/> SEU ESPAÇO, SEU JEITO</div><div className="editor-title-row"><SheetTitle>Personalizar sala</SheetTitle><button className="icon-button" aria-label="Fechar editor e descartar alterações" onClick={onClose}><X/></button></div><SheetDescription>Ajuste o personagem e o visual da sua sala. Toda escolha aparece na hora.</SheetDescription></header>
-   <Tabs value={tab} onValueChange={value=>setTab(String(value))} className="editor-tabs"><TabsList className="editor-tab-list" aria-label="Categorias de personalização"><TabsTrigger value="profile"><UserRound size={18}/>Personagem</TabsTrigger><TabsTrigger value="theme"><Palette size={18}/>Cores</TabsTrigger><TabsTrigger value="banner"><Image size={18}/>Banner</TabsTrigger><TabsTrigger value="font"><Type size={18}/>Fontes</TabsTrigger><TabsTrigger value="icons"><Shapes size={18}/>Ícones</TabsTrigger><TabsTrigger value="cursor"><MousePointer2 size={18}/>Cursor</TabsTrigger></TabsList>
+   <Tabs value={tab} onValueChange={value=>setTab(String(value))} className="editor-tabs"><TabsList ref={tabListRef} className="editor-tab-list" aria-label="Categorias de personalização"><TabsTrigger value="profile"><UserRound size={18}/>Personagem</TabsTrigger><TabsTrigger value="theme"><Palette size={18}/>Cores</TabsTrigger><TabsTrigger value="banner"><Image size={18}/>Banner</TabsTrigger><TabsTrigger value="font"><Type size={18}/>Fontes</TabsTrigger><TabsTrigger value="icons"><Shapes size={18}/>Ícones</TabsTrigger><TabsTrigger value="cursor"><MousePointer2 size={18}/>Cursor</TabsTrigger></TabsList>
     <div className="editor-scroll">
      <TabsContent value="profile">
       <div className="avatar-studio">
