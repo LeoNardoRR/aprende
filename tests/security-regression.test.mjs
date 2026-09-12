@@ -39,6 +39,16 @@ const phase2Foundation = readMigration(
 const phase2Hardening = readMigration(
   '20260912175310_harden_phase_2_writes_and_audit.sql',
 );
+const phase3Core = readMigration(
+  '20260912180500_add_assessment_cycles_and_diagnostic_assessments.sql',
+);
+const phase3Booklets = readMigration(
+  '20260912181500_add_assessment_booklets_and_scheduling.sql',
+);
+const institutionalAssessments = readFileSync(
+  new URL('../components/institutional-assessments.tsx', import.meta.url),
+  'utf8',
+);
 const studentConnect = readFileSync(
   new URL('../components/student-connect.tsx', import.meta.url),
   'utf8',
@@ -268,6 +278,31 @@ test('institutional UI exposes curriculum, safe authorship and paginated workflo
   assert.match(institutionalPedagogy, /transition_assessment_item/);
   assert.match(institutionalPedagogy, /Habilidades sem itens/);
   assert.doesNotMatch(institutionalPedagogy, /service_role|serviceRole/i);
+});
+
+test('Phase 3 keeps diagnostic assessments separate and freezes approved item versions', () => {
+  for (const table of ['assessment_cycles', 'diagnostic_assessments']) {
+    assert.match(phase3Core, new RegExp(`create table public\\.${table}`));
+    assert.match(phase3Core, new RegExp(`alter table public\\.${table} enable row level security`));
+  }
+  for (const table of ['assessment_booklets', 'assessment_booklet_items', 'assessment_schedules', 'assessment_classrooms']) {
+    assert.match(phase3Booklets, new RegExp(`create table public\\.${table}`));
+    assert.match(phase3Booklets, new RegExp(`alter table public\\.${table} enable row level security`));
+  }
+  assert.match(phase3Booklets, /Only approved items are eligible/);
+  assert.match(phase3Booklets, /assessment_item_version_id/);
+  assert.match(phase3Booklets, /at most five booklets/);
+  assert.match(phase3Booklets, /Classroom is outside schedule scope/);
+  assert.match(phase3Booklets, /private\.validate_diagnostic_assessment/);
+  assert.doesNotMatch(phase3Core + phase3Booklets, /drop table|service_role/i);
+});
+
+test('Phase 3 UI exposes the complete assessment construction route', () => {
+  for (const label of ['Ciclos', 'Provas', 'Cadernos', 'Calendário', 'Aplicações']) assert.match(institutionalAssessments, new RegExp(label));
+  assert.match(institutionalAssessments, /create_assessment_booklet/);
+  assert.match(institutionalAssessments, /transition_diagnostic_assessment/);
+  assert.match(institutionalAssessments, /schedule_diagnostic_assessment/);
+  assert.match(institutionalAssessments, /Banco de Itens → Avaliação → Cadernos/);
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {
