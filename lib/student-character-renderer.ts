@@ -87,9 +87,16 @@ export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences,
       const leftEye = ((x-.543)/.025)**2 + ((y-.337)/.028)**2 < 1;
       const rightEye = ((x-.68)/.024)**2 + ((y-.365)/.032)**2 < 1;
       if ((leftEye || rightEye) && v > .07 && v < .55 && s > .12) kind = 'eye';
-      else if ((hairMask[i/4] || (usesAlternateHair && h < .14 && s > .18 && v < .7 && (y < .64 || x < .38 || x > .73))) && !(leftEye || rightEye)) kind = 'hair';
-      else if (y < .78 && h > .025 && h < .14 && s > .33 && v > .53) kind = 'skin';
-      else if (y > .51 && s > .25 && h > .52 && h < .79) kind = 'outfit';
+      else {
+        // Alternate hair assets extend behind the ears and below the jaw. Use a
+        // spatial hair region there, while excluding the face oval so lips,
+        // brows and outline pixels can never inherit the hair color.
+        const faceOval=((x-.59)/.28)**2+((y-.42)/.34)**2<1;
+        const outerHairRegion=usesAlternateHair && !faceOval && (y<.48 || x<.38 || x>.76);
+        if ((hairMask[i/4] || (outerHairRegion && s>.08 && v<.9)) && !(leftEye || rightEye)) kind = 'hair';
+        else if (y < .78 && h > .025 && h < .14 && s > .33 && v > .53) kind = 'skin';
+        else if (y > .51 && s > .25 && h > .52 && h < .79) kind = 'outfit';
+      }
     }
     if (!kind) continue;
     // The initial look uses the original pixels exactly. Shading and highlights are
