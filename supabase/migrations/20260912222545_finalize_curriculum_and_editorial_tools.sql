@@ -71,7 +71,7 @@ begin
  if length(trim(item.statement))<5 or length(trim(coalesce(item.pedagogical_comment,'')))<5 then raise exception 'Statement and pedagogical comment required'; end if;
  if item.item_type in('multiple_choice','true_false') then
  select count(*),count(*) filter(where is_correct) into options,correct from public.assessment_item_options where item_id=item.id;
- if options<>case when item.item_type='multiple_choice' then 4 else 2 end then raise exception 'Multiple choice requires exactly 4 options (true/false: 2)'; end if;
+ if options<>(case when item.item_type='multiple_choice' then 4 else 2 end) then raise exception 'Multiple choice requires exactly 4 options (true/false: 2)'; end if;
  if correct<>1 then raise exception 'Exactly one correct option required'; end if;
  if length(trim(coalesce(item.correct_answer_justification,'')))<5 then raise exception 'Correct answer justification required'; end if;
  if exists(select 1 from public.assessment_item_options where item_id=item.id and (length(trim(content))=0 or (not is_correct and length(trim(coalesce(distractor_analysis,'')))<5))) then raise exception 'Every option needs text and every distractor needs analysis'; end if;
