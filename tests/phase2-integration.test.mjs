@@ -138,6 +138,7 @@ test('Phase 2 protects curricula and enforces the professional item workflow', a
       skill_id: skill.data.id, thematic_unit_id: unit.data.id, knowledge_object_id: object.data.id,
       internal_title: title, statement: 'Qual alternativa representa a resposta demonstrativa correta?',
       difficulty: 'medium', item_type: 'multiple_choice', author_id: ownerId,
+      pedagogical_comment: 'Comentário pedagógico DEMO.', correct_answer_justification: 'Justificativa da correta DEMO.',
     }).select('id').single();
   }
 
