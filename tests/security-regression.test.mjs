@@ -11,9 +11,9 @@ const assignmentKind = readMigration('20260911161207_assignment_kind.sql');
 const submittedLock = readMigration('20260909123824_lock_submitted_student_work.sql');
 const connectedWorkflow = readMigration('20260909124234_harden_connected_workflow.sql');
 const scoreValidation = readMigration('20260909124231_validate_activity_scores.sql');
-const lesson = readMigration('20260911221817_add_lesson_records_and_materials.sql');
+const lesson = readMigration('20260911222656_add_lesson_records_and_materials.sql');
 const storagePolicyFix = readMigration(
-  '20260912004500_fix_lesson_material_storage_policies.sql',
+  '20260912004736_fix_lesson_material_storage_policies.sql',
 );
 const teacherPortal = readFileSync(
   new URL('../components/teacher-portal.tsx', import.meta.url),
