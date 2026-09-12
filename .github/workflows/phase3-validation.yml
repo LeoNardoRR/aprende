@@ -40,6 +40,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm run build:pages
+      - name: Review local database security advisors
+        run: npx supabase db advisors --local --type security --level error --fail-on error
       - name: Stop disposable local Supabase
         if: always()
         run: npx supabase stop --no-backup

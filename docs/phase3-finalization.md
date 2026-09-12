@@ -56,3 +56,15 @@ npx supabase db reset --local
 npx supabase migration list --local
 npx supabase db push --dry-run --local
 ```
+
+## Integração do pacote no repositório
+
+- Base: `codex/poc-phase-1`, commit `9a2b0011502a03b28475b9348108ef444c94f8e9`.
+- Branch de entrega: `codex/finaliza-fase-3`.
+- O CSS do pacote também é importado por `pages/main.tsx`, entrada do build estático.
+- O workflow `Validate Phase 3` executa todos os testes com Supabase local em um
+  runner descartável, além de lint, TypeScript, os dois builds e security advisors.
+  Esse workflow não contém deploy nem usa credenciais de produção.
+- Os testes de integração são ignorados por `npm test` quando não há Supabase
+  local configurado; a execução completa deve apresentar zero testes ignorados.
+- Nenhuma migração remota ou publicação faz parte desta entrega.
