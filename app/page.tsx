@@ -630,6 +630,11 @@ export default function Home() {
     }
   }, [authModeReady, showTeacher, studentAuthReady, studentSummary]);
   useEffect(() => {
+    if (authModeReady && studentAuthReady && !showTeacher && !showStudentConnect) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [authModeReady, studentAuthReady, showTeacher, showStudentConnect]);
+  useEffect(() => {
     const context = (
       document as Document & {
         modelContext?: {

@@ -256,8 +256,8 @@ export function AccountSettings({
       {open &&
         createPortal(
           <div className="account-settings-backdrop" role="presentation">
-            <dialog
-              open
+            <section
+              role="dialog"
               className="account-settings-dialog"
               aria-modal="true"
               aria-labelledby="account-settings-title"
@@ -433,7 +433,7 @@ export function AccountSettings({
                   Excluir conta
                 </button>
               </div>
-            </dialog>
+            </section>
           </div>,
           document.body,
         )}

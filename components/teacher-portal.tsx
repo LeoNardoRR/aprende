@@ -1105,6 +1105,8 @@ function TeacherDashboard({
             {currentClass && (
               <button
                 className="teacher-secondary teacher-send"
+                aria-label="Enviar recado"
+                title="Enviar recado"
                 onClick={() => setShowAnnouncementForm(true)}
               >
                 <Bell />
@@ -1113,6 +1115,8 @@ function TeacherDashboard({
             )}
             <button
               className="teacher-primary compact teacher-new-class"
+              aria-label="Nova turma"
+              title="Nova turma"
               onClick={() => setShowClassForm(true)}
             >
               <Plus />
@@ -1192,6 +1196,8 @@ function TeacherDashboard({
                     <button
                       type="button"
                       className="teacher-edit-class"
+                      aria-label={`Editar sala ${currentClass.name}`}
+                      title="Editar sala"
                       onClick={() => setShowClassSettings(true)}
                     >
                       <Pencil />
@@ -1199,6 +1205,8 @@ function TeacherDashboard({
                     </button>
                     <button
                       type="button"
+                      aria-label={`Copiar código da turma ${currentClass.join_code}`}
+                      title="Copiar código da turma"
                       onClick={() => {
                         void navigator.clipboard
                           .writeText(currentClass.join_code)
@@ -3089,8 +3097,8 @@ function Modal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <dialog
-        open
+      <section
+        role="dialog"
         className={`teacher-modal${wide ? ' teacher-modal-wide' : ''}`}
         aria-modal="true"
         aria-label={title}
@@ -3102,7 +3110,7 @@ function Modal({
           </button>
         </div>
         {children}
-      </dialog>
+      </section>
     </div>,
     document.body,
   );
