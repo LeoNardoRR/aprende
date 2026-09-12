@@ -20,7 +20,7 @@ import { studentSupabase as supabase } from '@/lib/supabase';
 import { AccountSettings } from '@/components/account-settings';
 import { BrandLogo } from '@/components/brand-logo';
 import {
-  calculateConnectedMetrics,
+  calculateConnectedProgress,
   canEditSubmission,
   connectedSubmissionLabel,
   friendlySupabaseError,
@@ -241,7 +241,7 @@ export function StudentConnect({
   }, [loading, initialAssignmentId, assignments, submissions]);
 
   const metrics = useMemo(
-    () => calculateConnectedMetrics(assignments, submissions),
+    () => calculateConnectedProgress(assignments, submissions),
     [assignments, submissions],
   );
   const activeSubmission = activeAssignment
@@ -693,16 +693,16 @@ export function StudentConnect({
                 <Trophy />
                 <div>
                   <strong>
-                    {metrics.earned} de {metrics.possible}
+                    {metrics.earned} de {metrics.evaluatedPoints}
                   </strong>
-                  <small>pontos conquistados</small>
+                  <small>pontos avaliados</small>
                 </div>
               </article>
               <article>
                 <CheckCircle2 />
                 <div>
                   <strong>
-                    {metrics.delivered} de {metrics.total}
+                    {metrics.submitted} de {metrics.total}
                   </strong>
                   <small>atividades entregues</small>
                 </div>
