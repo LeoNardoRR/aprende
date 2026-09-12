@@ -353,7 +353,6 @@ export default function Home() {
     [view, setView] = useState('home'),
     [resourceView, setResourceView] = useState<ResourceKey | null>(null),
     [attendanceRecords,setAttendanceRecords] = useState<{present:boolean;attendance_date:string}[]|null>(null),
-    [calendarExpanded,setCalendarExpanded] = useState(false),
     [connectedActivityId, setConnectedActivityId] = useState<string | null>(
       null,
     ),
@@ -1261,7 +1260,7 @@ export default function Home() {
               earned={studentSummary?.earned ?? 0}
               possible={studentSummary?.possible ?? 0}
               steps={learningPathSteps}
-              calendar={<><button className="student-expand-calendar" onClick={()=>setCalendarExpanded(true)}>Expandir calendário <ArrowUpRight size={18}/></button>{calendar}</>}
+              calendar={calendar}
               onNavigate={changeView}
               onClassroom={() => {
                 setConnectedActivityId(null);
@@ -1645,7 +1644,6 @@ export default function Home() {
           initialAssignmentId={connectedActivityId}
         />
       )}
-      <Dialog open={calendarExpanded} onOpenChange={setCalendarExpanded}><DialogContent className="student-calendar-dialog"><DialogTitle>Calendário da minha sala</DialogTitle><DialogDescription>Seus compromissos e prazos publicados pelo professor.</DialogDescription>{calendar}</DialogContent></Dialog>
       <Dialog
         open={!!activeTask}
         onOpenChange={(v) => {
