@@ -273,6 +273,7 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
   if (institutionalPreview)
     return (
       <InstitutionalAdmin
+        onExit={onClose}
         profile={{
           id: 'preview-admin',
           display_name: 'Gestora Municipal',
@@ -321,7 +322,7 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
       </PortalShell>
     );
   if (isInstitutionalRole(profile.role))
-    return <InstitutionalAdmin profile={{ ...profile, role: profile.role }} />;
+    return <InstitutionalAdmin profile={{ ...profile, role: profile.role }} onExit={onClose} />;
   if (profile.role !== 'teacher')
     return (
       <PortalShell onClose={onClose}>

@@ -96,7 +96,28 @@ const previewInstitutionalClassrooms: ClassroomRow[] = [
   },
 ];
 
-export function InstitutionalAdmin({ profile, preview = false }: { profile: InstitutionalProfile; preview?: boolean }) {
+export function InstitutionalAdmin({ profile, preview = false, onExit }: { profile: InstitutionalProfile; preview?: boolean; onExit?: () => void }) {
+  const [signingOut, setSigningOut] = useState(false);
+  async function signOut() {
+    setSigningOut(true);
+    try {
+      if (!preview) {
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        if (error) throw error;
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.delete('qa');
+      url.searchParams.delete('auth');
+      url.hash = '';
+      window.history.replaceState(null, '', url.pathname + url.search);
+      if (onExit) onExit();
+      else window.location.assign(url.pathname + url.search);
+    } catch {
+      setNotice('Não foi possível sair agora. Tente novamente.');
+    } finally {
+      setSigningOut(false);
+    }
+  }
   const [networks, setNetworks] = useState<NetworkRow[]>(preview ? previewNetworks : []);
   const [schools, setSchools] = useState<SchoolRow[]>(preview ? previewSchools : []);
   const [academicYears, setAcademicYears] = useState<AcademicYearRow[]>(preview ? previewYears : []);
@@ -192,7 +213,7 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
           <a href="#item-bank"><BookOpenCheck /> Banco de Itens</a>
           <a href="#assessments"><ClipboardList /> Avaliações</a>
         </nav>
-        <button type="button" onClick={() => void supabase.auth.signOut()}><LogOut /> Sair</button>
+        <button type="button" disabled={signingOut} onClick={() => void signOut()}><LogOut /> {signingOut ? 'Saindo…' : 'Sair'}</button>
       </aside>
       <main className="institutional-main">
         <header className="institutional-header">
