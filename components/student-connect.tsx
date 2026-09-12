@@ -31,11 +31,12 @@ import {
   isEmailConfirmationRequired,
   passwordRecoveryUrl,
 } from '@/lib/auth-flow';
+import type { Database } from '@/lib/database.types';
 
 type Profile = {
   id: string;
   display_name: string;
-  role: 'teacher' | 'student';
+  role: Database['public']['Enums']['app_role'];
 };
 type Classroom = { id: string; name: string; subject: string };
 type Membership = { classroom_id: string; classrooms: Classroom | null };
@@ -475,6 +476,7 @@ export function StudentConnect({
             <strong>Aprendê</strong>
           </button>
           <div className="student-header-actions">
+            <a className="teacher-secondary" href="?access=institutional">Gestor / equipe institucional</a>
             {onOpenTeacher && (
               <button
                 type="button"

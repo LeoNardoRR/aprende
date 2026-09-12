@@ -1,5 +1,6 @@
 'use client';
 
+import { TeacherItemBank } from '@/components/teacher-item-bank';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Session } from '@supabase/supabase-js';
@@ -44,11 +45,16 @@ import {
 } from '@/lib/auth-flow';
 import { AccountSettings } from '@/components/account-settings';
 import { BrandLogo } from '@/components/brand-logo';
+import {
+  InstitutionalAdmin,
+  type InstitutionalRole,
+} from '@/components/institutional-admin';
+import type { Database } from '@/lib/database.types';
 
 type Profile = {
   id: string;
   display_name: string;
-  role: 'teacher' | 'student';
+  role: Database['public']['Enums']['app_role'];
   avatar_url: string | null;
 };
 type Classroom = {
@@ -120,6 +126,12 @@ function normalizeJoinedProfile(value: unknown): { display_name: string } | null
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+function isInstitutionalRole(
+  role: Database['public']['Enums']['app_role'],
+): role is InstitutionalRole {
+  return ['network_admin', 'manager', 'reviewer', 'approver'].includes(role);
 }
 
 function mergePresence(
@@ -205,17 +217,18 @@ const teacherDensityIds: TeacherAppearance['density'][] = [
 ];
 
 export function TeacherPortal({ onClose }: { onClose: () => void }) {
-  const previewMode =
+  const previewTarget =
     typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('qa') ===
-      'teacher-dashboard';
+    new URLSearchParams(window.location.search).get('qa');
+  const previewMode = previewTarget === 'teacher-dashboard';
+  const institutionalPreview = previewTarget === 'institution-admin';
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (previewMode) {
+    if (previewMode || institutionalPreview) {
       setLoading(false);
       return;
     }
@@ -230,10 +243,10 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
       setSession(nextSession),
     );
     return () => data.subscription.unsubscribe();
-  }, [previewMode]);
+  }, [institutionalPreview, previewMode]);
 
   useEffect(() => {
-    if (previewMode) return;
+    if (previewMode || institutionalPreview) return;
     let active = true;
     async function readProfile() {
       if (!session) {
@@ -256,7 +269,21 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
     return () => {
       active = false;
     };
-  }, [previewMode, session]);
+  }, [institutionalPreview, previewMode, session]);
+
+  if (institutionalPreview)
+    return (
+      <InstitutionalAdmin
+        onExit={onClose}
+        profile={{
+          id: 'preview-admin',
+          display_name: 'Gestora Municipal',
+          role: 'network_admin',
+          avatar_url: null,
+        }}
+        preview
+      />
+    );
 
   if (previewMode)
     return (
@@ -283,7 +310,7 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
   if (!session)
     return (
       <PortalShell onClose={onClose}>
-        <TeacherAuth />
+        <TeacherAuth institutional={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('access') === 'institutional'} />
       </PortalShell>
     );
   if (!profile)
@@ -295,6 +322,8 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
         />
       </PortalShell>
     );
+  if (isInstitutionalRole(profile.role))
+    return <InstitutionalAdmin profile={{ ...profile, role: profile.role }} onExit={onClose} />;
   if (profile.role !== 'teacher')
     return (
       <PortalShell onClose={onClose}>
@@ -345,7 +374,7 @@ function PortalShell({
   );
 }
 
-function TeacherAuth() {
+function TeacherAuth({ institutional = false }: { institutional?: boolean }) {
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
@@ -439,11 +468,10 @@ function TeacherAuth() {
   return (
     <main className="teacher-auth">
       <section className="teacher-auth-copy">
-        <span className="teacher-kicker">MODO PROFESSOR</span>
-        <h1>Sua turma em um só lugar.</h1>
+        <span className="teacher-kicker">{institutional ? 'GESTÃO INSTITUCIONAL' : 'MODO PROFESSOR'}</span>
+        <h1>{institutional ? 'Sua rede e suas escolas, organizadas.' : 'Sua turma em um só lugar.'}</h1>
         <p>
-          Crie turmas e atividades, acompanhe quem entregou e organize o próximo
-          passo de cada aluno.
+          {institutional ? 'Acesso para gestores, administradores de rede, revisores e aprovadores. Use o e-mail vinculado pela administração da sua instituição.' : 'Crie turmas e atividades, acompanhe quem entregou e organize o próximo passo de cada aluno.'}
         </p>
         <div className="teacher-benefits">
           <span>
@@ -465,14 +493,14 @@ function TeacherAuth() {
           <span className="teacher-card-icon">
             <School />
           </span>
-          <h2>{creating ? 'Primeiro acesso' : 'Entrar como professor'}</h2>
+          <h2>{institutional ? 'Entrar como gestor / equipe institucional' : creating ? 'Primeiro acesso' : 'Entrar como professor'}</h2>
           <p>
-            {creating
+            {institutional ? 'Seu papel e suas permissões são definidos pelo vínculo institucional. Para o primeiro acesso, solicite a ativação à administração.' : creating
               ? 'Use o e-mail autorizado para criar seu perfil.'
               : 'Sua sessão continuará ativa neste navegador.'}
           </p>
         </div>
-        <div className="student-auth-tabs">
+        {!institutional && (<div className="student-auth-tabs">
           <button
             type="button"
             className={!creating ? 'active' : ''}
@@ -495,7 +523,8 @@ function TeacherAuth() {
           >
             Primeiro acesso
           </button>
-        </div>
+        </div>)}
+        {institutional && <p><a href="?qa=institution-admin">Conhecer o painel de gestão (DEMO)</a></p>}
         <form onSubmit={submit}>
           {creating && (
             <label>
@@ -1137,6 +1166,7 @@ function TeacherDashboard({
             </button>
           </div>
         </header>
+        <TeacherItemBank profile={profile} preview={preview} />
         {notice && <p className="teacher-notice">{notice}</p>}
         {classes.length > 0 && (
           <div

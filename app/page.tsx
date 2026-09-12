@@ -1,4 +1,5 @@
 'use client';
+import { InstitutionalActivation } from '@/components/institutional-activation';
 import {
   lazy,
   Suspense,
@@ -343,7 +344,7 @@ type ConnectedAnnouncement = {
   message: string;
   created_at: string;
 };
-export default function Home() {
+function Home() {
   const [state, setState] = useState(initialState),
     [ready, setReady] = useState(false),
     [editing, setEditing] = useState(false),
@@ -414,7 +415,16 @@ export default function Home() {
     let active = true;
     const params = new URLSearchParams(window.location.search);
     const authMode = params.get('auth');
-    if (params.get('qa') === 'teacher-dashboard') {
+    if (params.get('access') === 'institutional') {
+      setShowStudentConnect(false);
+      setShowTeacher(true);
+      setAuthModeReady(true);
+      return () => { active = false; };
+    }
+    if (
+      params.get('qa') === 'teacher-dashboard' ||
+      params.get('qa') === 'institution-admin'
+    ) {
       setShowStudentConnect(false);
       setShowTeacher(true);
       setAuthModeReady(true);
@@ -1842,4 +1852,9 @@ export default function Home() {
       )}
     </div>
   );
+}
+
+export default function AprendeEntry() {
+  const invitation = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("invitation");
+  return invitation ? <InstitutionalActivation invitation={invitation} /> : <Home />;
 }

@@ -1,0 +1,429 @@
+/* Aprendê - fechamento visual da Fase 3 */
+.phase3-booklet-workspace,
+.phase3-applications,
+.phase3-calendar {
+  display: grid;
+  gap: 18px;
+}
+
+.phase3-booklet-tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.phase3-booklet-tabs > button {
+  min-width: 150px;
+  border: 1px solid var(--border, #e7e2dc);
+  border-radius: 16px;
+  background: var(--card, #fff);
+  padding: 13px 15px;
+  text-align: left;
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.phase3-booklet-tabs > button.active {
+  border-color: #ff7900;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #ff7900 18%, transparent);
+}
+
+.phase3-booklet-tabs small,
+.phase3-builder-panel small,
+.phase3-map small,
+.phase3-calendar-event small,
+.phase3-boundary-note {
+  color: var(--muted-foreground, #6f6a65);
+}
+
+.phase3-builder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+  gap: 18px;
+}
+
+.phase3-builder-panel,
+.phase3-map,
+.phase3-calendar,
+.phase3-applications {
+  border: 1px solid var(--border, #e7e2dc);
+  border-radius: 20px;
+  background: var(--card, #fff);
+  padding: 18px;
+}
+
+.phase3-builder-panel > header,
+.phase3-map > header,
+.phase3-calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.phase3-builder-panel > header span,
+.phase3-map > header span {
+  display: block;
+  font-size: 11px;
+  letter-spacing: .12em;
+  font-weight: 800;
+  color: #a04c00;
+}
+
+.phase3-builder-panel h3,
+.phase3-map h3 {
+  margin: 2px 0 0;
+}
+
+.phase3-booklet-items {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.phase3-booklet-items > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--border, #ece7e1);
+  border-radius: 16px;
+}
+
+.phase3-item-order {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+}
+
+.phase3-item-order > strong {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff2e6;
+  color: #a04c00;
+}
+
+.phase3-item-order > div {
+  display: grid;
+  gap: 4px;
+}
+
+.phase3-item-order button,
+.phase3-danger-button,
+.phase3-map button,
+.phase3-calendar-toolbar button,
+.phase3-candidate-list button {
+  border: 1px solid var(--border, #e7e2dc);
+  border-radius: 10px;
+  background: var(--card, #fff);
+  padding: 7px 9px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.phase3-item-order button svg,
+.phase3-danger-button svg,
+.phase3-map button svg,
+.phase3-calendar-toolbar button svg,
+.phase3-candidate-list button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.phase3-item-order button:disabled,
+.phase3-danger-button:disabled,
+.phase3-candidate-list button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+
+.phase3-danger-button {
+  color: #a52828;
+}
+
+.phase3-item-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.phase3-item-copy > span,
+.phase3-candidate-list article span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: #a04c00;
+}
+
+.phase3-item-copy p,
+.phase3-candidate-list p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.phase3-search {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border, #e7e2dc);
+  border-radius: 12px;
+  padding: 0 11px;
+  margin-bottom: 12px;
+  background: var(--background, #fff);
+}
+
+.phase3-search svg {
+  width: 17px;
+  height: 17px;
+  color: var(--muted-foreground, #6f6a65);
+}
+
+.phase3-search input {
+  border: 0;
+  outline: 0;
+  min-width: 0;
+  width: 100%;
+  background: transparent;
+  color: inherit;
+}
+
+.phase3-candidate-list {
+  max-height: 560px;
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.phase3-candidate-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--border, #ece7e1);
+  border-radius: 14px;
+}
+
+.phase3-candidate-list article > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.phase3-candidate-list article > button:not(:disabled) {
+  color: #8c4300;
+  border-color: #ffb06b;
+  background: #fff6ee;
+}
+
+.phase3-map-bars {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.phase3-map-bars > div {
+  display: grid;
+  grid-template-columns: minmax(145px, .7fr) minmax(160px, 2fr) 64px;
+  align-items: center;
+  gap: 10px;
+}
+
+.phase3-map-bars > div > div:first-child {
+  display: grid;
+}
+
+.phase3-map-track {
+  height: 10px;
+  background: #eee8e1;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.phase3-map-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff9b42, #ff7900);
+}
+
+.phase3-map-bars b {
+  text-align: right;
+  font-size: 13px;
+}
+
+.phase3-calendar-toolbar {
+  margin: 0;
+}
+
+.phase3-calendar-toolbar > div {
+  display: flex;
+  gap: 6px;
+}
+
+.phase3-calendar-toolbar button.active {
+  background: #fff2e6;
+  border-color: #ff9b42;
+  color: #8c4300;
+  font-weight: 800;
+}
+
+.phase3-calendar-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.phase3-calendar-grid.month {
+  grid-template-columns: repeat(7, minmax(110px, 1fr));
+  overflow-x: auto;
+}
+
+.phase3-calendar-grid.week {
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
+  overflow-x: auto;
+}
+
+.phase3-calendar-grid.day {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.phase3-calendar-grid > article {
+  min-height: 118px;
+  border: 1px solid var(--border, #ece7e1);
+  border-radius: 14px;
+  padding: 10px;
+  background: var(--background, #fff);
+}
+
+.phase3-calendar-grid.month > article.muted {
+  opacity: .46;
+}
+
+.phase3-calendar-grid article > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  text-transform: capitalize;
+}
+
+.phase3-calendar-grid article > header span {
+  font-size: 12px;
+  color: var(--muted-foreground, #6f6a65);
+}
+
+.phase3-calendar-event {
+  display: grid;
+  gap: 2px;
+  border-left: 3px solid #ff7900;
+  border-radius: 8px;
+  background: #fff6ee;
+  padding: 7px 8px;
+  margin-top: 6px;
+  color: #4c2b0d;
+}
+
+.phase3-calendar-event strong,
+.phase3-calendar-event span,
+.phase3-calendar-event small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.phase3-application-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.phase3-application-summary article {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border, #ece7e1);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.phase3-application-summary article > svg {
+  grid-row: 1 / 3;
+  width: 24px;
+  height: 24px;
+  color: #e66d00;
+}
+
+.phase3-application-summary span {
+  font-size: 12px;
+  color: var(--muted-foreground, #6f6a65);
+}
+
+.phase3-application-summary strong {
+  font-size: 24px;
+}
+
+.phase3-boundary-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f7f4f0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 980px) {
+  .phase3-builder-grid {
+    grid-template-columns: 1fr;
+  }
+  .phase3-application-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .phase3-builder-panel,
+  .phase3-map,
+  .phase3-calendar,
+  .phase3-applications {
+    padding: 13px;
+    border-radius: 16px;
+  }
+  .phase3-booklet-items > li,
+  .phase3-candidate-list article {
+    grid-template-columns: 1fr;
+  }
+  .phase3-item-order {
+    display: flex;
+    justify-content: space-between;
+  }
+  .phase3-item-order > div {
+    display: flex;
+  }
+  .phase3-map-bars > div {
+    grid-template-columns: 1fr auto;
+  }
+  .phase3-map-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .phase3-calendar-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .phase3-calendar-toolbar > strong {
+    order: -1;
+  }
+}

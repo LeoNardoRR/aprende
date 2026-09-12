@@ -27,12 +27,42 @@ const lessonMaterialFkIndex = readMigration(
 const hardenedGrants = readMigration(
   '20260911235837_harden_app_table_grants.sql',
 );
+const institutionalFoundation = readMigration(
+  '20260912153902_add_institutional_rbac_foundation.sql',
+);
+const institutionalOperations = readMigration(
+  '20260912171627_finalize_phase_1_operations.sql',
+);
+const phase2Foundation = readMigration(
+  '20260912173208_add_curriculum_and_item_bank_foundation.sql',
+);
+const phase2Hardening = readMigration(
+  '20260912175310_harden_phase_2_writes_and_audit.sql',
+);
+const phase3Core = readMigration(
+  '20260912180500_add_assessment_cycles_and_diagnostic_assessments.sql',
+);
+const phase3Booklets = readMigration(
+  '20260912181500_add_assessment_booklets_and_scheduling.sql',
+);
+const institutionalAssessments = readFileSync(
+  new URL('../components/institutional-assessments.tsx', import.meta.url),
+  'utf8',
+);
 const studentConnect = readFileSync(
   new URL('../components/student-connect.tsx', import.meta.url),
   'utf8',
 );
 const teacherPortal = readFileSync(
   new URL('../components/teacher-portal.tsx', import.meta.url),
+  'utf8',
+);
+const institutionalAdmin = readFileSync(
+  new URL('../components/institutional-admin.tsx', import.meta.url),
+  'utf8',
+);
+const institutionalPedagogy = readFileSync(
+  new URL('../components/institutional-pedagogy.tsx', import.meta.url),
   'utf8',
 );
 const homePage = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
@@ -147,4 +177,147 @@ test('student connect refreshes and removes focus and visibility listeners', () 
   assert.match(studentConnect, /window\.removeEventListener\('focus', refreshWhenVisible\)/);
   assert.match(studentConnect, /document\.removeEventListener\('visibilitychange', refreshWhenVisible\)/);
   assert.match(studentConnect, /\}, \[loadStudent, session\]\);/);
+});
+
+test('institutional foundation is additive and protects scoped RBAC data', () => {
+  for (const table of [
+    'networks',
+    'schools',
+    'academic_years',
+    'school_years',
+    'institutional_memberships',
+    'student_enrollments',
+    'student_movements',
+  ]) {
+    assert.match(
+      institutionalFoundation,
+      new RegExp(`create table if not exists public\\.${table}`),
+    );
+    assert.match(
+      institutionalFoundation,
+      new RegExp(`alter table public\\.${table} enable row level security`),
+    );
+  }
+  for (const role of ['network_admin', 'manager', 'reviewer', 'approver']) {
+    assert.match(
+      institutionalFoundation,
+      new RegExp(`alter type public\\.app_role add value if not exists '${role}'`),
+    );
+  }
+  assert.match(institutionalFoundation, /create or replace function private\.has_permission/);
+  assert.match(institutionalFoundation, /profile\.role::text = 'network_admin'/);
+  assert.match(institutionalFoundation, /institutional_memberships_network_role_ux/);
+  assert.match(institutionalFoundation, /create policy student_enrollments_read/);
+  assert.match(institutionalFoundation, /create policy student_movements_manage/);
+  assert.match(institutionalFoundation, /add column if not exists network_id/);
+  assert.match(institutionalFoundation, /add column if not exists school_id/);
+  assert.doesNotMatch(institutionalFoundation, /drop table public\./i);
+  assert.doesNotMatch(institutionalFoundation, /drop column/i);
+  assert.doesNotMatch(institutionalFoundation, /revoke all on all functions in schema private/i);
+});
+
+test('institutional roles enter a real scoped administration interface', () => {
+  assert.match(teacherPortal, /isInstitutionalRole\(profile\.role\)/);
+  assert.match(teacherPortal, /<InstitutionalAdmin/);
+  for (const table of ['networks', 'schools', 'academic_years', 'school_years']) {
+    assert.match(institutionalAdmin, new RegExp(`supabase\\.from\\('${table}'\\)`));
+  }
+  assert.match(institutionalAdmin, /profile\.role === 'network_admin'/);
+  assert.match(institutionalAdmin, /profile\.role === 'manager'/);
+  assert.doesNotMatch(institutionalAdmin, /service_role|serviceRole/i);
+});
+
+test('Phase 1 mutations use guarded RPCs and preserve movement history', () => {
+  for (const rpc of [
+    'set_institutional_membership',
+    'set_institutional_membership_status',
+    'link_classroom_to_institution',
+    'set_institutional_classroom_status',
+    'create_student_enrollment',
+    'transition_student_enrollment',
+  ]) assert.match(institutionalOperations, new RegExp(`function public\\.${rpc}`));
+  assert.match(institutionalOperations, /private\.can_assign_institutional_role/);
+  assert.match(institutionalOperations, /Responsible teacher must be linked to school/);
+  assert.match(institutionalOperations, /insert into public\.student_movements/);
+  assert.match(institutionalOperations, /revoke update on public\.classrooms from authenticated/);
+  assert.match(institutionalOperations, /classrooms_complete_institutional_scope_check/);
+  assert.doesNotMatch(institutionalOperations, /service_role|serviceRole/i);
+});
+
+test('Phase 2 separates curricula, item workflow and immutable versions', () => {
+  for (const table of [
+    'curricula', 'curriculum_areas', 'curriculum_subjects',
+    'curriculum_school_years', 'curriculum_thematic_units',
+    'curriculum_knowledge_objects', 'curriculum_skills',
+    'assessment_items', 'assessment_item_options',
+    'assessment_item_versions', 'assessment_item_reviews', 'audit_logs',
+  ]) {
+    assert.match(phase2Foundation, new RegExp(`create table public\\.${table}`));
+    assert.match(phase2Foundation, new RegExp(`alter table public\\.${table} enable row level security`));
+  }
+  assert.match(phase2Foundation, /function public\.transition_assessment_item/);
+  assert.match(phase2Foundation, /Multiple choice item requires at least four options/);
+  assert.match(phase2Foundation, /Multiple choice item requires exactly one correct option/);
+  assert.match(phase2Foundation, /insert into public\.assessment_item_versions/);
+  assert.match(phase2Foundation, /create or replace view public\.approved_assessment_items/);
+  assert.match(phase2Foundation, /limit least\(greatest\(page_size, 1\), 100\)/);
+  assert.match(phase2Foundation, /curriculum_type = 'custom'/);
+  assert.doesNotMatch(phase2Foundation, /service_role|serviceRole/i);
+  assert.match(phase2Hardening, /revoke update on public\.assessment_items from authenticated/);
+  assert.doesNotMatch(phase2Hardening, /grant update \([^)]*(status|author_id|network_id)/);
+  assert.match(phase2Hardening, /create trigger curricula_audit_change/);
+});
+
+test('institutional UI exposes curriculum, safe authorship and paginated workflow', () => {
+  const editor = readFileSync(new URL('../components/item-workspace.tsx', import.meta.url), 'utf8');
+  const importer = readFileSync(new URL('../components/institutional-import.tsx', import.meta.url), 'utf8');
+  const explorer = readFileSync(new URL('../components/curriculum-explorer.tsx', import.meta.url), 'utf8');
+  assert.match(institutionalAdmin, /<InstitutionalPedagogy/);
+  assert.match(institutionalPedagogy, /BNCC\/SAEB são referências protegidas/);
+  assert.match(importer, /Validar sem gravar/);
+  assert.match(importer, /Confirmar importação/);
+  assert.match(editor, /katex\.renderToString/);
+  assert.match(editor, /trust:\s*false/);
+  assert.match(institutionalPedagogy, /page_size:\s*20/);
+  assert.match(institutionalPedagogy, /transition_assessment_item/);
+  assert.match(explorer, /item_bank_coverage/);
+  assert.doesNotMatch(institutionalPedagogy + editor, /service_role|serviceRole/i);
+});
+
+test('Phase 3 keeps diagnostic assessments separate and freezes approved item versions', () => {
+  for (const table of ['assessment_cycles', 'diagnostic_assessments']) {
+    assert.match(phase3Core, new RegExp(`create table public\\.${table}`));
+    assert.match(phase3Core, new RegExp(`alter table public\\.${table} enable row level security`));
+  }
+  for (const table of ['assessment_booklets', 'assessment_booklet_items', 'assessment_schedules', 'assessment_classrooms']) {
+    assert.match(phase3Booklets, new RegExp(`create table public\\.${table}`));
+    assert.match(phase3Booklets, new RegExp(`alter table public\\.${table} enable row level security`));
+  }
+  assert.match(phase3Booklets, /Only approved items are eligible/);
+  assert.match(phase3Booklets, /assessment_item_version_id/);
+  assert.match(phase3Booklets, /at most five booklets/);
+  assert.match(phase3Booklets, /Classroom is outside schedule scope/);
+  assert.match(phase3Booklets, /private\.validate_diagnostic_assessment/);
+  assert.doesNotMatch(phase3Core + phase3Booklets, /drop table|service_role/i);
+});
+
+test('Phase 3 UI exposes the complete assessment construction route', () => {
+  for (const label of ['Ciclos', 'Provas', 'Cadernos', 'Calendário', 'Aplicações']) assert.match(institutionalAssessments, new RegExp(label));
+  assert.match(institutionalAssessments, /create_assessment_booklet/);
+  assert.match(institutionalAssessments, /transition_diagnostic_assessment/);
+  assert.match(institutionalAssessments, /schedule_diagnostic_assessment/);
+  assert.match(institutionalAssessments, /Banco de Itens → Avaliação → Cadernos/);
+});
+
+test('official PoC traceability matrix records source pages and honest statuses', () => {
+  const matrix = readFileSync(
+    new URL('../docs/licitacao-pregao-40-2026.md', import.meta.url),
+    'utf8',
+  );
+  assert.match(matrix, /Matriz de conformidade - Pregão Eletrônico nº 40\/2026/);
+  assert.match(matrix, /Checklist rastreável da PoC oficial/);
+  assert.match(matrix, /1\.1[\s\S]*67–68/);
+  assert.match(matrix, /1\.17[\s\S]*76/);
+  assert.match(matrix, /2\.3[\s\S]*77/);
+  assert.match(matrix, /DEPENDÊNCIA DE OPERAÇÃO EXTERNA/);
 });

@@ -1,0 +1,130 @@
+.phase12-box {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #cbd8e2;
+  border-radius: 12px;
+  background: var(--card, #fff);
+  color: var(--foreground, #173b50);
+  min-width: 0;
+}
+.phase12-box h3 {
+  font-size: 1.15rem;
+  font-weight: 750;
+  margin-bottom: 10px;
+}
+.phase12-box p {
+  margin: 10px 0;
+  line-height: 1.6;
+}
+.phase12-box label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+.phase12-box label:has(input[type='checkbox']),
+.phase12-box label:has(input[type='radio']) {
+  flex-direction: row;
+  align-items: center;
+}
+.phase12-box input:not([type='checkbox']):not([type='radio']),
+.phase12-box select,
+.phase12-box textarea {
+  padding: 10px;
+  border: 1px solid #aebfce;
+  border-radius: 6px;
+  min-width: 0;
+  max-width: 100%;
+  background: var(--card, #fff);
+  color: inherit;
+}
+.phase12-box textarea {
+  min-height: 100px;
+  width: 100%;
+}
+.phase12-box button {
+  padding: 9px 14px;
+  border: 1px solid #aebfce;
+  border-radius: 6px;
+  margin: 5px;
+  background: #edf5fa;
+  color: #183d54;
+  cursor: pointer;
+}
+.phase12-box button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.phase12-box :focus-visible {
+  outline: 3px solid #267da5;
+  outline-offset: 3px;
+}
+.phase12-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+}
+.phase12-box .institutional-table-wrap {
+  max-height: 480px;
+  overflow: auto;
+  margin: 12px 0;
+}
+.phase12-box td {
+  vertical-align: top;
+}
+.phase12-box td small {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 520px;
+}
+.phase12-box img {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+}
+.phase12-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 16px;
+  background: #f1f6f9;
+  border-radius: 8px;
+  margin: 12px 0;
+  color: #173b50;
+}
+.phase12-version-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.phase12-version-grid pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+}
+.phase12-notice {
+  padding: 12px;
+  background: #fff6da;
+  color: #51401c;
+  border-radius: 8px;
+}
+.phase12-pager {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.phase12-box progress {
+  width: 100%;
+}
+@media (max-width: 680px) {
+  .phase12-box {
+    padding: 12px;
+  }
+  .phase12-version-grid {
+    grid-template-columns: 1fr;
+  }
+  .phase12-box button {
+    min-height: 44px;
+  }
+}

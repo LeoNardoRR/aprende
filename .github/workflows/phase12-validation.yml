@@ -1,0 +1,53 @@
+name: Validate Phases 1 and 2
+
+on:
+  push:
+    branches: [codex/finaliza-fases-1-e-2]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase12-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Start disposable local Supabase and verify migrations
+        run: |
+          npx supabase start
+          npx supabase db reset --local
+          npx supabase migration list --local
+          npx supabase db push --dry-run --local
+      - name: Serve invitation function locally
+        run: npx supabase functions serve institutional-invite > /tmp/aprende-functions.log 2>&1 &
+      - name: Run every test with local Supabase
+        run: |
+          eval "$(npx supabase status -o env)"
+          test -n "$API_URL" && test -n "$ANON_KEY" && test -n "$SERVICE_ROLE_KEY"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          npm test
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/institutional-invite/index.ts
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run build:pages
+      - name: Review local database security advisors
+        run: npx supabase db advisors --local --type security --fail-on error
+      - name: Stop disposable local Supabase
+        if: always()
+        run: npx supabase stop --no-backup
