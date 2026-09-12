@@ -25,6 +25,9 @@ import type { Tables } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { InstitutionalProfile } from '@/components/institutional-admin';
 
+type PedagogyProfile = Omit<InstitutionalProfile, 'role'> & {
+  role: InstitutionalProfile['role'] | 'teacher';
+};
 type NetworkRow = Tables<'networks'>;
 type Curriculum = Tables<'curricula'>;
 type Area = Tables<'curriculum_areas'>;
@@ -137,7 +140,7 @@ export function InstitutionalPedagogy({
   networks,
   preview = false,
 }: {
-  profile: InstitutionalProfile;
+  profile: PedagogyProfile;
   networks: NetworkRow[];
   preview?: boolean;
 }) {
@@ -340,15 +343,13 @@ export function InstitutionalPedagogy({
     } else {
       const curriculumName = String(form.get('name')).trim();
       const curriculumVersion = String(form.get('version')).trim();
-      const result = await supabase
-        .from('curricula')
-        .insert({
-          network_id: networkId,
-          name: curriculumName,
-          curriculum_type: 'custom',
-          version: curriculumVersion,
-          created_by: profile.id,
-        });
+      const result = await supabase.from('curricula').insert({
+        network_id: networkId,
+        name: curriculumName,
+        curriculum_type: 'custom',
+        version: curriculumVersion,
+        created_by: profile.id,
+      });
       if (result.error)
         setNotice(`Não foi possível criar: ${result.error.message}`);
       else {
@@ -382,30 +383,24 @@ export function InstitutionalPedagogy({
           .from('curriculum_areas')
           .insert({ curriculum_id: selectedCurriculum, name }));
       if (kind === 'subject')
-        ({ error } = await supabase
-          .from('curriculum_subjects')
-          .insert({
-            curriculum_id: selectedCurriculum,
-            area_id: String(form.get('area_id')),
-            name,
-          }));
+        ({ error } = await supabase.from('curriculum_subjects').insert({
+          curriculum_id: selectedCurriculum,
+          area_id: String(form.get('area_id')),
+          name,
+        }));
       if (kind === 'year')
-        ({ error } = await supabase
-          .from('curriculum_school_years')
-          .insert({
-            curriculum_id: selectedCurriculum,
-            code: String(form.get('code')).trim(),
-            name,
-          }));
+        ({ error } = await supabase.from('curriculum_school_years').insert({
+          curriculum_id: selectedCurriculum,
+          code: String(form.get('code')).trim(),
+          name,
+        }));
       if (kind === 'unit')
-        ({ error } = await supabase
-          .from('curriculum_thematic_units')
-          .insert({
-            curriculum_id: selectedCurriculum,
-            subject_id: String(form.get('subject_id')),
-            curriculum_school_year_id: String(form.get('year_id')),
-            name,
-          }));
+        ({ error } = await supabase.from('curriculum_thematic_units').insert({
+          curriculum_id: selectedCurriculum,
+          subject_id: String(form.get('subject_id')),
+          curriculum_school_year_id: String(form.get('year_id')),
+          name,
+        }));
       if (kind === 'object')
         ({ error } = await supabase
           .from('curriculum_knowledge_objects')
@@ -415,17 +410,15 @@ export function InstitutionalPedagogy({
             name,
           }));
       if (kind === 'skill')
-        ({ error } = await supabase
-          .from('curriculum_skills')
-          .insert({
-            curriculum_id: selectedCurriculum,
-            subject_id: String(form.get('subject_id')),
-            curriculum_school_year_id: String(form.get('year_id')),
-            thematic_unit_id: String(form.get('unit_id')) || null,
-            knowledge_object_id: String(form.get('object_id')) || null,
-            code: String(form.get('code')).trim().toUpperCase(),
-            description: String(form.get('description')).trim(),
-          }));
+        ({ error } = await supabase.from('curriculum_skills').insert({
+          curriculum_id: selectedCurriculum,
+          subject_id: String(form.get('subject_id')),
+          curriculum_school_year_id: String(form.get('year_id')),
+          thematic_unit_id: String(form.get('unit_id')) || null,
+          knowledge_object_id: String(form.get('object_id')) || null,
+          code: String(form.get('code')).trim().toUpperCase(),
+          description: String(form.get('description')).trim(),
+        }));
     }
     setBusy(false);
     if (error) setNotice(`Não foi possível adicionar: ${error.message}`);
@@ -771,9 +764,9 @@ export function InstitutionalPedagogy({
               <label key={key}>
                 {
                   {
-                    author: 'ID do autor',
-                    reviewer: 'ID do revisor',
-                    approver: 'ID do aprovador',
+                    author: 'Nome do autor',
+                    reviewer: 'Nome do revisor',
+                    approver: 'Nome do aprovador',
                   }[key]
                 }
                 <input
@@ -1020,7 +1013,7 @@ function ItemActions({
   onTransition,
 }: {
   item: ItemListRow;
-  role: InstitutionalProfile['role'];
+  role: PedagogyProfile['role'];
   busy: boolean;
   onTransition: (id: string, action: string) => Promise<void>;
 }) {

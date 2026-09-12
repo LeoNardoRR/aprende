@@ -69,6 +69,9 @@ export function InstitutionalActivation({
       }
       if (password !== confirm)
         throw new Error('As senhas precisam coincidir.');
+      await institutionalRpc('institutional_invitation_context', {
+        invitation_id: invitation,
+      });
       const changed = await supabase.auth.updateUser({ password });
       if (changed.error) throw changed.error;
       await institutionalRpc('accept_institutional_invitation', {
@@ -111,7 +114,7 @@ export function InstitutionalActivation({
             <input
               type="password"
               autoComplete={ready ? 'new-password' : 'current-password'}
-              minLength={12}
+              minLength={ready ? 12 : 1}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}

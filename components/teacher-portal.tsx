@@ -1,5 +1,6 @@
 'use client';
 
+import { TeacherItemBank } from '@/components/teacher-item-bank';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Session } from '@supabase/supabase-js';
@@ -1164,6 +1165,7 @@ function TeacherDashboard({
             </button>
           </div>
         </header>
+        <TeacherItemBank profile={profile} preview={preview} />
         {notice && <p className="teacher-notice">{notice}</p>}
         {classes.length > 0 && (
           <div

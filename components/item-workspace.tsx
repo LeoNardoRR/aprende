@@ -136,6 +136,7 @@ export function ItemWorkspace({
         action: string;
         comment: string | null;
         actor_id: string;
+        actor_name: string;
         created_at: string;
       }[]
     >([]),
@@ -167,12 +168,9 @@ export function ItemWorkspace({
           .eq('item_id', id)
           .order('version_number', { ascending: false })
           .limit(100),
-        supabase
-          .from('assessment_item_reviews')
-          .select('*')
-          .eq('item_id', id)
-          .order('created_at', { ascending: false })
-          .limit(100),
+        institutionalRpc<typeof history>('item_editorial_history', {
+          target_item: id,
+        }).then((data) => ({ data, error: null })),
       ]);
       for (const r of [data, opts, vers, reviews]) if (r.error) throw r.error;
       const record = data.data as Item;
@@ -560,7 +558,9 @@ export function ItemWorkspace({
                     onChange={(e) => change('difficulty', e.target.value)}
                   >
                     {['easy', 'medium', 'hard'].map((v) => (
-                      <option key={v}>{v}</option>
+                      <option key={v} value={v}>
+                        {{ easy: 'Fácil', medium: 'Média', hard: 'Difícil' }[v]}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -792,7 +792,23 @@ export function ItemWorkspace({
                       'image_paths',
                     ].map((key) => (
                       <div key={key}>
-                        <strong>{key}</strong>
+                        <strong>
+                          {
+                            (
+                              {
+                                statement: 'Enunciado',
+                                support_text: 'Texto de apoio',
+                                options: 'Alternativas e resposta correta',
+                                correct_answer_justification: 'Justificativa',
+                                pedagogical_comment: 'Comentário pedagógico',
+                                skill_id: 'Habilidade (identificador)',
+                                difficulty: 'Dificuldade',
+                                formula: 'Fórmula',
+                                image_paths: 'Imagens',
+                              } as Record<string, string>
+                            )[key]
+                          }
+                        </strong>
                         <pre>
                           {JSON.stringify(
                             versions.find((v) => v.id === value)?.snapshot[
@@ -813,8 +829,18 @@ export function ItemWorkspace({
           {history.length ? (
             history.map((h, i) => (
               <p key={i}>
-                {new Date(h.created_at).toLocaleString('pt-BR')} · {h.action} ·
-                responsável {h.actor_id}
+                {new Date(h.created_at).toLocaleString('pt-BR')} ·{' '}
+                {(
+                  {
+                    submitted: 'Enviado',
+                    returned: 'Devolvido',
+                    reviewed: 'Revisado',
+                    approved: 'Aprovado',
+                    rejected: 'Rejeitado',
+                    archived: 'Arquivado',
+                  } as Record<string, string>
+                )[h.action] ?? h.action}{' '}
+                · responsável {h.actor_name || 'Usuário indisponível'}
                 <br />
                 {h.comment ?? 'Sem comentário'}
               </p>
