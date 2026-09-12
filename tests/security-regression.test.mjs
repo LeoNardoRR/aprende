@@ -48,6 +48,10 @@ const institutionalAdmin = readFileSync(
   new URL('../components/institutional-admin.tsx', import.meta.url),
   'utf8',
 );
+const institutionalPedagogy = readFileSync(
+  new URL('../components/institutional-pedagogy.tsx', import.meta.url),
+  'utf8',
+);
 const homePage = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
 
 test('classroom content is readable only by members and writable by teachers', () => {
@@ -246,6 +250,18 @@ test('Phase 2 separates curricula, item workflow and immutable versions', () => 
   assert.match(phase2Foundation, /limit least\(greatest\(page_size, 1\), 100\)/);
   assert.match(phase2Foundation, /curriculum_type = 'custom'/);
   assert.doesNotMatch(phase2Foundation, /service_role|serviceRole/i);
+});
+
+test('institutional UI exposes curriculum, safe authorship and paginated workflow', () => {
+  assert.match(institutionalAdmin, /<InstitutionalPedagogy/);
+  assert.match(institutionalPedagogy, /BNCC\/SAEB são referências protegidas/);
+  assert.match(institutionalPedagogy, /CSV ou JSON com prévia obrigatória/);
+  assert.match(institutionalPedagogy, /katex\.renderToString/);
+  assert.match(institutionalPedagogy, /trust: false/);
+  assert.match(institutionalPedagogy, /page_size: 20/);
+  assert.match(institutionalPedagogy, /transition_assessment_item/);
+  assert.match(institutionalPedagogy, /Habilidades sem itens/);
+  assert.doesNotMatch(institutionalPedagogy, /service_role|serviceRole/i);
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {

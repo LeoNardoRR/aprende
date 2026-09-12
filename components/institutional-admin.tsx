@@ -8,6 +8,8 @@ import {
   GraduationCap,
   LoaderCircle,
   LogOut,
+  LibraryBig,
+  BookOpenCheck,
   Network,
   Plus,
   School,
@@ -17,6 +19,7 @@ import {
 import { BrandLogo } from '@/components/brand-logo';
 import { InstitutionalClassrooms } from '@/components/institutional-classrooms';
 import { InstitutionalEnrollments } from '@/components/institutional-enrollments';
+import { InstitutionalPedagogy } from '@/components/institutional-pedagogy';
 import { InstitutionalUsers } from '@/components/institutional-users';
 import { supabase } from '@/lib/supabase';
 import type { Database, Tables } from '@/lib/database.types';
@@ -183,6 +186,8 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
           <a href="#classrooms"><GraduationCap /> Turmas</a>
           <a href="#enrollments"><Users /> Matrículas</a>
           <a href="#access"><ShieldCheck /> Acessos</a>
+          <a href="#curricula"><LibraryBig /> Currículos</a>
+          <a href="#item-bank"><BookOpenCheck /> Banco de Itens</a>
         </nav>
         <button type="button" onClick={() => void supabase.auth.signOut()}><LogOut /> Sair</button>
       </aside>
@@ -222,6 +227,7 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
             <InstitutionalClassrooms profile={profile} networks={networks} schools={schools} academicYears={academicYears} schoolYears={schoolYears} preview={preview} />
             <InstitutionalEnrollments profile={profile} networks={networks} schools={schools} academicYears={academicYears} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
             <InstitutionalUsers profile={profile} networks={networks} schools={schools} preview={preview} />
+            <InstitutionalPedagogy profile={profile} networks={networks} preview={preview} />
           </>
         )}
       </main>

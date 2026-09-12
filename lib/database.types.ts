@@ -162,6 +162,66 @@ export type Database = {
           },
         ]
       }
+      curricula: {
+        Row: { id: string; network_id: string | null; name: string; curriculum_type: string; version: string; active: boolean; created_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; network_id?: string | null; name: string; curriculum_type: string; version: string; active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; network_id?: string | null; name?: string; curriculum_type?: string; version?: string; active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      curriculum_areas: {
+        Row: { id: string; curriculum_id: string; code: string | null; name: string; sort_order: number; created_at: string; updated_at: string }
+        Insert: { id?: string; curriculum_id: string; code?: string | null; name: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; curriculum_id?: string; code?: string | null; name?: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      curriculum_subjects: {
+        Row: { id: string; curriculum_id: string; area_id: string; code: string | null; name: string; sort_order: number; created_at: string; updated_at: string }
+        Insert: { id?: string; curriculum_id: string; area_id: string; code?: string | null; name: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; curriculum_id?: string; area_id?: string; code?: string | null; name?: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      curriculum_school_years: {
+        Row: { id: string; curriculum_id: string; school_year_id: string | null; code: string; name: string; sort_order: number; created_at: string; updated_at: string }
+        Insert: { id?: string; curriculum_id: string; school_year_id?: string | null; code: string; name: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; curriculum_id?: string; school_year_id?: string | null; code?: string; name?: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      curriculum_thematic_units: {
+        Row: { id: string; curriculum_id: string; subject_id: string; curriculum_school_year_id: string | null; name: string; sort_order: number; created_at: string; updated_at: string }
+        Insert: { id?: string; curriculum_id: string; subject_id: string; curriculum_school_year_id?: string | null; name: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; curriculum_id?: string; subject_id?: string; curriculum_school_year_id?: string | null; name?: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      curriculum_knowledge_objects: {
+        Row: { id: string; curriculum_id: string; thematic_unit_id: string; name: string; sort_order: number; created_at: string; updated_at: string }
+        Insert: { id?: string; curriculum_id: string; thematic_unit_id: string; name: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; curriculum_id?: string; thematic_unit_id?: string; name?: string; sort_order?: number; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      curriculum_skills: {
+        Row: { id: string; curriculum_id: string; subject_id: string; curriculum_school_year_id: string; thematic_unit_id: string | null; knowledge_object_id: string | null; code: string; description: string; active: boolean; created_at: string; updated_at: string }
+        Insert: { id?: string; curriculum_id: string; subject_id: string; curriculum_school_year_id: string; thematic_unit_id?: string | null; knowledge_object_id?: string | null; code: string; description: string; active?: boolean; created_at?: string; updated_at?: string }
+        Update: { id?: string; curriculum_id?: string; subject_id?: string; curriculum_school_year_id?: string; thematic_unit_id?: string | null; knowledge_object_id?: string | null; code?: string; description?: string; active?: boolean; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      curriculum_imports: {
+        Row: { id: string; network_id: string; curriculum_id: string | null; file_name: string; format: string; status: string; row_count: number; valid_count: number; duplicate_count: number; error_count: number; preview_rows: Json; validation_errors: Json; created_by: string; created_at: string; imported_at: string | null }
+        Insert: { id?: string; network_id: string; curriculum_id?: string | null; file_name: string; format: string; status?: string; row_count?: number; valid_count?: number; duplicate_count?: number; error_count?: number; preview_rows?: Json; validation_errors?: Json; created_by: string; created_at?: string; imported_at?: string | null }
+        Update: { curriculum_id?: string | null; status?: string; row_count?: number; valid_count?: number; duplicate_count?: number; error_count?: number; preview_rows?: Json; validation_errors?: Json; imported_at?: string | null }
+        Relationships: []
+      }
+      assessment_items: {
+        Row: { id: string; network_id: string; curriculum_id: string; curriculum_school_year_id: string; subject_id: string; skill_id: string; thematic_unit_id: string | null; knowledge_object_id: string | null; internal_title: string; statement: string; support_text: string | null; pedagogical_comment: string | null; correct_answer_justification: string | null; difficulty: string; item_type: string; status: string; author_id: string; reviewer_id: string | null; approver_id: string | null; current_version: number; created_at: string; updated_at: string }
+        Insert: { id?: string; network_id: string; curriculum_id: string; curriculum_school_year_id: string; subject_id: string; skill_id: string; thematic_unit_id?: string | null; knowledge_object_id?: string | null; internal_title: string; statement: string; support_text?: string | null; pedagogical_comment?: string | null; correct_answer_justification?: string | null; difficulty: string; item_type: string; status?: string; author_id: string; reviewer_id?: string | null; approver_id?: string | null; current_version?: number; created_at?: string; updated_at?: string }
+        Update: { internal_title?: string; statement?: string; support_text?: string | null; pedagogical_comment?: string | null; correct_answer_justification?: string | null; difficulty?: string; skill_id?: string; thematic_unit_id?: string | null; knowledge_object_id?: string | null; updated_at?: string }
+        Relationships: []
+      }
+      assessment_item_options: {
+        Row: { id: string; item_id: string; label: string; content: string; is_correct: boolean; feedback: string | null; distractor_analysis: string | null; sort_order: number; created_at: string; updated_at: string }
+        Insert: { id?: string; item_id: string; label: string; content: string; is_correct?: boolean; feedback?: string | null; distractor_analysis?: string | null; sort_order?: number; created_at?: string; updated_at?: string }
+        Update: { label?: string; content?: string; is_correct?: boolean; feedback?: string | null; distractor_analysis?: string | null; sort_order?: number; updated_at?: string }
+        Relationships: []
+      }
       classrooms: {
         Row: {
           academic_year_id: string | null
@@ -765,6 +825,41 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_assessment_items: {
+        Args: {
+          target_network: string
+          status_filter?: string
+          curriculum_filter?: string | null
+          subject_filter?: string | null
+          school_year_filter?: string | null
+          skill_filter?: string | null
+          difficulty_filter?: string
+          author_filter?: string | null
+          reviewer_filter?: string | null
+          approver_filter?: string | null
+          search_query?: string
+          page_size?: number
+          page_offset?: number
+        }
+        Returns: {
+          item_id: string
+          internal_title: string
+          statement: string
+          item_type: string
+          difficulty: string
+          item_status: string
+          curriculum_name: string
+          subject_name: string
+          school_year_name: string
+          skill_code: string
+          author_name: string
+          reviewer_name: string | null
+          approver_name: string | null
+          current_version: number
+          updated_at: string
+          total_count: number
+        }[]
+      }
       list_legacy_classrooms: {
         Args: {
           page_size?: number
@@ -830,6 +925,10 @@ export type Database = {
           target_classroom?: string | null
           target_enrollment: string
         }
+        Returns: undefined
+      }
+      transition_assessment_item: {
+        Args: { target_item: string; target_action: string; action_comment?: string | null }
         Returns: undefined
       }
     }
