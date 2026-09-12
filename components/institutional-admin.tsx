@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarRange,
   CheckCircle2,
+  ClipboardList,
   GraduationCap,
   LoaderCircle,
   LogOut,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
 import { InstitutionalClassrooms } from '@/components/institutional-classrooms';
+import { InstitutionalAssessments } from '@/components/institutional-assessments';
 import { InstitutionalEnrollments } from '@/components/institutional-enrollments';
 import { InstitutionalPedagogy } from '@/components/institutional-pedagogy';
 import { InstitutionalUsers } from '@/components/institutional-users';
@@ -188,6 +190,7 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
           <a href="#access"><ShieldCheck /> Acessos</a>
           <a href="#curricula"><LibraryBig /> Currículos</a>
           <a href="#item-bank"><BookOpenCheck /> Banco de Itens</a>
+          <a href="#assessments"><ClipboardList /> Avaliações</a>
         </nav>
         <button type="button" onClick={() => void supabase.auth.signOut()}><LogOut /> Sair</button>
       </aside>
@@ -228,6 +231,7 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
             <InstitutionalEnrollments profile={profile} networks={networks} schools={schools} academicYears={academicYears} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
             <InstitutionalUsers profile={profile} networks={networks} schools={schools} preview={preview} />
             <InstitutionalPedagogy profile={profile} networks={networks} preview={preview} />
+            <InstitutionalAssessments profile={profile} networks={networks} schools={schools} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
           </>
         )}
       </main>

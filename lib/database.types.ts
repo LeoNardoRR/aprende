@@ -222,6 +222,42 @@ export type Database = {
         Update: { label?: string; content?: string; is_correct?: boolean; feedback?: string | null; distractor_analysis?: string | null; sort_order?: number; updated_at?: string }
         Relationships: []
       }
+      assessment_cycles: {
+        Row: { id: string; network_id: string; name: string; description: string | null; starts_at: string; ends_at: string; status: string; created_by: string; created_at: string; updated_at: string }
+        Insert: { id?: string; network_id: string; name: string; description?: string | null; starts_at: string; ends_at: string; status?: string; created_by: string; created_at?: string; updated_at?: string }
+        Update: { name?: string; description?: string | null; starts_at?: string; ends_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      diagnostic_assessments: {
+        Row: { id: string; cycle_id: string; network_id: string; curriculum_id: string; subject_id: string; curriculum_school_year_id: string; title: string; description: string | null; instructions: string; total_points: number; duration_minutes: number; starts_at: string | null; ends_at: string | null; status: string; randomize_questions: boolean; randomize_options: boolean; created_by: string; created_at: string; updated_at: string }
+        Insert: { id?: string; cycle_id: string; network_id: string; curriculum_id: string; subject_id: string; curriculum_school_year_id: string; title: string; description?: string | null; instructions: string; total_points?: number; duration_minutes: number; starts_at?: string | null; ends_at?: string | null; status?: string; randomize_questions?: boolean; randomize_options?: boolean; created_by: string; created_at?: string; updated_at?: string }
+        Update: { title?: string; description?: string | null; instructions?: string; duration_minutes?: number; starts_at?: string | null; ends_at?: string | null; randomize_questions?: boolean; randomize_options?: boolean; updated_at?: string }
+        Relationships: []
+      }
+      assessment_booklets: {
+        Row: { id: string; assessment_id: string; network_id: string; code: string; title: string; generation_strategy: string; generation_seed: string | null; created_by: string; created_at: string; updated_at: string }
+        Insert: { id?: string; assessment_id: string; network_id: string; code: string; title: string; generation_strategy?: string; generation_seed?: string | null; created_by: string; created_at?: string; updated_at?: string }
+        Update: { title?: string; updated_at?: string }
+        Relationships: []
+      }
+      assessment_booklet_items: {
+        Row: { id: string; booklet_id: string; assessment_id: string; assessment_item_id: string; assessment_item_version_id: string; position: number; points: number; grouping_metadata: Json; created_at: string }
+        Insert: { id?: string; booklet_id: string; assessment_id: string; assessment_item_id: string; assessment_item_version_id: string; position: number; points?: number; grouping_metadata?: Json; created_at?: string }
+        Update: { position?: number; points?: number; grouping_metadata?: Json }
+        Relationships: []
+      }
+      assessment_schedules: {
+        Row: { id: string; assessment_id: string; network_id: string; school_id: string; starts_at: string; ends_at: string; status: string; token_required: boolean; assigned_by: string; created_at: string; updated_at: string }
+        Insert: { id?: string; assessment_id: string; network_id: string; school_id: string; starts_at: string; ends_at: string; status?: string; token_required?: boolean; assigned_by: string; created_at?: string; updated_at?: string }
+        Update: { starts_at?: string; ends_at?: string; status?: string; token_required?: boolean; updated_at?: string }
+        Relationships: []
+      }
+      assessment_classrooms: {
+        Row: { id: string; schedule_id: string; assessment_id: string; classroom_id: string; booklet_assignment_strategy: string; created_at: string }
+        Insert: { id?: string; schedule_id: string; assessment_id: string; classroom_id: string; booklet_assignment_strategy?: string; created_at?: string }
+        Update: { booklet_assignment_strategy?: string }
+        Relationships: []
+      }
       classrooms: {
         Row: {
           academic_year_id: string | null
@@ -756,6 +792,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_assessment_booklet: {
+        Args: { target_assessment: string; booklet_title?: string | null; strategy?: string; deterministic_seed?: string | null }
+        Returns: string
+      }
+      add_approved_item_to_booklet: {
+        Args: { target_booklet: string; target_item: string; target_position: number; item_points?: number }
+        Returns: string
+      }
+      duplicate_assessment_booklet: {
+        Args: { target_booklet: string; deterministic_seed?: string | null }
+        Returns: string
+      }
+      transition_diagnostic_assessment: {
+        Args: { target_assessment: string; target_action: string }
+        Returns: undefined
+      }
+      schedule_diagnostic_assessment: {
+        Args: { target_assessment: string; target_school: string; target_classrooms: string[]; window_starts_at: string; window_ends_at: string }
+        Returns: string
+      }
+      assessment_curriculum_map: {
+        Args: { target_assessment: string }
+        Returns: { skill_code: string; thematic_unit: string | null; knowledge_object: string | null; difficulty: string; item_count: number; points: number; percentage: number }[]
+      }
       create_student_enrollment: {
         Args: {
           target_academic_year: string
