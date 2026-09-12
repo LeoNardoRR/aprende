@@ -50,6 +50,13 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
     'attendance',
     'lesson_records',
     'lesson_materials',
+    'networks',
+    'schools',
+    'academic_years',
+    'school_years',
+    'institutional_memberships',
+    'student_enrollments',
+    'student_movements',
   ]) {
     const tableResult = await admin.from(table).select('*', { head: true, count: 'exact' });
     assert.ifError(tableResult.error);
@@ -68,10 +75,14 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
   };
   const userIds = [];
   const storagePaths = [];
+  const networkIds = [];
 
   t.after(async () => {
     if (storagePaths.length) {
       await admin.storage.from('lesson-materials').remove(storagePaths);
+    }
+    if (networkIds.length) {
+      await admin.from('networks').delete().in('id', networkIds);
     }
     for (const id of userIds.reverse()) {
       await admin.auth.admin.deleteUser(id);
@@ -120,6 +131,109 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
     .single();
   assert.ifError(classBResult.error);
   const classB = classBResult.data;
+
+  const networkResult = await admin
+    .from('networks')
+    .insert({
+      name: 'Rede Local de Teste',
+      municipality: 'Monte Mor',
+      state_code: 'SP',
+      created_by: created.teacherA,
+    })
+    .select('id')
+    .single();
+  assert.ifError(networkResult.error);
+  const networkId = networkResult.data.id;
+  networkIds.push(networkId);
+  const schoolResult = await admin
+    .from('schools')
+    .insert({ network_id: networkId, name: 'EMEF de Teste', code: `EMEF-${suffix}` })
+    .select('id')
+    .single();
+  assert.ifError(schoolResult.error);
+  const schoolId = schoolResult.data.id;
+  const academicYearResult = await admin
+    .from('academic_years')
+    .insert({
+      network_id: networkId,
+      label: `2026-${suffix.slice(-8)}`,
+      starts_on: '2026-01-01',
+      ends_on: '2026-12-31',
+      status: 'open',
+    })
+    .select('id')
+    .single();
+  assert.ifError(academicYearResult.error);
+  const academicYearId = academicYearResult.data.id;
+  const schoolYearResult = await admin
+    .from('school_years')
+    .insert({ school_id: schoolId, name: '6º ano', code: `6-${suffix.slice(-8)}` })
+    .select('id')
+    .single();
+  assert.ifError(schoolYearResult.error);
+  const schoolYearId = schoolYearResult.data.id;
+  assert.ifError(
+    (
+      await admin.from('institutional_memberships').insert({
+        user_id: created.teacherA,
+        network_id: networkId,
+        role: 'manager',
+        created_by: created.teacherA,
+      })
+    ).error,
+  );
+  const scopedClassResult = await teacherA
+    .from('classrooms')
+    .insert({
+      owner_id: created.teacherA,
+      name: 'Turma Institucional',
+      subject: 'Português',
+      network_id: networkId,
+      school_id: schoolId,
+      academic_year_id: academicYearId,
+      school_year_id: schoolYearId,
+    })
+    .select('id,join_code')
+    .single();
+  assert.ifError(scopedClassResult.error);
+  const scopedClass = scopedClassResult.data;
+  const visibleNetwork = await teacherA
+    .from('networks')
+    .select('id')
+    .eq('id', networkId);
+  assert.ifError(visibleNetwork.error);
+  assert.equal(visibleNetwork.data.length, 1);
+  const hiddenNetwork = await studentA
+    .from('networks')
+    .select('id')
+    .eq('id', networkId);
+  assert.ifError(hiddenNetwork.error);
+  assert.equal(hiddenNetwork.data.length, 0);
+  const enrollmentResult = await admin
+    .from('student_enrollments')
+    .insert({
+      student_id: created.studentA,
+      network_id: networkId,
+      school_id: schoolId,
+      academic_year_id: academicYearId,
+      classroom_id: scopedClass.id,
+      source: 'manual',
+    })
+    .select('id')
+    .single();
+  assert.ifError(enrollmentResult.error);
+  const ownEnrollment = await studentA
+    .from('student_enrollments')
+    .select('id')
+    .eq('id', enrollmentResult.data.id);
+  assert.ifError(ownEnrollment.error);
+  assert.equal(ownEnrollment.data.length, 1);
+  const managedEnrollment = await teacherA
+    .from('student_enrollments')
+    .select('student_id')
+    .eq('id', enrollmentResult.data.id);
+  assert.ifError(managedEnrollment.error);
+  assert.equal(managedEnrollment.data.length, 1);
 
   assert.ifError((await studentA.rpc('join_class_by_code', { code: classA.join_code })).error);
   assert.ifError((await studentB.rpc('join_class_by_code', { code: classB.join_code })).error);

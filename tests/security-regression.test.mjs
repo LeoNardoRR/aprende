@@ -27,6 +27,9 @@ const lessonMaterialFkIndex = readMigration(
 const hardenedGrants = readMigration(
   '20260911235837_harden_app_table_grants.sql',
 );
+const institutionalFoundation = readMigration(
+  '20260912153902_add_institutional_rbac_foundation.sql',
+);
 const studentConnect = readFileSync(
   new URL('../components/student-connect.tsx', import.meta.url),
   'utf8',
@@ -147,4 +150,54 @@ test('student connect refreshes and removes focus and visibility listeners', () 
   assert.match(studentConnect, /window\.removeEventListener\('focus', refreshWhenVisible\)/);
   assert.match(studentConnect, /document\.removeEventListener\('visibilitychange', refreshWhenVisible\)/);
   assert.match(studentConnect, /\}, \[loadStudent, session\]\);/);
+});
+
+test('institutional foundation is additive and protects scoped RBAC data', () => {
+  for (const table of [
+    'networks',
+    'schools',
+    'academic_years',
+    'school_years',
+    'institutional_memberships',
+    'student_enrollments',
+    'student_movements',
+  ]) {
+    assert.match(
+      institutionalFoundation,
+      new RegExp(`create table if not exists public\\.${table}`),
+    );
+    assert.match(
+      institutionalFoundation,
+      new RegExp(`alter table public\\.${table} enable row level security`),
+    );
+  }
+  for (const role of ['network_admin', 'manager', 'reviewer', 'approver']) {
+    assert.match(
+      institutionalFoundation,
+      new RegExp(`alter type public\\.app_role add value if not exists '${role}'`),
+    );
+  }
+  assert.match(institutionalFoundation, /create or replace function private\.has_permission/);
+  assert.match(institutionalFoundation, /profile\.role::text = 'network_admin'/);
+  assert.match(institutionalFoundation, /institutional_memberships_network_role_ux/);
+  assert.match(institutionalFoundation, /create policy student_enrollments_read/);
+  assert.match(institutionalFoundation, /create policy student_movements_manage/);
+  assert.match(institutionalFoundation, /add column if not exists network_id/);
+  assert.match(institutionalFoundation, /add column if not exists school_id/);
+  assert.doesNotMatch(institutionalFoundation, /drop table public\./i);
+  assert.doesNotMatch(institutionalFoundation, /drop column/i);
+  assert.doesNotMatch(institutionalFoundation, /revoke all on all functions in schema private/i);
+});
+
+test('official PoC traceability matrix records source pages and honest statuses', () => {
+  const matrix = readFileSync(
+    new URL('../docs/licitacao-pregao-40-2026.md', import.meta.url),
+    'utf8',
+  );
+  assert.match(matrix, /Matriz de conformidade - Pregão Eletrônico nº 40\/2026/);
+  assert.match(matrix, /Checklist rastreável da PoC oficial/);
+  assert.match(matrix, /1\.1[\s\S]*67–68/);
+  assert.match(matrix, /1\.17[\s\S]*76/);
+  assert.match(matrix, /2\.3[\s\S]*77/);
+  assert.match(matrix, /DEPENDÊNCIA DE OPERAÇÃO EXTERNA/);
 });
