@@ -33,6 +33,9 @@ const institutionalFoundation = readMigration(
 const institutionalOperations = readMigration(
   '20260912171627_finalize_phase_1_operations.sql',
 );
+const phase2Foundation = readMigration(
+  '20260912173208_add_curriculum_and_item_bank_foundation.sql',
+);
 const studentConnect = readFileSync(
   new URL('../components/student-connect.tsx', import.meta.url),
   'utf8',
@@ -222,6 +225,27 @@ test('Phase 1 mutations use guarded RPCs and preserve movement history', () => {
   assert.match(institutionalOperations, /revoke update on public\.classrooms from authenticated/);
   assert.match(institutionalOperations, /classrooms_complete_institutional_scope_check/);
   assert.doesNotMatch(institutionalOperations, /service_role|serviceRole/i);
+});
+
+test('Phase 2 separates curricula, item workflow and immutable versions', () => {
+  for (const table of [
+    'curricula', 'curriculum_areas', 'curriculum_subjects',
+    'curriculum_school_years', 'curriculum_thematic_units',
+    'curriculum_knowledge_objects', 'curriculum_skills',
+    'assessment_items', 'assessment_item_options',
+    'assessment_item_versions', 'assessment_item_reviews', 'audit_logs',
+  ]) {
+    assert.match(phase2Foundation, new RegExp(`create table public\\.${table}`));
+    assert.match(phase2Foundation, new RegExp(`alter table public\\.${table} enable row level security`));
+  }
+  assert.match(phase2Foundation, /function public\.transition_assessment_item/);
+  assert.match(phase2Foundation, /Multiple choice item requires at least four options/);
+  assert.match(phase2Foundation, /Multiple choice item requires exactly one correct option/);
+  assert.match(phase2Foundation, /insert into public\.assessment_item_versions/);
+  assert.match(phase2Foundation, /create or replace view public\.approved_assessment_items/);
+  assert.match(phase2Foundation, /limit least\(greatest\(page_size, 1\), 100\)/);
+  assert.match(phase2Foundation, /curriculum_type = 'custom'/);
+  assert.doesNotMatch(phase2Foundation, /service_role|serviceRole/i);
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {
