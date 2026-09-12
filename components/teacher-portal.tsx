@@ -2303,7 +2303,34 @@ function AttendancePanel({
             </button>
           );
         })}
-        {!students.length && <p>Nenhum aluno conectado.</p>}
+        {!students.length && (
+          <div className="teacher-roster-empty">
+            <span aria-hidden="true">
+              <Users />
+            </span>
+            <strong>Nenhum aluno conectado</strong>
+            <p>
+              Compartilhe o código da turma para começar a lista de chamada.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard
+                  .writeText(classroom.join_code)
+                  .then(() => setNotice('Código da turma copiado.'))
+                  .catch(() =>
+                    setNotice(`Código da turma: ${classroom.join_code}`),
+                  );
+              }}
+            >
+              <Copy />
+              <span>
+                <small>Código da turma</small>
+                {classroom.join_code}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
       {notice && (
         <output className="teacher-attendance-notice">{notice}</output>
