@@ -32,12 +32,12 @@ export function StudentCharacter({ preferences, size = 'hero' }: {
 function CharacterAccessory({type,color}:{type:string;color:string}){
   if(type==='none') return null;
   return <svg className="character-accessory" viewBox="0 0 1348 1167" aria-hidden="true">
-    {type==='round-glasses'&&<g fill="none" stroke={color} strokeWidth="20"><ellipse cx="733" cy="395" rx="72" ry="63"/><ellipse cx="919" cy="427" rx="69" ry="62"/><path d="M803 405q25-12 49 5M663 387l-66-24m391 72 63-2"/></g>}
-    {type==='square-glasses'&&<g fill="none" stroke={color} strokeWidth="18" strokeLinejoin="round"><path d="M657 329l151 25-14 112-145-23Zm211 36 143 26-19 109-139-25Z"/><path d="M802 399q28-12 55 7M657 376l-62-22m414 83 55 2"/></g>}
-    {type==='sunglasses'&&<g fill="#19202b" fillOpacity=".86" stroke={color} strokeWidth="13"><path d="M650 339l159 25-16 106-143-25Z"/><path d="M861 375l155 26-22 105-143-26Z"/><path d="M800 403q31-13 61 8" fill="none"/></g>}
-    {type==='earrings'&&<g fill="none" stroke={color} strokeWidth="13"><circle cx="473" cy="524" r="25"/><circle cx="1040" cy="559" r="25"/></g>}
-    {type==='necklace'&&<g fill="none" stroke={color} strokeWidth="12"><path d="M565 800q113 145 248 5"/><circle cx="690" cy="914" r="22" fill={color}/></g>}
-    {type==='headphones'&&<g fill="none" stroke={color} strokeWidth="30"><path d="M449 439q-3-294 280-322 278-27 341 244"/><rect x="423" y="411" width="67" height="171" rx="30" fill={color}/><rect x="1016" y="444" width="67" height="171" rx="30" fill={color}/></g>}
-    {type==='headband'&&<path d="M474 252q238-169 470 18" fill="none" stroke={color} strokeWidth="34" strokeLinecap="round"/>}
+    {type==='round-glasses'&&<g fill="none" stroke={color} strokeWidth="13"><ellipse cx="738" cy="399" rx="61" ry="52" transform="rotate(8 738 399)"/><ellipse cx="916" cy="429" rx="59" ry="52" transform="rotate(9 916 429)"/><path d="M800 408q27-10 56 5M678 389l-55-21m352 70 48 1" strokeLinecap="round"/></g>}
+    {type==='square-glasses'&&<g fill="none" stroke={color} strokeWidth="13" strokeLinejoin="round"><rect x="674" y="350" width="132" height="96" rx="18" transform="rotate(8 740 398)"/><rect x="851" y="380" width="128" height="94" rx="18" transform="rotate(9 915 427)"/><path d="M805 407q25-9 48 5M675 385l-53-20m356 71 46 1" strokeLinecap="round"/></g>}
+    {type==='sunglasses'&&<g fill="#202735" fillOpacity=".82" stroke={color} strokeWidth="10"><rect x="674" y="351" width="134" height="94" rx="22" transform="rotate(8 741 398)"/><rect x="850" y="380" width="130" height="94" rx="22" transform="rotate(9 915 427)"/><path d="M806 406q25-9 47 5M675 385l-53-20m356 71 46 1" fill="none" strokeLinecap="round"/></g>}
+    {type==='earrings'&&<g fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"><circle cx="486" cy="535" r="15"/><path d="M486 550v15"/><circle cx="1034" cy="565" r="15"/><path d="M1034 580v15"/></g>}
+    {type==='necklace'&&<g fill="none" stroke={color} strokeWidth="9" strokeLinecap="round"><path d="M588 795q92 88 190 17"/><circle cx="691" cy="856" r="14" fill={color}/></g>}
+    {type==='headphones'&&<g fill="none" stroke={color} strokeWidth="20" strokeLinecap="round"><path d="M469 443q12-258 276-276 250-15 305 213"/><rect x="442" y="423" width="55" height="139" rx="24" fill={color}/><rect x="1009" y="447" width="55" height="139" rx="24" fill={color}/></g>}
+    {type==='headband'&&<g fill="none" stroke={color} strokeLinecap="round"><path d="M506 292q208-151 425-2" strokeWidth="22"/><path d="M689 188l32-42 31 43 45-19-11 49" strokeWidth="13" strokeLinejoin="round"/></g>}
   </svg>;
 }

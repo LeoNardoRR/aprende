@@ -713,7 +713,7 @@ export default function Home() {
     root.style.setProperty('--primary-soft', theme.soft);
     root.style.setProperty('--room-font', font.family);
   }, [p.theme, p.cursor, theme, font]);
-  function openEditor(tab = 'banner') {
+  function openEditor(tab = 'profile') {
     setDraft({
       ...state.preferences,
       name: studentSummary?.name || state.preferences.name,
@@ -740,6 +740,10 @@ export default function Home() {
           await studentSupabase.auth.updateUser({
             data: {
               student_appearance: {
+                theme: nextPreferences.theme,
+                font: nextPreferences.font,
+                icons: nextPreferences.icons,
+                cursor: nextPreferences.cursor,
                 presentation: nextPreferences.presentation,
                 accessory: nextPreferences.accessory,
                 accessoryColor: nextPreferences.accessoryColor,
@@ -1180,7 +1184,6 @@ export default function Home() {
             </div>
           </SidebarContent>
           <div className="sidebar-profile">
-            <img src={`./avatars/avatar-${p.avatar}.svg`} alt="Seu avatar" />
             <span>
               <strong>{studentName}</strong>
               <small>
