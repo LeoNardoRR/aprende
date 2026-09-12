@@ -98,10 +98,13 @@ test('Phase 2 protects curricula and enforces the professional item workflow', a
   const unchangedOfficial = await service.from('curricula').select('name').eq('id', official.data.id).single();
   assert.equal(unchangedOfficial.data.name, `BNCC teste ${suffix}`);
 
-  const curriculum = await manager.from('curricula').insert({
-    network_id: scopeA.network, name: `Currículo DEMO ${suffix}`, curriculum_type: 'custom',
+  const curriculumName = `Currículo DEMO ${suffix}`;
+  const curriculumInsert = await manager.from('curricula').insert({
+    network_id: scopeA.network, name: curriculumName, curriculum_type: 'custom',
     version: '1', created_by: ids.manager,
-  }).select('id').single();
+  });
+  assert.ifError(curriculumInsert.error);
+  const curriculum = await service.from('curricula').select('id').eq('network_id', scopeA.network).eq('name', curriculumName).single();
   assert.ifError(curriculum.error);
   const area = await manager.from('curriculum_areas').insert({ curriculum_id: curriculum.data.id, name: 'Matemática' }).select('id').single();
   assert.ifError(area.error);
