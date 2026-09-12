@@ -216,6 +216,18 @@ export type Database = {
         Update: { internal_title?: string; statement?: string; support_text?: string | null; pedagogical_comment?: string | null; correct_answer_justification?: string | null; difficulty?: string; skill_id?: string; thematic_unit_id?: string | null; knowledge_object_id?: string | null; updated_at?: string }
         Relationships: []
       }
+      assessment_item_versions: {
+        Row: {id:string;item_id:string;version_number:number;snapshot:Json;change_summary:string|null;created_by:string;created_at:string}
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      assessment_item_reviews: {
+        Row: {id:string;item_id:string;from_status:string;to_status:string;action:string;comment:string|null;actor_id:string;created_at:string}
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       assessment_item_options: {
         Row: { id: string; item_id: string; label: string; content: string; is_correct: boolean; feedback: string | null; distractor_analysis: string | null; sort_order: number; created_at: string; updated_at: string }
         Insert: { id?: string; item_id: string; label: string; content: string; is_correct?: boolean; feedback?: string | null; distractor_analysis?: string | null; sort_order?: number; created_at?: string; updated_at?: string }

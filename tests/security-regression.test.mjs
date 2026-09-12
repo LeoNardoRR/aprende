@@ -269,15 +269,19 @@ test('Phase 2 separates curricula, item workflow and immutable versions', () => 
 });
 
 test('institutional UI exposes curriculum, safe authorship and paginated workflow', () => {
+  const editor = readFileSync(new URL('../components/item-workspace.tsx', import.meta.url), 'utf8');
+  const importer = readFileSync(new URL('../components/institutional-import.tsx', import.meta.url), 'utf8');
+  const explorer = readFileSync(new URL('../components/curriculum-explorer.tsx', import.meta.url), 'utf8');
   assert.match(institutionalAdmin, /<InstitutionalPedagogy/);
   assert.match(institutionalPedagogy, /BNCC\/SAEB são referências protegidas/);
-  assert.match(institutionalPedagogy, /CSV ou JSON com prévia obrigatória/);
-  assert.match(institutionalPedagogy, /katex\.renderToString/);
-  assert.match(institutionalPedagogy, /trust: false/);
-  assert.match(institutionalPedagogy, /page_size: 20/);
+  assert.match(importer, /Validar sem gravar/);
+  assert.match(importer, /Confirmar importação/);
+  assert.match(editor, /katex\.renderToString/);
+  assert.match(editor, /trust:\s*false/);
+  assert.match(institutionalPedagogy, /page_size:\s*20/);
   assert.match(institutionalPedagogy, /transition_assessment_item/);
-  assert.match(institutionalPedagogy, /Habilidades sem itens/);
-  assert.doesNotMatch(institutionalPedagogy, /service_role|serviceRole/i);
+  assert.match(explorer, /item_bank_coverage/);
+  assert.doesNotMatch(institutionalPedagogy + editor, /service_role|serviceRole/i);
 });
 
 test('Phase 3 keeps diagnostic assessments separate and freezes approved item versions', () => {

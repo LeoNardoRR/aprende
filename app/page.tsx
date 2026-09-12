@@ -1,4 +1,5 @@
 'use client';
+import { InstitutionalActivation } from '@/components/institutional-activation';
 import {
   lazy,
   Suspense,
@@ -343,7 +344,7 @@ type ConnectedAnnouncement = {
   message: string;
   created_at: string;
 };
-export default function Home() {
+function Home() {
   const [state, setState] = useState(initialState),
     [ready, setReady] = useState(false),
     [editing, setEditing] = useState(false),
@@ -1845,4 +1846,9 @@ export default function Home() {
       )}
     </div>
   );
+}
+
+export default function AprendeEntry() {
+  const invitation = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("invitation");
+  return invitation ? <InstitutionalActivation invitation={invitation} /> : <Home />;
 }

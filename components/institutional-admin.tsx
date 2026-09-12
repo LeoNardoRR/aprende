@@ -22,6 +22,7 @@ import { InstitutionalClassrooms } from '@/components/institutional-classrooms';
 import { InstitutionalAssessments } from '@/components/institutional-assessments';
 import { InstitutionalEnrollments } from '@/components/institutional-enrollments';
 import { InstitutionalPedagogy } from '@/components/institutional-pedagogy';
+import { InstitutionalBulk } from '@/components/institutional-bulk';
 import { InstitutionalUsers } from '@/components/institutional-users';
 import { supabase } from '@/lib/supabase';
 import type { Database, Tables } from '@/lib/database.types';
@@ -229,6 +230,7 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
             </section>
             <InstitutionalClassrooms profile={profile} networks={networks} schools={schools} academicYears={academicYears} schoolYears={schoolYears} preview={preview} />
             <InstitutionalEnrollments profile={profile} networks={networks} schools={schools} academicYears={academicYears} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
+            <InstitutionalBulk networks={networks} schools={schools} academicYears={academicYears} schoolYears={schoolYears} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
             <InstitutionalUsers profile={profile} networks={networks} schools={schools} preview={preview} />
             <InstitutionalPedagogy profile={profile} networks={networks} preview={preview} />
             <InstitutionalAssessments profile={profile} networks={networks} schools={schools} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
