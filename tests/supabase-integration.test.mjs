@@ -36,7 +36,7 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const password = `Local-only-${suffix}!`;
   const identities = {
-    teacherA: `teacher-a-${suffix}@example.test`,
+    teacherA: 'ribeiroleonardoti@gmail.com',
     teacherB: `teacher-b-${suffix}@example.test`,
     studentA: `student-a-${suffix}@example.test`,
     studentB: `student-b-${suffix}@example.test`,
@@ -67,13 +67,16 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
     userIds.push(result.data.user.id);
   }
 
-  const teacherIds = [created.teacherA, created.teacherB];
-  const roleResult = await admin.from('profiles').update({ role: 'teacher' }).in('id', teacherIds);
-  assert.ifError(roleResult.error);
+  const teacherProfile = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', created.teacherA)
+    .single();
+  assert.ifError(teacherProfile.error);
+  assert.equal(teacherProfile.data.role, 'teacher');
 
-  const [teacherA, teacherB, studentA, studentB] = await Promise.all([
+  const [teacherA, studentA, studentB] = await Promise.all([
     signedInClient(identities.teacherA, password),
-    signedInClient(identities.teacherB, password),
     signedInClient(identities.studentA, password),
     signedInClient(identities.studentB, password),
   ]);
@@ -84,7 +87,7 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
     .select('id,join_code')
     .single();
   assert.ifError(classAResult.error);
-  const classBResult = await teacherB
+  const classBResult = await admin
     .from('classrooms')
     .insert({ owner_id: created.teacherB, name: 'Turma B', subject: 'Matemática' })
     .select('id,join_code')
@@ -109,7 +112,7 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
     .select('id')
     .single();
   assert.ifError(assignmentAResult.error);
-  const assignmentBResult = await teacherB
+  const assignmentBResult = await admin
     .from('assignments')
     .insert({ classroom_id: classB.id, created_by: created.teacherB, title: 'Tarefa B', subject: 'Matemática', points: 10 })
     .select('id')
@@ -122,7 +125,7 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
     .select('id')
     .single();
   assert.ifError(materialAResult.error);
-  const materialBResult = await teacherB
+  const materialBResult = await admin
     .from('lesson_materials')
     .insert({ classroom_id: classB.id, teacher_id: created.teacherB, title: 'Material B', file_name: 'b.txt', storage_path: `${classB.id}/${suffix}-b.txt`, file_type: 'text/plain', file_size: 1 })
     .select('id')
