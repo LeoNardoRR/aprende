@@ -1,14 +1,15 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ArrowRight, CheckCircle2, ChevronRight, Clock3, Coins, SlidersHorizontal, UserRound, GraduationCap } from 'lucide-react';
+import { ArrowRight, CalendarCheck2, CheckCircle2, ChevronRight, Clock3, Coins, SlidersHorizontal, TriangleAlert, UserRound, GraduationCap } from 'lucide-react';
 import { ClipboardTextIcon, BookOpenIcon, ChatCircleDotsIcon, GraduationCapIcon, GameControllerIcon, YoutubeLogoIcon } from '@phosphor-icons/react';
 import { StudentCharacter } from './student-character';
 import type { LearningPathStep } from './student-learning-path';
 import type { Preferences } from '@/lib/classroom';
 
-export function StudentHome({ name, preferences, earned, possible, steps, calendar, onNavigate, onClassroom, onTeacher, onCustomize, onActivity }: {
+export function StudentHome({ name, preferences, earned, possible, steps, attendance, calendar, onNavigate, onClassroom, onTeacher, onCustomize, onActivity }: {
   name:string; preferences:Preferences; earned:number; possible:number; steps:LearningPathStep[];
+  attendance:{total:number;absences:number;percentage:number|null}|null;
   calendar:ReactNode;
   onNavigate:(view:string)=>void; onClassroom:()=>void; onTeacher:()=>void;
   onCustomize:(tab?:string)=>void; onActivity:(id:string)=>void;
@@ -66,6 +67,15 @@ export function StudentHome({ name, preferences, earned, possible, steps, calend
         <ArrowRight aria-hidden="true"/>
       </button>}
     </section>
+    <button className={`student-home-attendance${attendance?.percentage!=null&&attendance.percentage<75?' risk':''}`} onClick={()=>onNavigate('grades')}>
+      <span className="student-home-attendance-icon" aria-hidden="true">{attendance?.percentage!=null&&attendance.percentage<75?<TriangleAlert/>:<CalendarCheck2/>}</span>
+      <span>
+        <small>FREQUÊNCIA</small>
+        <strong>{attendance?.percentage==null?'Aguardando registro':`${attendance.percentage}% de presença`}</strong>
+        <em>{attendance?.percentage==null?'A chamada aparecerá quando o professor salvar.':`${attendance.absences} ${attendance.absences===1?'falta':'faltas'} em ${attendance.total} ${attendance.total===1?'chamada':'chamadas'}`}</em>
+      </span>
+      <span className="student-home-attendance-state">{attendance?.percentage==null?'Ver boletim':attendance.percentage<75?'Risco por frequência':'Frequência regular'} <ArrowRight aria-hidden="true"/></span>
+    </button>
     <div className="student-home-calendar">{calendar}</div>
   </div>;
 }

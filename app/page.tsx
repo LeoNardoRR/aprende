@@ -802,6 +802,19 @@ export default function Home() {
   const connectedProgress = studentSummary
     ? calculateConnectedProgress(teacherAssignments, teacherSubmissions)
     : null;
+  const connectedAttendance = attendanceRecords === null
+    ? null
+    : {
+        total: attendanceRecords.length,
+        absences: attendanceRecords.filter((record) => !record.present).length,
+        percentage: attendanceRecords.length
+          ? Math.round(
+              (attendanceRecords.filter((record) => record.present).length /
+                attendanceRecords.length) *
+                100,
+            )
+          : null,
+      };
   const learningPathSteps: LearningPathStep[] = studentSummary
     ? [...teacherAssignments].filter(a => a.kind !== 'exam').sort((a,b)=>a.created_at.localeCompare(b.created_at)).map((assignment) => ({
         id: assignment.id,
@@ -1260,6 +1273,7 @@ export default function Home() {
               earned={studentSummary?.earned ?? 0}
               possible={studentSummary?.possible ?? 0}
               steps={learningPathSteps}
+              attendance={connectedAttendance}
               calendar={calendar}
               onNavigate={changeView}
               onClassroom={() => {
@@ -1402,13 +1416,18 @@ export default function Home() {
               <section className="student-report-summary">
                 <article>
                   <strong>
-                    {attendanceRecords === null
+                    {connectedAttendance === null
                       ? 'Indisponível'
-                      : attendanceRecords.length
-                        ? `${Math.round((attendanceRecords.filter((a) => a.present).length / attendanceRecords.length) * 100)}%`
+                      : connectedAttendance.percentage != null
+                        ? `${connectedAttendance.percentage}%`
                         : 'Sem registros'}
                   </strong>
-                  <span>Presença registrada pelo professor</span>
+                  <span>
+                    {connectedAttendance?.percentage != null
+                      ? `${connectedAttendance.absences} ${connectedAttendance.absences === 1 ? 'falta' : 'faltas'} em ${connectedAttendance.total} ${connectedAttendance.total === 1 ? 'chamada' : 'chamadas'}`
+                      : 'Presença registrada pelo professor'}
+                  </span>
+                  {connectedAttendance?.percentage != null && connectedAttendance.percentage < 75 && <small className="student-attendance-warning">Abaixo dos 75% mínimos - risco de reprovação por frequência.</small>}
                 </article>
                 <article>
                   <strong>

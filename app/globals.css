@@ -1623,6 +1623,19 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .student-home-assignment-list>button>svg,.student-home-assignment-empty>svg{width:18px;height:18px;color:#7390a8;}
 .student-home-assignment-empty{grid-template-columns:44px minmax(0,1fr) 18px;}
 .student-home-assignment-empty small{color:#71879a;font-size:12px;line-height:1.35;}
+.student-home-attendance{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:13px;width:100%;margin-top:14px;padding:16px 18px;border:1px solid #dcebe5;border-radius:18px;background:#f5fbf8;color:#174a3a;text-align:left;box-shadow:0 8px 20px #183a5d08;}
+.student-home-attendance.risk{border-color:#f1c9c5;background:#fff6f5;color:#8e302b;}
+.student-home-attendance-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#daf3e6;color:#2d9668;}
+.student-home-attendance.risk .student-home-attendance-icon{background:#ffe1de;color:#c74941;}
+.student-home-attendance-icon svg{width:25px;height:25px;}
+.student-home-attendance>span:nth-child(2){display:grid;min-width:0;gap:2px;}
+.student-home-attendance small{font-size:9px;font-weight:950;letter-spacing:1.1px;opacity:.72;}
+.student-home-attendance strong{font-size:17px;font-weight:950;}
+.student-home-attendance em{font-size:12px;font-style:normal;font-weight:700;opacity:.72;}
+.student-home-attendance-state{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:11px;background:#e3f5eb;font-size:12px;font-weight:900;white-space:nowrap;}
+.student-home-attendance.risk .student-home-attendance-state{background:#ffe4e1;}
+.student-home-attendance-state svg{width:16px;height:16px;}
+.student-attendance-warning{display:block;margin-top:8px;color:#b43d37;font-size:11px;font-weight:850;line-height:1.35;}
 @media (hover: hover){
 .student-home-shortcut:hover{transform:translateY(-3px);box-shadow:0 12px 24px #16365514;}
 .student-home-actions button:hover{transform:translateY(-2px);box-shadow:0 10px 22px #193b5b12;}
@@ -1818,6 +1831,12 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .student-home-assignment-status svg{width:19px;height:19px;}
 .student-home-assignment-list strong,.student-home-assignment-empty strong{font-size:13px;}
 .student-home-assignment-list em,.student-home-assignment-empty small{font-size:10px;}
+.student-home-attendance{grid-template-columns:40px minmax(0,1fr);gap:9px;margin-top:10px;padding:12px;border-radius:15px;}
+.student-home-attendance-icon{width:40px;height:40px;border-radius:12px;}
+.student-home-attendance-icon svg{width:21px;height:21px;}
+.student-home-attendance strong{font-size:14px;}
+.student-home-attendance em{font-size:10px;}
+.student-home-attendance-state{grid-column:1/-1;justify-content:center;min-height:38px;padding:7px 9px;font-size:11px;}
 .learning-path{padding:10px 10px 9px;border-radius:17px;}
 .learning-path-heading{gap:8px;min-height:46px;padding:0 2px;}
 .learning-path-map{width:40px;height:42px;}
