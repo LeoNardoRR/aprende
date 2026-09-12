@@ -42,7 +42,7 @@ test('Phase 3 freezes approved versions, limits booklets and isolates schedules 
   const schoolA = await service.from('schools').insert({ network_id: network.data.id, name: 'Escola A', code: `A-${suffix}` }).select('id').single();
   const schoolB = await service.from('schools').insert({ network_id: network.data.id, name: 'Escola B', code: `B-${suffix}` }).select('id').single();
   assert.ifError(schoolA.error); assert.ifError(schoolB.error);
-  const academicYear = await service.from('academic_years').insert({ network_id: network.data.id, label: `2026 F3 ${suffix}`, starts_on: '2026-02-01', ends_on: '2026-12-20', status: 'open' }).select('id').single();
+  const academicYear = await service.from('academic_years').insert({ network_id: network.data.id, label: `Ano 2026 F3 ${suffix.slice(-8)}`, starts_on: '2026-02-01', ends_on: '2026-12-20', status: 'open' }).select('id').single();
   assert.ifError(academicYear.error);
   const gradeA = await service.from('school_years').insert({ school_id: schoolA.data.id, code: `6A-${suffix}`, name: '6º ano', sort_order: 6 }).select('id').single();
   const gradeB = await service.from('school_years').insert({ school_id: schoolB.data.id, code: `6B-${suffix}`, name: '6º ano', sort_order: 6 }).select('id').single();
