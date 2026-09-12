@@ -69,18 +69,26 @@ export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences,
   // Build a connected mask from the hair at the top of the portrait. This keeps
   // similarly colored backpack straps and clothing outside the recolored region.
   const hairMask=new Uint8Array(w*h),hairQueue=new Int32Array(w*h);let hairHead=0,hairTail=0;
-  function hairCandidate(index:number){if(index<0||index>=hairMask.length||hairMask[index])return false;const n=index*4,[hh,ss,vv]=hsv(pixels[n],pixels[n+1],pixels[n+2]);return pixels[n+3]>8&&hh<.14&&ss>.18&&vv<.67;}
+  function hairCandidate(index:number){if(index<0||index>=hairMask.length||hairMask[index])return false;const n=index*4,[hh,ss,vv]=hsv(pixels[n],pixels[n+1],pixels[n+2]);return pixels[n+3]>8&&(hh<.18||hh>.95)&&ss>.12&&vv<.86;}
   function addHair(index:number){if(!hairCandidate(index))return;hairMask[index]=1;hairQueue[hairTail++]=index;}
-  for(let y=0;y<Math.round(h*.3);y++)for(let x=0;x<w;x++)addHair(y*w+x);
+  const hairSeeds=[[.27,.08],[.5,.08],[.73,.1],[.3,.36],[.76,.34]];
+  if(p.hair==='ponytail') hairSeeds.push([.17,.36],[.23,.5]);
+  for(const [sx,sy] of hairSeeds)addHair(Math.round(sy*(h-1))*w+Math.round(sx*(w-1)));
   while(hairHead<hairTail){const index=hairQueue[hairHead++],x=index%w;if(x>0)addHair(index-1);if(x<w-1)addHair(index+1);if(index>=w)addHair(index-w);if(index<w*(h-1))addHair(index+w);}
   const colors = { hair:hexHsv(p.hairColor), skin:hexHsv(p.skin), eye:hexHsv(p.eyeColor), outfit:hexHsv(p.outfitColor) };
   for (let i = 0; i < data.data.length; i += 4) {
     if (data.data[i + 3] < 8) continue;
     const x = (i / 4 % canvas.width) / canvas.width, y = Math.floor(i / 4 / canvas.width) / canvas.height;
     const [h,s,v] = hsv(data.data[i],data.data[i+1],data.data[i+2]);
+    const brownHairPixel=(h<.22 || h>.95) && s>.06 && v<.95;
+    // Hair assets keep a few highlighted and disconnected locks outside the
+    // connected seed mask. The top and side bands recover those locks while
+    // staying away from the shirt and backpack below the jaw.
+    const backpackRegion=y>.48 && ((x>.18 && x<.43) || (x>.65 && x<.84));
+    const hairRegion=!backpackRegion && hairMask[i/4] && brownHairPixel;
     let kind: keyof typeof colors | null = null;
     if (fullBody) {
-      if (hairMask[i/4]) kind = 'hair';
+      if (hairRegion) kind = 'hair';
       else if (y < .39 && h > .025 && h < .14 && s > .3 && v > .5) kind = 'skin';
       else if (y > .29 && y < .68 && h > .48 && h < .78 && s > .2) kind = 'outfit';
     } else {
@@ -91,9 +99,7 @@ export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences,
         // Alternate hair assets extend behind the ears and below the jaw. Use a
         // spatial hair region there, while excluding the face oval so lips,
         // brows and outline pixels can never inherit the hair color.
-        const faceOval=((x-.59)/.28)**2+((y-.42)/.34)**2<1;
-        const outerHairRegion=usesAlternateHair && !faceOval && (y<.48 || x<.38 || x>.76);
-        if ((hairMask[i/4] || (outerHairRegion && s>.08 && v<.9)) && !(leftEye || rightEye)) kind = 'hair';
+        if (hairRegion && !(leftEye || rightEye)) kind = 'hair';
         else if (y < .78 && h > .025 && h < .14 && s > .33 && v > .53) kind = 'skin';
         else if (y > .51 && s > .25 && h > .52 && h < .79) kind = 'outfit';
       }
