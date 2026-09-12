@@ -106,6 +106,15 @@ type LessonMaterial = {
   created_at: string;
 };
 
+function normalizeJoinedProfile(value: unknown): { display_name: string } | null {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  if (!candidate || typeof candidate !== 'object') return null;
+  const record = candidate as Record<string, unknown>;
+  return typeof record.display_name === 'string'
+    ? { display_name: record.display_name }
+    : null;
+}
+
 type TeacherAppearance = {
   palette:
     | 'ocean'
@@ -216,7 +225,7 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
         .eq('id', session.user.id)
         .single();
       if (!active) return;
-      setProfile(data as Profile | null);
+      setProfile(data);
       setMessage(error?.message ?? '');
       setLoading(false);
     }
@@ -678,6 +687,7 @@ function TeacherDashboard({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_url);
   const [showClassForm, setShowClassForm] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
+  const [activityKind, setActivityKind] = useState<'task' | 'exam'>('task');
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
   const [showLessonRecordForm, setShowLessonRecordForm] = useState(false);
   const [showAppearanceForm, setShowAppearanceForm] = useState(false);
@@ -706,15 +716,13 @@ function TeacherDashboard({
         .select('*')
         .order('created_at');
       let loadError = classResult.error;
-      const nextClasses = (classResult.data ?? []) as Classroom[];
+      const nextClasses: Classroom[] = classResult.data ?? [];
       setClasses(nextClasses);
-      setSelected((current) =>
-        nextClasses.some((item) => item.id === current)
-          ? current
-          : nextClasses[0]?.id || '',
-      );
-      if (nextClasses.length) {
-        const ids = nextClasses.map((item) => item.id);
+      const selectedClassId = nextClasses.some((item) => item.id === selected)
+        ? selected
+        : nextClasses[0]?.id || '';
+      setSelected(selectedClassId);
+      if (selectedClassId) {
         const [
           activityResult,
           memberResult,
@@ -725,35 +733,51 @@ function TeacherDashboard({
             supabase
               .from('assignments')
               .select('*')
-              .in('classroom_id', ids)
+              .eq('classroom_id', selectedClassId)
               .order('created_at', { ascending: false }),
             supabase
               .from('memberships')
               .select('classroom_id,user_id,profiles(display_name)')
-              .in('classroom_id', ids),
+              .eq('classroom_id', selectedClassId),
             supabase
               .from('lesson_records')
               .select('*')
-              .in('classroom_id', ids)
+              .eq('classroom_id', selectedClassId)
               .order('lesson_date', { ascending: false })
               .order('created_at', { ascending: false }),
             supabase
               .from('lesson_materials')
               .select('*')
-              .in('classroom_id', ids)
+              .eq('classroom_id', selectedClassId)
               .order('created_at', { ascending: false }),
           ]);
-        const nextAssignments = (activityResult.data ?? []) as Assignment[];
+        const nextAssignments: Assignment[] = (activityResult.data ?? []).map(
+          (item) => ({
+            ...item,
+            kind: item.kind === 'exam' ? 'exam' : 'task',
+          }),
+        );
         setAssignments(nextAssignments);
-        setMemberships((memberResult.data ?? []) as unknown as Membership[]);
-        setLessonRecords((lessonRecordResult.data ?? []) as LessonRecord[]);
+        setMemberships(
+          (memberResult.data ?? []).map((item) => ({
+            classroom_id: item.classroom_id,
+            user_id: item.user_id,
+            profiles: normalizeJoinedProfile(item.profiles),
+          })),
+        );
+        setLessonRecords(lessonRecordResult.data ?? []);
         setLessonMaterials(
-          (lessonMaterialResult.data ?? []) as LessonMaterial[],
+          (lessonMaterialResult.data ?? []).map((item) => ({
+            ...item,
+            source: item.source === 'teacher' ? 'teacher' : 'government',
+          })),
         );
         loadError =
           loadError ||
           activityResult.error ||
-          memberResult.error;
+          memberResult.error ||
+          lessonRecordResult.error ||
+          lessonMaterialResult.error;
         if (lessonRecordResult.error || lessonMaterialResult.error) {
           setNotice(
             'O Registro de aula precisa da atualização mais recente do banco de dados.',
@@ -770,7 +794,16 @@ function TeacherDashboard({
               nextAssignments.map((item) => item.id),
             );
           setSubmissions(
-            (submissionResult.data ?? []) as unknown as Submission[],
+            (submissionResult.data ?? []).map((item) => ({
+              id: item.id,
+              assignment_id: item.assignment_id,
+              student_id: item.student_id,
+              answer: item.answer,
+              status: item.status,
+              score: item.score,
+              feedback: item.feedback,
+              profiles: normalizeJoinedProfile(item.profiles),
+            })),
           );
           loadError = loadError || submissionResult.error;
         } else setSubmissions([]);
@@ -785,12 +818,25 @@ function TeacherDashboard({
       else if (successNotice) setNotice(successNotice);
       setBusy(false);
     },
-    [preview],
+    [preview, selected],
   );
 
   useEffect(() => {
     if (preview) return;
     void refresh();
+  }, [preview, refresh]);
+
+  useEffect(() => {
+    if (preview) return;
+    const reloadWhenVisible = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    window.addEventListener('focus', reloadWhenVisible);
+    document.addEventListener('visibilitychange', reloadWhenVisible);
+    return () => {
+      window.removeEventListener('focus', reloadWhenVisible);
+      document.removeEventListener('visibilitychange', reloadWhenVisible);
+    };
   }, [preview, refresh]);
 
   useEffect(() => {
@@ -849,6 +895,10 @@ function TeacherDashboard({
     (item) =>
       classActivities.some((activity) => activity.id === item.assignment_id) &&
       item.status === 'submitted',
+  );
+  const examAssignments = classActivities.filter((item) => item.kind === 'exam');
+  const examDelivered = delivered.filter((item) =>
+    examAssignments.some((assignment) => assignment.id === item.assignment_id),
   );
   const classLessonRecords = lessonRecords.filter(
     (item) => item.classroom_id === selected,
@@ -1154,6 +1204,7 @@ function TeacherDashboard({
                   <button
                     onClick={() => {
                       setView('activities');
+                      setActivityKind('task');
                       setShowActivityForm(true);
                     }}
                   >
@@ -1216,7 +1267,10 @@ function TeacherDashboard({
                     </div>
                     <button
                       className="teacher-primary compact"
-                      onClick={() => setShowActivityForm(true)}
+                      onClick={() => {
+                        setActivityKind('task');
+                        setShowActivityForm(true);
+                      }}
                     >
                       <Plus />
                       Nova tarefa
@@ -1240,7 +1294,10 @@ function TeacherDashboard({
                     </div>
                     <button
                       className="teacher-primary compact"
-                      onClick={() => setShowActivityForm(true)}
+                      onClick={() => {
+                        setActivityKind('task');
+                        setShowActivityForm(true);
+                      }}
                     >
                       <Plus />
                       Nova atividade
@@ -1275,13 +1332,22 @@ function TeacherDashboard({
                 <div className="teacher-panel-title">
                   <div>
                     <span>PROVAS E AVALIAÇÕES</span>
-                    <h2>Provas da turma</h2><button className="teacher-primary" onClick={()=>setShowActivityForm(true)}>Publicar avaliação</button>
+                    <h2>Provas da turma</h2>
+                    <button
+                      className="teacher-primary"
+                      onClick={() => {
+                        setActivityKind('exam');
+                        setShowActivityForm(true);
+                      }}
+                    >
+                      Publicar avaliação
+                    </button>
                   </div>
-                  <strong className="teacher-count">{delivered.length}</strong>
+                  <strong className="teacher-count">{examDelivered.length}</strong>
                 </div>
                 <SubmissionList
-                  submissions={delivered.filter(s=>classActivities.some(a=>a.id===s.assignment_id&&a.kind==='exam'))}
-                  assignments={classActivities.filter(a=>a.kind==='exam')}
+                  submissions={examDelivered}
+                  assignments={examAssignments}
                   onGrade={setGrading}
                 />
               </section>
@@ -1358,8 +1424,15 @@ function TeacherDashboard({
           <ActivityForm
             profile={profile}
             classroom={currentClass}
+            initialKind={activityKind}
             onClose={() => setShowActivityForm(false)}
-            onSaved={() => refresh('Atividade publicada para a turma.')}
+            onSaved={() =>
+              refresh(
+                activityKind === 'exam'
+                  ? 'Prova publicada para a turma.'
+                  : 'Atividade publicada para a turma.',
+              )
+            }
           />
         )}{' '}
         {showAnnouncementForm && currentClass && (
@@ -2071,7 +2144,7 @@ function AttendancePanel({
       .upsert(rows, { onConflict: 'classroom_id,student_id,attendance_date' });
     setNotice(
       error
-        ? 'Chamada salva neste dispositivo. A sincronização será concluída quando o banco estiver atualizado.'
+        ? 'Não foi possível sincronizar a chamada. Os dados permanecem salvos apenas neste dispositivo.'
         : 'Chamada salva e sincronizada.',
     );
     setBusy(false);
@@ -2094,7 +2167,7 @@ function AttendancePanel({
         </button>
       </div>
       <div className="teacher-roster-table">
-        {students.slice(0, 10).map((member, index) => {
+        {students.map((member, index) => {
           const present = presence[member.user_id] ?? true;
           return (
             <button
@@ -2610,16 +2683,25 @@ function ClassForm({
 function ActivityForm({
   profile,
   classroom,
+  initialKind = 'task',
   onClose,
   onSaved,
 }: {
   profile: Profile;
   classroom: Classroom;
+  initialKind?: 'task' | 'exam';
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
-  const [form, setForm] = useState({
-    kind: 'task',
+  const [form, setForm] = useState<{
+    kind: 'task' | 'exam';
+    title: string;
+    subject: string;
+    instructions: string;
+    due: string;
+    points: string;
+  }>({
+    kind: initialKind,
     title: '',
     subject: classroom.subject,
     instructions: '',
@@ -2632,7 +2714,7 @@ function ActivityForm({
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.from('assignments').insert({
-      ...(form.kind === 'exam' ? { kind: 'exam' } : {}),
+      kind: form.kind,
       classroom_id: classroom.id,
       created_by: profile.id,
       title: form.title.trim(),
@@ -2649,9 +2731,26 @@ function ActivityForm({
     }
   }
   return (
-    <Modal title="Nova atividade" onClose={onClose}>
+    <Modal
+      title={form.kind === 'exam' ? 'Nova prova' : 'Nova atividade'}
+      onClose={onClose}
+    >
       <form className="teacher-form" onSubmit={submit}>
-        <label>Tipo<select value={form.kind} onChange={e=>setForm({...form,kind:e.target.value})}><option value="task">Tarefa</option><option value="exam">Prova</option></select></label>
+        <label>
+          Tipo
+          <select
+            value={form.kind}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                kind: e.target.value === 'exam' ? 'exam' : 'task',
+              })
+            }
+          >
+            <option value="task">Tarefa</option>
+            <option value="exam">Prova</option>
+          </select>
+        </label>
         <label>
           Título
           <input
@@ -2704,7 +2803,13 @@ function ActivityForm({
         </div>
         {notice && <p className="teacher-notice">{notice}</p>}
         <button className="teacher-primary" disabled={busy}>
-          {busy ? <LoaderCircle className="spin" /> : 'Publicar atividade'}
+          {busy ? (
+            <LoaderCircle className="spin" />
+          ) : form.kind === 'exam' ? (
+            'Publicar prova'
+          ) : (
+            'Publicar atividade'
+          )}
         </button>
       </form>
     </Modal>

@@ -5,6 +5,14 @@ export type PointsSubmission = {
   score: number | null;
 };
 
+export type ProgressAssignment = { id: string; points: number };
+
+export type ProgressSubmission = {
+  assignment_id: string;
+  status: 'draft' | 'submitted';
+  score: number | null;
+};
+
 export function normalizeClassCode(value: string) {
   return value
     .replace(/[^a-z0-9]/gi, '')
@@ -29,6 +37,52 @@ export function calculateConnectedMetrics(
     (item) => item.status === 'submitted',
   ).length;
   return { possible, earned, delivered, total: assignments.length };
+}
+
+/**
+ * Separates evaluated points from the points still available in the class.
+ * Pending work stays visible but cannot lower the student's evaluated average.
+ */
+export function calculateConnectedProgress(
+  assignments: ProgressAssignment[],
+  submissions: ProgressSubmission[],
+) {
+  const submissionByAssignment = new Map(
+    submissions.map((submission) => [submission.assignment_id, submission]),
+  );
+  const evaluatedAssignments = assignments.filter((assignment) => {
+    const submission = submissionByAssignment.get(assignment.id);
+    return submission?.status === 'submitted' && submission.score != null;
+  });
+  const earned = evaluatedAssignments.reduce(
+    (total, assignment) =>
+      total + (submissionByAssignment.get(assignment.id)?.score ?? 0),
+    0,
+  );
+  const evaluatedPoints = evaluatedAssignments.reduce(
+    (total, assignment) => total + assignment.points,
+    0,
+  );
+  const totalAvailable = assignments.reduce(
+    (total, assignment) => total + assignment.points,
+    0,
+  );
+  const submitted = assignments.filter(
+    (assignment) =>
+      submissionByAssignment.get(assignment.id)?.status === 'submitted',
+  ).length;
+  const pending = assignments.length - submitted;
+  return {
+    earned,
+    evaluatedPoints,
+    totalAvailable,
+    submitted,
+    pending,
+    total: assignments.length,
+    percentage: evaluatedPoints
+      ? Math.round((earned / evaluatedPoints) * 100)
+      : null,
+  };
 }
 
 export function canEditSubmission(submission?: {

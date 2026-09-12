@@ -57,6 +57,7 @@ import {
 } from '@/lib/supabase';
 import {
   calculateConnectedMetrics,
+  calculateConnectedProgress,
   friendlySupabaseError,
 } from '@/lib/connected-flow';
 import {
@@ -382,6 +383,10 @@ export default function Home() {
       name: string;
       earned: number;
       possible: number;
+      totalAvailable: number;
+      evaluatedPoints: number;
+      pending: number;
+      evaluatedPercentage: number | null;
       classCount: number;
       assignments: ConnectedAssignment[];
       submissions: ConnectedSubmission[];
@@ -569,10 +574,18 @@ export default function Home() {
       connectedAssignments,
       connectedSubmissions,
     );
+    const progress = calculateConnectedProgress(
+      connectedAssignments,
+      connectedSubmissions,
+    );
     setStudentSummary({
       name: profileResult.data.display_name,
       earned: metrics.earned,
-      possible: metrics.possible,
+      possible: progress.evaluatedPoints,
+      totalAvailable: progress.totalAvailable,
+      evaluatedPoints: progress.evaluatedPoints,
+      pending: progress.pending,
+      evaluatedPercentage: progress.percentage,
       classCount: classIds.length,
       assignments: connectedAssignments,
       submissions: connectedSubmissions,
@@ -766,6 +779,9 @@ export default function Home() {
   const teacherDelivered = teacherSubmissions.filter(
     (item) => item.status === 'submitted',
   ).length;
+  const connectedProgress = studentSummary
+    ? calculateConnectedProgress(teacherAssignments, teacherSubmissions)
+    : null;
   const learningPathSteps: LearningPathStep[] = studentSummary
     ? [...teacherAssignments].filter(a => a.kind !== 'exam').sort((a,b)=>a.created_at.localeCompare(b.created_at)).map((assignment) => ({
         id: assignment.id,
@@ -1363,7 +1379,40 @@ export default function Home() {
           )}
           {view === 'grades' && (
             <>
-              <section className="student-report-summary"><article><strong>{attendanceRecords===null?'Indisponível':attendanceRecords.length?`${Math.round(attendanceRecords.filter(a=>a.present).length/attendanceRecords.length*100)}%`:'Sem registros'}</strong><span>Presença registrada pelo professor</span></article><article><strong>{teacherAssignments.length?Math.round(teacherDelivered/teacherAssignments.length*100):0}%</strong><span>Atividades entregues</span></article></section>
+              <section className="student-report-summary">
+                <article>
+                  <strong>
+                    {attendanceRecords === null
+                      ? 'Indisponível'
+                      : attendanceRecords.length
+                        ? `${Math.round((attendanceRecords.filter((a) => a.present).length / attendanceRecords.length) * 100)}%`
+                        : 'Sem registros'}
+                  </strong>
+                  <span>Presença registrada pelo professor</span>
+                </article>
+                <article>
+                  <strong>
+                    {connectedProgress
+                      ? `${connectedProgress.earned}/${connectedProgress.evaluatedPoints}`
+                      : '0/0'}
+                  </strong>
+                  <span>
+                    Pontos avaliados · {connectedProgress?.totalAvailable ?? 0}{' '}
+                    disponíveis
+                  </span>
+                </article>
+                <article>
+                  <strong>
+                    {connectedProgress?.percentage == null
+                      ? 'Aguardando'
+                      : `${connectedProgress.percentage}%`}
+                  </strong>
+                  <span>
+                    Aproveitamento · {connectedProgress?.pending ?? 0}{' '}
+                    pendentes
+                  </span>
+                </article>
+              </section>
               <div className="page-intro">
                 <h2>Cada descoberta conta.</h2>
                 <p>

@@ -120,7 +120,7 @@ export function StudentConnect({
         .select('id,display_name,role')
         .eq('id', activeSession.user.id)
         .single();
-      const nextProfile = profileResult.data as Profile | null;
+      const nextProfile: Profile | null = profileResult.data;
       setProfile(nextProfile);
       if (nextProfile?.role === 'student') {
         const memberResult = await supabase
@@ -128,8 +128,14 @@ export function StudentConnect({
           .select('classroom_id,classrooms(id,name,subject)')
           .eq('user_id', activeSession.user.id)
           .order('joined_at');
-        const nextMemberships = (memberResult.data ??
-          []) as unknown as Membership[];
+        const nextMemberships: Membership[] = (memberResult.data ?? []).map(
+          (item) => ({
+            classroom_id: item.classroom_id,
+            classrooms: Array.isArray(item.classrooms)
+              ? item.classrooms[0] ?? null
+              : item.classrooms,
+          }),
+        );
         const classIds = nextMemberships.map((item) => item.classroom_id);
         setMemberships(nextMemberships);
         if (classIds.length) {
@@ -145,9 +151,9 @@ export function StudentConnect({
               .in('classroom_id', classIds)
               .order('created_at', { ascending: false }),
           ]);
-          const nextAssignments = (assignmentResult.data ?? []) as Assignment[];
+          const nextAssignments: Assignment[] = assignmentResult.data ?? [];
           setAssignments(nextAssignments);
-          setAnnouncements((announcementResult.data ?? []) as Announcement[]);
+          setAnnouncements(announcementResult.data ?? []);
           if (nextAssignments.length) {
             const submissionResult = await supabase
               .from('submissions')
@@ -156,7 +162,7 @@ export function StudentConnect({
                 'assignment_id',
                 nextAssignments.map((item) => item.id),
               );
-            setSubmissions((submissionResult.data ?? []) as Submission[]);
+            setSubmissions(submissionResult.data ?? []);
             const loadError =
               memberResult.error ||
               assignmentResult.error ||

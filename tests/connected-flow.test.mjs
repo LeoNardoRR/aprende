@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   calculateConnectedMetrics,
+  calculateConnectedProgress,
   canEditSubmission,
   connectedSubmissionLabel,
   friendlySupabaseError,
@@ -32,6 +33,27 @@ test('connected points use teacher scores and assignment totals', () => {
     delivered: 1,
     total: 2,
   });
+});
+
+test('pending work stays separate from the evaluated average', () => {
+  assert.deepEqual(
+    calculateConnectedProgress(
+      [
+        { id: 'graded', points: 10 },
+        { id: 'pending', points: 20 },
+      ],
+      [{ assignment_id: 'graded', status: 'submitted', score: 8 }],
+    ),
+    {
+      earned: 8,
+      evaluatedPoints: 10,
+      totalAvailable: 30,
+      submitted: 1,
+      pending: 1,
+      total: 2,
+      percentage: 80,
+    },
+  );
 });
 
 test('only draft submissions remain editable', () => {

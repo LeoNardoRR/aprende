@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from './database.types';
 
 const supabaseUrl = 'https://egroulwtaofnnzenbwsr.supabase.co';
 const supabasePublishableKey = 'sb_publishable_8SzfeiUXLTQ2XXX0Iv-06Q_HDsZLFrn';
@@ -8,7 +9,7 @@ export const initialAuthCallbackType =
     ? null
     : new URLSearchParams(window.location.hash.slice(1)).get('type');
 
-export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
   auth: {
     storageKey: 'aprende-teacher-auth',
     persistSession: true,
@@ -20,7 +21,7 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   },
 });
 
-export const studentSupabase = createClient(supabaseUrl, supabasePublishableKey, {
+export const studentSupabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
   auth: {
     storageKey: 'aprende-student-auth',
     persistSession: true,
