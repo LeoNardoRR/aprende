@@ -50,8 +50,9 @@ test('Phase 3 freezes approved versions, limits booklets and isolates schedules 
   for (const [user, school, role] of [[users.managerA, schoolA.data.id, 'manager'], [users.managerB, schoolB.data.id, 'manager'], [users.teacher, schoolA.data.id, 'teacher'], [users.student, schoolA.data.id, 'student']]) {
     assert.ifError((await service.from('institutional_memberships').insert({ user_id: user, network_id: network.data.id, school_id: school, role, status: 'active', created_by: users.admin })).error);
   }
-  const classroomA = await service.from('classrooms').insert({ owner_id: users.teacher, name: `6º A ${suffix}`, subject: 'Matemática', join_code: `F3A${suffix}`.replace(/[^A-Z0-9]/gi,'').slice(-12).toUpperCase(), network_id: network.data.id, school_id: schoolA.data.id, academic_year_id: academicYear.data.id, school_year_id: gradeA.data.id, classroom_status: 'active' }).select('id').single();
-  const classroomB = await service.from('classrooms').insert({ owner_id: users.teacher, name: `6º B ${suffix}`, subject: 'Matemática', join_code: `F3B${suffix}`.replace(/[^A-Z0-9]/gi,'').slice(-12).toUpperCase(), network_id: network.data.id, school_id: schoolB.data.id, academic_year_id: academicYear.data.id, school_year_id: gradeB.data.id, classroom_status: 'active' }).select('id').single();
+  const codeSuffix = suffix.replace(/[^A-Z0-9]/gi,'').slice(-10).toUpperCase();
+  const classroomA = await service.from('classrooms').insert({ owner_id: users.teacher, name: `6º A ${suffix}`, subject: 'Matemática', join_code: `A${codeSuffix}`, network_id: network.data.id, school_id: schoolA.data.id, academic_year_id: academicYear.data.id, school_year_id: gradeA.data.id, classroom_status: 'active' }).select('id').single();
+  const classroomB = await service.from('classrooms').insert({ owner_id: users.teacher, name: `6º B ${suffix}`, subject: 'Matemática', join_code: `B${codeSuffix}`, network_id: network.data.id, school_id: schoolB.data.id, academic_year_id: academicYear.data.id, school_year_id: gradeB.data.id, classroom_status: 'active' }).select('id').single();
   assert.ifError(classroomA.error); assert.ifError(classroomB.error);
 
   const curriculum = await service.from('curricula').insert({ network_id: network.data.id, name: `Currículo F3 ${suffix}`, curriculum_type: 'custom', version: '1', created_by: users.managerA }).select('id').single();
