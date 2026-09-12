@@ -1953,7 +1953,7 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .avatar-preview-stage:before{width:190px;height:190px;left:-85px;top:110px}.avatar-preview-stage:after{width:150px;height:150px;right:-72px;top:55px}
 .avatar-preview-label{position:absolute;z-index:3;left:19px;top:18px;display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:#ffffffc9;color:#41617c;font-size:10px;font-weight:950;letter-spacing:1px;backdrop-filter:blur(8px);}
 .avatar-preview-label i{width:7px;height:7px;border-radius:50%;background:#32b778;box-shadow:0 0 0 4px #32b7781f;}
-.avatar-preview-stage .student-character{z-index:2;width:min(320px,90%);margin:0 auto -62px;animation:student-breathe 5s ease-in-out infinite;}
+.avatar-preview-stage .student-character{z-index:2;width:min(320px,90%);margin:0 auto -62px;animation:none;}
 .avatar-preview-actions{position:relative;z-index:4;display:grid;grid-template-columns:1fr 1fr;gap:9px;width:100%;margin-top:16px;}
 .avatar-preview-actions button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:8px 10px;border:1px solid #ffffffc9;border-radius:13px;background:#ffffffd9;color:#16446c;font-size:12px;font-weight:900;box-shadow:0 7px 18px #22507212;backdrop-filter:blur(8px);}
 .avatar-preview-actions button:hover{transform:translateY(-1px);background:#fff;}
@@ -2022,9 +2022,8 @@ to{opacity:1;transform:translateY(0) scale(1);}
  .presentation-options{gap:6px}.presentation-options button{min-height:69px;padding:7px 16px 7px 5px}.presentation-options button b{font-size:21px}.presentation-options button span{font-size:9px;}
 }
 
-/* Feminine hairstyles and composable accessories. */
-.student-character .character-accessory{position:absolute;inset:0;z-index:3;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 3px 2px #19304b22);}
-.student-character-editor .avatar-category-nav{grid-template-columns:repeat(5,minmax(0,1fr));}
+/* Feminine hairstyles keep the same character structure. */
+.student-character-editor .avatar-category-nav{grid-template-columns:repeat(4,minmax(0,1fr));}
 .student-character-editor .avatar-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 @media(max-width:760px){
  .student-character-editor .avatar-category-nav{display:flex;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;}
@@ -2034,10 +2033,13 @@ to{opacity:1;transform:translateY(0) scale(1);}
 }
 
 /* Keep every hairstyle framed correctly, including long hair, in short windows. */
-.avatar-preview-stage{min-height:390px;height:calc(100svh - 285px);max-height:500px;}
+.avatar-preview-stage{min-height:360px;height:calc(100svh - 350px);max-height:420px;}
 .avatar-preview-stage .student-character{position:absolute;top:48px;width:min(300px,82%);margin:0;}
-.avatar-preview-stage .avatar-preview-actions{margin-top:auto;}
+.avatar-preview-stage .avatar-preview-actions{margin-top:auto;padding:5px;border-radius:16px;background:#c8e8f8e8;backdrop-filter:blur(4px);}
 @media(max-width:760px){
  .avatar-preview-stage{min-height:230px;height:30svh;max-height:270px;}
  .avatar-preview-stage .student-character{top:31px;width:min(205px,66%);margin:0;}
 }
+
+/* The character stays still in both the room banner and the editor preview. */
+.journey-portrait{animation:none!important;}

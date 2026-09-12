@@ -33,6 +33,7 @@ function hexHsv(hex: string) { return hsv(parseInt(hex.slice(1,3),16), parseInt(
 export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences, fullBody = false) {
   const hairSource:Record<string,string>={long:p.presentation==='feminine'?'character-feminine-long.png':'character-long.png',bob:'character-bob.png',ponytail:'character-ponytail-v2.png',bun:'character-bun.png'};
   // Every option keeps the approved face, pose, framing and body proportions.
+  const usesAlternateHair = !fullBody && Boolean(hairSource[p.hair]);
   const body = await loadImage(fullBody ? characterSource(true) : base+(hairSource[p.hair]??'character-original.png'));
   const width = fullBody ? 240 : 680;
   canvas.width = width;
@@ -55,6 +56,16 @@ export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences,
   for(let x=0;x<w;x++){enqueue(x);enqueue((h-1)*w+x);}
   for(let y=0;y<h;y++){enqueue(y*w);enqueue(y*w+w-1);}
   while(head<tail){const index=queue[head++];pixels[index*4+3]=0;const x=index%w;if(x>0)enqueue(index-1);if(x<w-1)enqueue(index+1);enqueue(index-w);enqueue(index+w);}
+  // Some alternate hairstyles were supplied over a baked checkerboard. Remove
+  // those neutral pixels while preserving the whites inside the face and shirt.
+  if (usesAlternateHair) for (let index=0; index<w*h; index++) {
+    const n=index*4, x=(index%w)/w, y=Math.floor(index/w)/h;
+    const r=pixels[n], g=pixels[n+1], b=pixels[n+2];
+    const neutral=Math.max(r,g,b)-Math.min(r,g,b)<42 && Math.min(r,g,b)>125;
+    const face=((x-.59)/.28)**2+((y-.42)/.34)**2<1;
+    const shirt=y>.73&&y<.91&&x>.46&&x<.63;
+    if(neutral&&!face&&!shirt)pixels[n+3]=0;
+  }
   // Build a connected mask from the hair at the top of the portrait. This keeps
   // similarly colored backpack straps and clothing outside the recolored region.
   const hairMask=new Uint8Array(w*h),hairQueue=new Int32Array(w*h);let hairHead=0,hairTail=0;
@@ -76,7 +87,7 @@ export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences,
       const leftEye = ((x-.543)/.025)**2 + ((y-.337)/.028)**2 < 1;
       const rightEye = ((x-.68)/.024)**2 + ((y-.365)/.032)**2 < 1;
       if ((leftEye || rightEye) && v > .07 && v < .55 && s > .12) kind = 'eye';
-      else if (hairMask[i/4] && !(leftEye || rightEye)) kind = 'hair';
+      else if ((hairMask[i/4] || (usesAlternateHair && h < .14 && s > .18 && v < .7 && (y < .64 || x < .38 || x > .73))) && !(leftEye || rightEye)) kind = 'hair';
       else if (y < .78 && h > .025 && h < .14 && s > .33 && v > .53) kind = 'skin';
       else if (y > .51 && s > .25 && h > .52 && h < .79) kind = 'outfit';
     }
@@ -87,7 +98,7 @@ export async function renderCharacter(canvas: HTMLCanvasElement, p: Preferences,
     const selected = {hair:p.hairColor,skin:p.skin,eye:p.eyeColor,outfit:p.outfitColor}[kind];
     if (selected === defaults[kind]) continue;
     const [nh,ns,nv] = colors[kind];
-    const value = kind === 'skin' ? Math.min(1, v * (nv / .95)) : kind === 'hair' ? Math.min(1, v * (nv / .25)) : kind === 'eye' ? Math.min(.85, v * (nv / .3)) : Math.min(1, v * (nv / .52));
+    const value = kind === 'skin' ? Math.min(1, v * (nv / .95)) : kind === 'hair' ? Math.min(.92, v * (.75 + nv * 1.1)) : kind === 'eye' ? Math.min(.85, v * (nv / .3)) : Math.min(1, v * (nv / .52));
     const [r,g,b] = rgb(nh, Math.min(1, ns * (.7 + s * .4)), value);
     data.data[i]=r; data.data[i+1]=g; data.data[i+2]=b;
   }
