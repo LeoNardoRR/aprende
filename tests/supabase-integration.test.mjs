@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { createClient } from '@supabase/supabase-js';
 
@@ -87,11 +88,13 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
     signedInClient(identities.studentB, password),
   ]);
 
+  const classA = {
+    id: randomUUID(),
+    join_code: randomUUID().replaceAll('-', '').slice(0, 8).toUpperCase(),
+  };
   const classAResult = await teacherA
     .from('classrooms')
-    .insert({ owner_id: created.teacherA, name: 'Turma A', subject: 'Português' })
-    .select('id,join_code')
-    .single();
+    .insert({ ...classA, owner_id: created.teacherA, name: 'Turma A', subject: 'Português' });
   assert.ifError(classAResult.error);
   const classBResult = await admin
     .from('classrooms')
@@ -99,7 +102,6 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
     .select('id,join_code')
     .single();
   assert.ifError(classBResult.error);
-  const classA = classAResult.data;
   const classB = classBResult.data;
 
   assert.ifError((await studentA.rpc('join_class_by_code', { code: classA.join_code })).error);
