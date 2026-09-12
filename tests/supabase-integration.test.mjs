@@ -16,12 +16,18 @@ function isLocalSupabase(target) {
 }
 
 async function signedInClient(email, password) {
-  const client = createClient(url, anonKey, {
+  const authClient = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { error } = await client.auth.signInWithPassword({ email, password });
+  const { data, error } = await authClient.auth.signInWithPassword({ email, password });
   assert.ifError(error);
-  return client;
+  assert.ok(data.session?.access_token);
+  return createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      headers: { Authorization: `Bearer ${data.session.access_token}` },
+    },
+  });
 }
 
 test('RLS and grants isolate classes on a local Supabase instance', async (t) => {
