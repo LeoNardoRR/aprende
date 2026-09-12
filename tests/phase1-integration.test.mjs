@@ -54,7 +54,7 @@ test('Phase 1 operations preserve scope, history and role boundaries', async (t)
     assert.ifError(network.error); networkIds.push(network.data.id);
     const school = await service.from('schools').insert({ network_id: network.data.id, name: `Escola ${label}`, code: `${label}-${suffix}` }).select('id').single();
     assert.ifError(school.error);
-    const year = await service.from('academic_years').insert({ network_id: network.data.id, label: `2026 ${label} ${suffix}`, starts_on: '2026-02-01', ends_on: '2026-12-20', status: 'open' }).select('id').single();
+    const year = await service.from('academic_years').insert({ network_id: network.data.id, label: `2026 ${label} ${suffix.slice(-8)}`, starts_on: '2026-02-01', ends_on: '2026-12-20', status: 'open' }).select('id').single();
     assert.ifError(year.error);
     const grade = await service.from('school_years').insert({ school_id: school.data.id, name: '6º ano', code: `6-${label}-${suffix}` }).select('id').single();
     assert.ifError(grade.error);
