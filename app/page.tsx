@@ -56,7 +56,6 @@ import {
   supabase,
 } from '@/lib/supabase';
 import {
-  calculateConnectedMetrics,
   calculateConnectedProgress,
   friendlySupabaseError,
 } from '@/lib/connected-flow';
@@ -580,17 +579,13 @@ export default function Home() {
         }),
       }));
     }
-    const metrics = calculateConnectedMetrics(
-      connectedAssignments,
-      connectedSubmissions,
-    );
     const progress = calculateConnectedProgress(
       connectedAssignments,
       connectedSubmissions,
     );
     setStudentSummary({
       name: profileResult.data.display_name,
-      earned: metrics.earned,
+      earned: progress.earned,
       possible: progress.evaluatedPoints,
       totalAvailable: progress.totalAvailable,
       evaluatedPoints: progress.evaluatedPoints,
