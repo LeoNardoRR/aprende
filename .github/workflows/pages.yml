@@ -2,6 +2,8 @@ name: Publish GitHub Pages
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,7 +22,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
+      - name: Start local Supabase and rebuild the database
+        run: |
+          npx supabase start
+          npx supabase db reset --local
+      - name: Run unit and authenticated RLS integration tests
+        run: |
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          npm test
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build:pages
@@ -30,6 +42,7 @@ jobs:
           path: dist-pages
   deploy:
     needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

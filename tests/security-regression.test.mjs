@@ -15,6 +15,22 @@ const lesson = readMigration('20260911222656_add_lesson_records_and_materials.sq
 const storagePolicyFix = readMigration(
   '20260912004736_fix_lesson_material_storage_policies.sql',
 );
+const schemaStabilization = readMigration(
+  '20260911235402_stabilize_schema_and_storage.sql',
+);
+const lessonMaterialFkFix = readMigration(
+  '20260911235412_fix_lesson_material_record_fk_delete.sql',
+);
+const lessonMaterialFkIndex = readMigration(
+  '20260911235654_index_lesson_material_record_classroom_fk.sql',
+);
+const hardenedGrants = readMigration(
+  '20260911235837_harden_app_table_grants.sql',
+);
+const studentConnect = readFileSync(
+  new URL('../components/student-connect.tsx', import.meta.url),
+  'utf8',
+);
 const teacherPortal = readFileSync(
   new URL('../components/teacher-portal.tsx', import.meta.url),
   'utf8',
@@ -102,4 +118,33 @@ test('student summary refreshes after returning to the app', () => {
   assert.match(homePage, /document\.addEventListener\('visibilitychange', refreshWhenVisible\)/);
   assert.match(homePage, /window\.removeEventListener\('focus', refreshWhenVisible\)/);
   assert.match(homePage, /document\.removeEventListener\('visibilitychange', refreshWhenVisible\)/);
+});
+
+test('production stabilization migrations remain fully versioned', () => {
+  assert.match(schemaStabilization, /add column if not exists kind text not null default 'task'/);
+  assert.match(schemaStabilization, /add column if not exists image_url text/);
+  assert.match(schemaStabilization, /create table if not exists public\.attendance/);
+  assert.match(schemaStabilization, /lesson_records_id_classroom_uidx/);
+  assert.match(schemaStabilization, /storage\.foldername\(storage\.objects\.name\)/);
+  assert.match(lessonMaterialFkFix, /on delete set null \(lesson_record_id\)/);
+  assert.match(lessonMaterialFkIndex, /\(lesson_record_id, classroom_id\)[\s\S]*where lesson_record_id is not null/);
+  assert.match(hardenedGrants, /revoke all on table[\s\S]*public\.submissions[\s\S]*from anon;/);
+  assert.match(hardenedGrants, /revoke all on table[\s\S]*public\.submissions[\s\S]*from authenticated;/);
+  assert.match(hardenedGrants, /grant update \(answer, status, submitted_at, updated_at\)\s+on public\.submissions to authenticated/);
+  assert.doesNotMatch(hardenedGrants, /grant update \([^)]*(score|feedback)/);
+});
+
+test('attendance freezes its snapshot while synchronization is in progress', () => {
+  assert.match(teacherPortal, /async function save\(\) \{\s*if \(busy\) return;/);
+  assert.match(teacherPortal, /key=\{member\.user_id\}[\s\S]*?disabled=\{busy\}/);
+  assert.match(teacherPortal, /onClick=\{\(\) => \{\s*if \(busy\) return;/);
+  assert.match(teacherPortal, /present: nextPresence\[student\.user_id\] \?\? true/);
+});
+
+test('student connect refreshes and removes focus and visibility listeners', () => {
+  assert.match(studentConnect, /window\.addEventListener\('focus', refreshWhenVisible\)/);
+  assert.match(studentConnect, /document\.addEventListener\('visibilitychange', refreshWhenVisible\)/);
+  assert.match(studentConnect, /window\.removeEventListener\('focus', refreshWhenVisible\)/);
+  assert.match(studentConnect, /document\.removeEventListener\('visibilitychange', refreshWhenVisible\)/);
+  assert.match(studentConnect, /\}, \[loadStudent, session\]\);/);
 });

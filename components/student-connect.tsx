@@ -234,6 +234,22 @@ export function StudentConnect({
   }, [loadStudent]);
 
   useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible' && session) {
+        void loadStudent(session);
+      }
+    };
+
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+
+    return () => {
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [loadStudent, session]);
+
+  useEffect(() => {
     if (!loading && initialAssignmentId) {
       const item = assignments.find((assignment) => assignment.id === initialAssignmentId);
       if (item) { setActiveAssignment(item); setAnswer(submissions.find((submission) => submission.assignment_id === item.id)?.answer ?? ''); }

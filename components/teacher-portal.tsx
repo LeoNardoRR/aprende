@@ -2182,6 +2182,7 @@ function AttendancePanel({
   }, [classroom.id, date, preview, storageKey, studentKey]);
 
   async function save() {
+    if (busy) return;
     setBusy(true);
     setNotice('Salvando chamada...');
     const nextPresence = { ...presence };
@@ -2214,7 +2215,7 @@ function AttendancePanel({
       classroom_id: classroom.id,
       student_id: student.user_id,
       attendance_date: date,
-      present: presence[student.user_id] ?? true,
+      present: nextPresence[student.user_id] ?? true,
       recorded_by: profile.id,
       updated_at: new Date().toISOString(),
     }));
@@ -2268,14 +2269,16 @@ function AttendancePanel({
             <button
               type="button"
               key={member.user_id}
+              disabled={busy}
               aria-pressed={present}
               aria-label={`${present ? 'Marcar falta para' : 'Marcar presença para'} ${member.profiles?.display_name || 'Aluno'}`}
-              onClick={() =>
+              onClick={() => {
+                if (busy) return;
                 setPresence((current) => ({
                   ...current,
                   [member.user_id]: !present,
-                }))
-              }
+                }));
+              }}
             >
               <small>{String(index + 1).padStart(2, '0')}</small>
               <span
