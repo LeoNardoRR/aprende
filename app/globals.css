@@ -1421,8 +1421,8 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .teacher-roster-table > button:hover{background:#f5faff;}
 .teacher-roster-table > button:disabled{cursor:wait;opacity:.62;background:#f5f7fa;}
 .teacher-roster-empty{display:grid;justify-items:center;align-content:center;gap:7px;min-height:220px;padding:26px 18px;text-align:center;background:linear-gradient(145deg,#fbfdff,#f2f8fd);}
-.teacher-roster-empty > span{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:var(--teacher-accent-soft);color:var(--teacher-accent-dark);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--teacher-accent) 13%,transparent);}
-.teacher-roster-empty > span svg{width:24px;height:24px;}
+.teacher-roster-empty > span{display:grid;place-items:center;width:48px;height:48px;padding:0!important;border-radius:14px;background:var(--teacher-accent-soft);color:var(--teacher-accent-dark);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--teacher-accent) 13%,transparent);line-height:0;}
+.teacher-roster-empty > span svg{display:block;width:24px;height:24px;margin:0;}
 .teacher-roster-empty > strong{color:#183e66;font-size:14px;}
 .teacher-roster-empty > p{max-width:290px;color:#708399;font-size:10px;line-height:1.5;}
 .teacher-roster-empty > button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;margin-top:5px;padding:7px 13px;border:1px solid #cfe0ed;border-radius:10px;background:#fff;color:var(--teacher-accent-dark);box-shadow:0 5px 14px #183a5d0b;font-size:12px;font-weight:850;}
@@ -1431,7 +1431,7 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .teacher-roster-empty > button small{color:#73899e;font-size:8px;font-weight:750;text-transform:uppercase;letter-spacing:.04em;}
 .teacher-roster-table small{color:#7c91a9;}
 .teacher-roster-table strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;}
-.teacher-roster-table span{padding:5px 13px;border-radius:999px;background:#dff7eb;color:#178451;font-size:9px;font-weight:800;}
+.teacher-roster-table > button span{padding:5px 13px;border-radius:999px;background:#dff7eb;color:#178451;font-size:9px;font-weight:800;}
 .teacher-compact-stats{display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;margin-bottom:13px;}
 .teacher-compact-stats article{display:flex;align-items:center;gap:9px;padding:11px;border:1px solid #e2eaf2;border-radius:9px;background:#f9fbfd;}
 .teacher-compact-stats article > span{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:var(--teacher-accent-soft);color:var(--teacher-accent-dark);}
@@ -1455,7 +1455,7 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .teacher-class-image-actions input{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
 .account-name-card{display:grid;gap:11px;padding:16px;margin-bottom:12px;border:1px solid #dfe7f1;border-radius:15px;background:#f7faff;}
 .account-name-card p{margin-top:3px;color:#737b8c;font-size:12px;}.account-name-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.account-name-controls input{min-width:0;padding:11px 12px;border:1px solid #d9e1e8;border-radius:10px;background:#fff}.account-name-controls button{min-width:105px}
-.teacher-attendance{display:grid;gap:9px}.teacher-attendance-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.teacher-attendance-head>span{display:flex;align-items:center;gap:6px;color:#59728c;font-size:10px;font-weight:800}.teacher-attendance-head svg{width:16px}.teacher-attendance-head button{min-height:34px;padding:7px 10px;font-size:10px}.teacher-roster-table span:not(.attendance-empty-check){display:inline-flex;align-items:center;gap:5px}.teacher-roster-table span:not(.attendance-empty-check) svg{width:13px;height:13px}.teacher-roster-table span.absent{background:#ffe3e3;color:#bd3c3c}.attendance-empty-check{display:inline-block;width:12px;height:12px;border:1.5px solid currentColor;border-radius:4px}.teacher-roster-table .attendance-checkbox{display:grid;place-items:center;width:21px;height:21px;border:1.5px solid #aab9c8;border-radius:6px;background:#fff;color:#fff}.teacher-roster-table .attendance-checkbox.checked{border-color:#1ca66b;background:#1ca66b;box-shadow:0 2px 5px #1ca66b33}.teacher-roster-table .attendance-checkbox svg{width:15px;height:15px;stroke-width:3}.teacher-attendance-notice{color:#267552;font-size:10px;font-weight:750}
+.teacher-attendance{display:grid;gap:9px}.teacher-attendance-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.teacher-attendance-head>span{display:flex;align-items:center;gap:6px;color:#59728c;font-size:10px;font-weight:800}.teacher-attendance-head svg{width:16px}.teacher-attendance-head button{min-height:34px;padding:7px 10px;font-size:10px}.teacher-roster-table > button span:not(.attendance-empty-check){display:inline-flex;align-items:center;gap:5px}.teacher-roster-table > button span:not(.attendance-empty-check) svg{width:13px;height:13px}.teacher-roster-table > button span.absent{background:#ffe3e3;color:#bd3c3c}.attendance-empty-check{display:inline-block;width:12px;height:12px;border:1.5px solid currentColor;border-radius:4px}.teacher-roster-table .attendance-checkbox{display:grid;place-items:center;width:21px;height:21px;border:1.5px solid #aab9c8;border-radius:6px;background:#fff;color:#fff}.teacher-roster-table .attendance-checkbox.checked{border-color:#1ca66b;background:#1ca66b;box-shadow:0 2px 5px #1ca66b33}.teacher-roster-table .attendance-checkbox svg{width:15px;height:15px;stroke-width:3}.teacher-attendance-notice{color:#267552;font-size:10px;font-weight:750}
 .teacher-gradebook .teacher-panel-title{justify-content:space-between;text-align:left}
 .teacher-gradebook-score{display:grid;gap:2px;min-width:0}.teacher-gradebook-score small{color:#7b8d9e;font-size:8px;font-weight:650;line-height:1.25}
 .teacher-roster-table .attendance-checkbox{padding:0}
@@ -1474,18 +1474,25 @@ to{opacity:1;transform:translateY(0) scale(1);}
 @media (max-width: 960px){
 .teacher-app{grid-template-columns:76px minmax(0, 1fr);}
 .teacher-sidebar .teacher-logo strong{display:none;}
+.teacher-sidebar .teacher-profile{justify-content:center;padding:10px 0;}
+.teacher-sidebar .teacher-profile > img,
+.teacher-sidebar .teacher-profile > div{width:38px;height:38px;flex:0 0 38px;}
 .teacher-sidebar .teacher-profile > span,
-.teacher-sidebar > .account-settings-trigger > span{display:none;}
+.teacher-sidebar nav button > span,
+.teacher-sidebar > .account-settings-trigger > span,
+.teacher-sidebar > .teacher-exit > span{display:none;}
+.teacher-sidebar nav button,
+.teacher-sidebar > .teacher-exit{gap:0;}
 .teacher-sidebar > .account-settings-trigger{display:flex;align-items:center;justify-content:center;padding:12px 8px;}
 .teacher-sidebar > .account-settings-trigger svg{width:21px;height:21px;}
 }
 @media (min-width: 701px) and (max-width: 900px){
 .teacher-top-actions .teacher-send,
 .teacher-top-actions .teacher-new-class,
-.teacher-top-actions .teacher-appearance-button{display:grid;place-items:center;width:44px;min-width:44px;height:42px;padding:0;font-size:0;line-height:1;}
+.teacher-top-actions .teacher-appearance-button{display:flex;align-items:center;justify-content:center;gap:0;width:44px;min-width:44px;height:42px;padding:0;font-size:0;line-height:0;}
 .teacher-top-actions .teacher-send svg,
 .teacher-top-actions .teacher-new-class svg,
-.teacher-top-actions .teacher-appearance-button svg{width:19px;height:19px;margin:0;}
+.teacher-top-actions .teacher-appearance-button svg{display:block;width:19px;height:19px;margin:0;}
 }
 @media (max-width: 700px){
 .teacher-app{display:block;}
@@ -1504,7 +1511,8 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .teacher-sidebar nav button > span, .teacher-sidebar > .account-settings-trigger > span, .teacher-sidebar > .teacher-exit > span{display:none!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .teacher-sidebar nav button svg, .teacher-sidebar > .account-settings-trigger svg, .teacher-sidebar > .teacher-exit svg{width:21px;height:21px;}
 .teacher-sidebar nav button, .teacher-sidebar > .account-settings-trigger, .teacher-sidebar > .teacher-exit{display:flex!important;align-items:center;justify-content:center;}
-.teacher-top-actions .teacher-new-class, .teacher-appearance-button{display:grid;place-items:center;align-content:center;line-height:1;}
+.teacher-top-actions .teacher-new-class, .teacher-appearance-button{display:flex;align-items:center;justify-content:center;gap:0;line-height:0;}
+.teacher-top-actions .teacher-new-class svg, .teacher-appearance-button svg{display:block;width:20px;height:20px;margin:0;}
 .teacher-class-tabs{display:flex;grid-auto-columns:none;gap:7px;width:100%;min-width:0;margin-bottom:9px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .teacher-class-tabs::-webkit-scrollbar{display:none;}
 .teacher-class-tabs button{min-height:44px;padding:8px 10px;font-size:11px;}
