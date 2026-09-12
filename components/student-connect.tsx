@@ -476,6 +476,7 @@ export function StudentConnect({
             <strong>Aprendê</strong>
           </button>
           <div className="student-header-actions">
+            <a className="teacher-secondary" href="?access=institutional">Gestor / equipe institucional</a>
             {onOpenTeacher && (
               <button
                 type="button"
