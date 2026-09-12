@@ -67,7 +67,7 @@ create or replace function public.list_assessment_booklet_items(target_booklet u
 returns table (
   link_id uuid,
   item_id uuid,
-  position integer,
+  "position" integer,
   points numeric,
   internal_title text,
   statement text,
