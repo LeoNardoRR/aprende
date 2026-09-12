@@ -310,7 +310,7 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
   if (!session)
     return (
       <PortalShell onClose={onClose}>
-        <TeacherAuth />
+        <TeacherAuth institutional={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('access') === 'institutional'} />
       </PortalShell>
     );
   if (!profile)
@@ -374,7 +374,7 @@ function PortalShell({
   );
 }
 
-function TeacherAuth() {
+function TeacherAuth({ institutional = false }: { institutional?: boolean }) {
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
@@ -468,11 +468,10 @@ function TeacherAuth() {
   return (
     <main className="teacher-auth">
       <section className="teacher-auth-copy">
-        <span className="teacher-kicker">MODO PROFESSOR</span>
-        <h1>Sua turma em um só lugar.</h1>
+        <span className="teacher-kicker">{institutional ? 'GESTÃO INSTITUCIONAL' : 'MODO PROFESSOR'}</span>
+        <h1>{institutional ? 'Sua rede e suas escolas, organizadas.' : 'Sua turma em um só lugar.'}</h1>
         <p>
-          Crie turmas e atividades, acompanhe quem entregou e organize o próximo
-          passo de cada aluno.
+          {institutional ? 'Acesso para gestores, administradores de rede, revisores e aprovadores. Use o e-mail vinculado pela administração da sua instituição.' : 'Crie turmas e atividades, acompanhe quem entregou e organize o próximo passo de cada aluno.'}
         </p>
         <div className="teacher-benefits">
           <span>
@@ -494,14 +493,14 @@ function TeacherAuth() {
           <span className="teacher-card-icon">
             <School />
           </span>
-          <h2>{creating ? 'Primeiro acesso' : 'Entrar como professor'}</h2>
+          <h2>{institutional ? 'Entrar como gestor / equipe institucional' : creating ? 'Primeiro acesso' : 'Entrar como professor'}</h2>
           <p>
-            {creating
+            {institutional ? 'Seu papel e suas permissões são definidos pelo vínculo institucional. Para o primeiro acesso, solicite a ativação à administração.' : creating
               ? 'Use o e-mail autorizado para criar seu perfil.'
               : 'Sua sessão continuará ativa neste navegador.'}
           </p>
         </div>
-        <div className="student-auth-tabs">
+        {!institutional && (<div className="student-auth-tabs">
           <button
             type="button"
             className={!creating ? 'active' : ''}
@@ -524,7 +523,8 @@ function TeacherAuth() {
           >
             Primeiro acesso
           </button>
-        </div>
+        </div>)}
+        {institutional && <p><a href="?qa=institution-admin">Conhecer o painel de gestão (DEMO)</a></p>}
         <form onSubmit={submit}>
           {creating && (
             <label>

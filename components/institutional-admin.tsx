@@ -109,6 +109,7 @@ export function InstitutionalAdmin({ profile, preview = false, onExit }: { profi
       const url = new URL(window.location.href);
       url.searchParams.delete('qa');
       url.searchParams.delete('auth');
+      url.searchParams.delete('access');
       url.hash = '';
       window.history.replaceState(null, '', url.pathname + url.search);
       if (onExit) onExit();
