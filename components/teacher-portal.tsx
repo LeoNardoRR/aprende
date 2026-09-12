@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Session } from '@supabase/supabase-js';
 import {
@@ -33,7 +33,10 @@ import {
   X,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { friendlySupabaseError } from '@/lib/connected-flow';
+import {
+  calculateConnectedProgress,
+  friendlySupabaseError,
+} from '@/lib/connected-flow';
 import {
   authReturnUrl,
   isEmailConfirmationRequired,
@@ -113,6 +116,26 @@ function normalizeJoinedProfile(value: unknown): { display_name: string } | null
   return typeof record.display_name === 'string'
     ? { display_name: record.display_name }
     : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function mergePresence(
+  defaults: Record<string, boolean>,
+  value: unknown,
+): Record<string, boolean> {
+  if (!isRecord(value)) return defaults;
+  return Object.entries(value).reduce(
+    (next, [studentId, present]) => {
+      if (studentId in defaults && typeof present === 'boolean') {
+        next[studentId] = present;
+      }
+      return next;
+    },
+    { ...defaults },
+  );
 }
 
 type TeacherAppearance = {
@@ -888,6 +911,8 @@ function TeacherDashboard({
   const classActivities = assignments.filter(
     (item) => item.classroom_id === selected,
   );
+  const taskAssignments = classActivities.filter((item) => item.kind !== 'exam');
+  const examAssignments = classActivities.filter((item) => item.kind === 'exam');
   const classStudents = memberships.filter(
     (item) => item.classroom_id === selected,
   );
@@ -896,7 +921,9 @@ function TeacherDashboard({
       classActivities.some((activity) => activity.id === item.assignment_id) &&
       item.status === 'submitted',
   );
-  const examAssignments = classActivities.filter((item) => item.kind === 'exam');
+  const taskDelivered = delivered.filter((item) =>
+    taskAssignments.some((assignment) => assignment.id === item.assignment_id),
+  );
   const examDelivered = delivered.filter((item) =>
     examAssignments.some((assignment) => assignment.id === item.assignment_id),
   );
@@ -1277,7 +1304,7 @@ function TeacherDashboard({
                     </button>
                   </div>
                   <ActivityList
-                    activities={classActivities}
+                    activities={taskAssignments}
                     submissions={submissions}
                     students={classStudents.length}
                   />
@@ -1304,7 +1331,7 @@ function TeacherDashboard({
                     </button>
                   </div>
                   <ActivityList
-                    activities={classActivities}
+                    activities={taskAssignments}
                     submissions={submissions}
                     students={classStudents.length}
                   />
@@ -1316,12 +1343,12 @@ function TeacherDashboard({
                       <h2>Entregas recebidas</h2>
                     </div>
                     <strong className="teacher-count">
-                      {delivered.length}
+                      {taskDelivered.length}
                     </strong>
                   </div>
                   <SubmissionList
-                    submissions={delivered}
-                    assignments={classActivities}
+                    submissions={taskDelivered}
+                    assignments={taskAssignments}
                     onGrade={setGrading}
                   />
                 </section>
@@ -2087,6 +2114,8 @@ function AttendancePanel({
   const studentKey = students.map((item) => item.user_id).join(',');
   const storageKey = `aprende:attendance:${classroom.id}:${date}`;
   const [presence, setPresence] = useState<Record<string, boolean>>({});
+  const [pendingSync, setPendingSync] = useState(false);
+  const pendingSyncRef = useRef(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
 
@@ -2094,13 +2123,35 @@ function AttendancePanel({
     const defaultPresence = Object.fromEntries(
       students.map((item) => [item.user_id, true]),
     );
+    let localState: {
+      presence: Record<string, boolean>;
+      pendingSync: boolean;
+    } = { presence: defaultPresence, pendingSync: false };
     try {
       const saved = window.localStorage.getItem(storageKey);
-      setPresence(
-        saved ? { ...defaultPresence, ...JSON.parse(saved) } : defaultPresence,
-      );
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (isRecord(parsed) && isRecord(parsed.presence)) {
+          localState = {
+            presence: mergePresence(defaultPresence, parsed.presence),
+            pendingSync: parsed.pendingSync === true,
+          };
+        } else if (isRecord(parsed)) {
+          // Keep compatibility with the previous plain presence format.
+          localState = {
+            presence: mergePresence(defaultPresence, parsed),
+            pendingSync: false,
+          };
+        }
+      }
     } catch {
-      setPresence(defaultPresence);
+      localState = { presence: defaultPresence, pendingSync: false };
+    }
+    pendingSyncRef.current = localState.pendingSync;
+    setPendingSync(localState.pendingSync);
+    setPresence(localState.presence);
+    if (localState.pendingSync) {
+      setNotice('Há uma chamada salva neste dispositivo aguardando sincronização.');
     }
     if (preview || !students.length) return;
     void supabase
@@ -2110,7 +2161,15 @@ function AttendancePanel({
       .eq('attendance_date', date)
       .then(({ data, error }) => {
         if (error) {
-          setNotice(friendlySupabaseError(error.message));
+          setNotice(
+            localState.pendingSync
+              ? 'Há uma chamada salva neste dispositivo aguardando sincronização.'
+              : friendlySupabaseError(error.message),
+          );
+          return;
+        }
+        if (localState.pendingSync || pendingSyncRef.current) {
+          setNotice('Há uma chamada salva neste dispositivo aguardando sincronização.');
           return;
         }
         setPresence((current) => ({
@@ -2125,9 +2184,29 @@ function AttendancePanel({
   async function save() {
     setBusy(true);
     setNotice('Salvando chamada...');
-    window.localStorage.setItem(storageKey, JSON.stringify(presence));
+    const nextPresence = { ...presence };
+    const persist = (nextPendingSync: boolean) => {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          presence: nextPresence,
+          pendingSync: nextPendingSync,
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+    };
+    try {
+      persist(!preview);
+    } catch {
+      setNotice('Não foi possível salvar a chamada neste dispositivo.');
+      setBusy(false);
+      return;
+    }
+    pendingSyncRef.current = !preview;
+    setPendingSync(!preview);
     if (preview) {
       setNotice('Chamada salva nesta prévia.');
+      pendingSyncRef.current = false;
       setBusy(false);
       return;
     }
@@ -2142,11 +2221,27 @@ function AttendancePanel({
     const { error } = await supabase
       .from('attendance')
       .upsert(rows, { onConflict: 'classroom_id,student_id,attendance_date' });
-    setNotice(
-      error
-        ? 'Não foi possível sincronizar a chamada. Os dados permanecem salvos apenas neste dispositivo.'
-        : 'Chamada salva e sincronizada.',
-    );
+    if (error) {
+      try {
+        persist(true);
+      } catch {
+        // The original local write already succeeded; keep the honest sync state.
+      }
+      pendingSyncRef.current = true;
+      setPendingSync(true);
+      setNotice(
+        'Não foi possível sincronizar a chamada. Os dados permanecem salvos apenas neste dispositivo. Há uma chamada salva neste dispositivo aguardando sincronização.',
+      );
+    } else {
+      try {
+        persist(false);
+      } catch {
+        // The server is authoritative even if the local status update fails.
+      }
+      pendingSyncRef.current = false;
+      setPendingSync(false);
+      setNotice('Chamada salva e sincronizada.');
+    }
     setBusy(false);
   }
 
@@ -2202,6 +2297,16 @@ function AttendancePanel({
       {notice && (
         <output className="teacher-attendance-notice">{notice}</output>
       )}
+      {pendingSync && !preview && (
+        <button
+          type="button"
+          className="teacher-secondary teacher-attendance-retry"
+          disabled={busy || !students.length}
+          onClick={() => void save()}
+        >
+          Tentar sincronizar novamente
+        </button>
+      )}
     </div>
   );
 }
@@ -2215,7 +2320,6 @@ function Gradebook({
   assignments: Assignment[];
   submissions: Submission[];
 }) {
-  const possible = assignments.reduce((sum, item) => sum + item.points, 0);
   return (
     <section className="teacher-panel teacher-gradebook">
       <div className="teacher-panel-title">
@@ -2230,34 +2334,36 @@ function Gradebook({
           <div className="teacher-gradebook-row heading">
             <strong>Aluno</strong>
             <span>Atividades</span>
-            <span>Nota total</span>
+            <span>Pontos avaliados</span>
             <span>Aproveitamento</span>
           </div>
           {students.map((student) => {
             const studentSubmissions = submissions.filter(
-              (item) =>
-                item.student_id === student.user_id &&
-                item.status === 'submitted',
+              (item) => item.student_id === student.user_id,
             );
-            const score = studentSubmissions.reduce(
-              (sum, item) => sum + (item.score ?? 0),
-              0,
+            const progress = calculateConnectedProgress(
+              assignments,
+              studentSubmissions,
             );
-            const percentage = possible
-              ? Math.round((score / possible) * 100)
-              : 0;
+            const percentage = progress.percentage ?? 0;
             return (
               <div className="teacher-gradebook-row" key={student.user_id}>
                 <strong>{student.profiles?.display_name || 'Aluno'}</strong>
                 <span>
-                  {studentSubmissions.length}/{assignments.length}
+                  {progress.submitted}/{progress.total}
                 </span>
-                <span>
-                  {score}/{possible}
+                <span className="teacher-gradebook-score">
+                  {progress.evaluatedPoints
+                    ? `${progress.earned}/${progress.evaluatedPoints}`
+                    : 'Aguardando'}
+                  <small>
+                    {progress.totalAvailable} pts disponíveis
+                    {progress.pending ? ` · ${progress.pending} pendente${progress.pending === 1 ? '' : 's'}` : ''}
+                  </small>
                 </span>
                 <span>
                   <b style={{ width: `${Math.min(percentage, 100)}%` }} />
-                  {percentage}%
+                  {progress.percentage == null ? 'Aguardando' : `${progress.percentage}%`}
                 </span>
               </div>
             );

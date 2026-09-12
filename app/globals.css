@@ -1447,6 +1447,7 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .account-name-card p{margin-top:3px;color:#737b8c;font-size:12px;}.account-name-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.account-name-controls input{min-width:0;padding:11px 12px;border:1px solid #d9e1e8;border-radius:10px;background:#fff}.account-name-controls button{min-width:105px}
 .teacher-attendance{display:grid;gap:9px}.teacher-attendance-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.teacher-attendance-head>span{display:flex;align-items:center;gap:6px;color:#59728c;font-size:10px;font-weight:800}.teacher-attendance-head svg{width:16px}.teacher-attendance-head button{min-height:34px;padding:7px 10px;font-size:10px}.teacher-roster-table span:not(.attendance-empty-check){display:inline-flex;align-items:center;gap:5px}.teacher-roster-table span:not(.attendance-empty-check) svg{width:13px;height:13px}.teacher-roster-table span.absent{background:#ffe3e3;color:#bd3c3c}.attendance-empty-check{display:inline-block;width:12px;height:12px;border:1.5px solid currentColor;border-radius:4px}.teacher-roster-table .attendance-checkbox{display:grid;place-items:center;width:21px;height:21px;border:1.5px solid #aab9c8;border-radius:6px;background:#fff;color:#fff}.teacher-roster-table .attendance-checkbox.checked{border-color:#1ca66b;background:#1ca66b;box-shadow:0 2px 5px #1ca66b33}.teacher-roster-table .attendance-checkbox svg{width:15px;height:15px;stroke-width:3}.teacher-attendance-notice{color:#267552;font-size:10px;font-weight:750}
 .teacher-gradebook .teacher-panel-title{justify-content:space-between;text-align:left}
+.teacher-gradebook-score{display:grid;gap:2px;min-width:0}.teacher-gradebook-score small{color:#7b8d9e;font-size:8px;font-weight:650;line-height:1.25}
 .teacher-roster-table .attendance-checkbox{padding:0}
 .teacher-roster-table .attendance-checkbox{justify-content:center;align-items:center;flex:0 0 21px}
 .teacher-roster-table .attendance-checkbox.absent{border-color:#d24d4d;background:#d24d4d;color:#fff;box-shadow:0 2px 5px #d24d4d33}.teacher-roster-table .attendance-checkbox.absent svg{color:#fff}.teacher-roster-table > button > span:last-child{min-width:84px;justify-content:center;font-size:10px}.teacher-roster-table > button > span:last-child.absent svg{color:#bd3c3c}
@@ -1518,6 +1519,7 @@ to{opacity:1;transform:translateY(0) scale(1);}
 .teacher-module-tabs{grid-template-columns:repeat(2, minmax(0, 1fr));}
 .teacher-greeting p{display:none;}
 }
+.teacher-attendance-retry{justify-self:start;min-height:32px;padding:7px 10px;font-size:10px}
 /* Student home: a single, scoped layout for the reference composition. */
 .student-experience{--student-ink:#07325c;--student-muted:#61768d;--student-canvas:#f3f8fe;}
 .student-home{background:var(--student-canvas);background-image:none;font-family:'Nunito Variable', sans-serif;color:var(--student-ink);}

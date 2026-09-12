@@ -56,6 +56,23 @@ test('pending work stays separate from the evaluated average', () => {
   );
 });
 
+test('teacher and student summaries share the same evaluated progress', () => {
+  const assignments = [
+    { id: 'task-1', points: 10 },
+    { id: 'task-2', points: 20 },
+  ];
+  const submissions = [
+    { assignment_id: 'task-1', status: 'submitted', score: 8 },
+    { assignment_id: 'task-2', status: 'draft', score: null },
+  ];
+  const teacherProgress = calculateConnectedProgress(assignments, submissions);
+  const studentProgress = calculateConnectedProgress(assignments, submissions);
+  assert.deepEqual(studentProgress, teacherProgress);
+  assert.equal(teacherProgress.evaluatedPoints, 10);
+  assert.equal(teacherProgress.totalAvailable, 30);
+  assert.equal(teacherProgress.pending, 1);
+});
+
 test('only draft submissions remain editable', () => {
   assert.equal(canEditSubmission(), true);
   assert.equal(canEditSubmission({ status: 'draft', score: null }), true);

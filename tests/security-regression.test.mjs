@@ -12,10 +12,14 @@ const submittedLock = readMigration('20260909123824_lock_submitted_student_work.
 const connectedWorkflow = readMigration('20260909124234_harden_connected_workflow.sql');
 const scoreValidation = readMigration('20260909124231_validate_activity_scores.sql');
 const lesson = readMigration('20260911221817_add_lesson_records_and_materials.sql');
+const storagePolicyFix = readMigration(
+  '20260912004500_fix_lesson_material_storage_policies.sql',
+);
 const teacherPortal = readFileSync(
   new URL('../components/teacher-portal.tsx', import.meta.url),
   'utf8',
 );
+const homePage = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
 
 test('classroom content is readable only by members and writable by teachers', () => {
   assert.match(core, /create policy classrooms_read[\s\S]*private\.is_class_member\(id\)/);
@@ -50,9 +54,29 @@ test('lesson records and files protect member reads and teacher writes', () => {
   assert.match(lesson, /alter table public\.lesson_records enable row level security/);
   assert.match(lesson, /lesson_records_read[\s\S]*private\.is_class_member\(classroom_id\)/);
   assert.match(lesson, /lesson_records_create[\s\S]*teacher_id = \(select auth\.uid\(\)\)[\s\S]*private\.is_class_teacher\(classroom_id\)/);
-  assert.match(lesson, /lesson_material_file_read[\s\S]*private\.is_class_member\(classroom\.id\)/);
-  assert.match(lesson, /lesson_material_file_insert[\s\S]*private\.is_class_teacher\(classroom\.id\)/);
-  assert.match(lesson, /storage\.foldername\(name\)\)\[1\]/);
+});
+
+test('lesson material storage policies use an explicit private path scope', () => {
+  assert.match(storagePolicyFix, /storage\.foldername\(storage\.objects\.name\)/);
+  assert.doesNotMatch(storagePolicyFix, /storage\.foldername\(name\)/);
+  for (const policy of [
+    'lesson_material_file_read',
+    'lesson_material_file_insert',
+    'lesson_material_file_update',
+    'lesson_material_file_delete',
+  ]) {
+    assert.match(storagePolicyFix, new RegExp(`create policy ${policy}`));
+  }
+  assert.match(storagePolicyFix, /bucket_id = 'lesson-materials'/);
+  assert.match(storagePolicyFix, /for select to authenticated/);
+  assert.match(storagePolicyFix, /private\.is_class_member\(classroom\.id\)/);
+  assert.match(storagePolicyFix, /for insert to authenticated/);
+  assert.match(storagePolicyFix, /private\.is_class_teacher\(classroom\.id\)/);
+  assert.match(storagePolicyFix, /owner_id = \(select auth\.uid\(\)::text\)/);
+  assert.match(
+    storagePolicyFix,
+    /classroom\.id::text = \(storage\.foldername\(storage\.objects\.name\)\)\[1\]/,
+  );
 });
 
 test('assignments preserve task and exam semantics and the dashboard scopes reads', () => {
@@ -60,4 +84,22 @@ test('assignments preserve task and exam semantics and the dashboard scopes read
   assert.match(assignmentKind, /check \(kind in \('task', 'exam'\)\)/);
   assert.doesNotMatch(teacherPortal, /\.in\(['"]classroom_id['"], ids\)/);
   assert.match(teacherPortal, /\.eq\(['"]classroom_id['"], selectedClassId\)/);
+  assert.match(teacherPortal, /const taskAssignments = classActivities\.filter/);
+  assert.match(teacherPortal, /const examAssignments = classActivities\.filter/);
+  assert.match(teacherPortal, /activities=\{taskAssignments\}/);
+  assert.match(teacherPortal, /submissions=\{examDelivered\}/);
+});
+
+test('attendance keeps an honest offline pending state', () => {
+  assert.match(teacherPortal, /pendingSync/);
+  assert.match(teacherPortal, /updatedAt/);
+  assert.match(teacherPortal, /Há uma chamada salva neste dispositivo aguardando sincronização/);
+  assert.match(teacherPortal, /Tentar sincronizar novamente/);
+});
+
+test('student summary refreshes after returning to the app', () => {
+  assert.match(homePage, /window\.addEventListener\('focus', refreshWhenVisible\)/);
+  assert.match(homePage, /document\.addEventListener\('visibilitychange', refreshWhenVisible\)/);
+  assert.match(homePage, /window\.removeEventListener\('focus', refreshWhenVisible\)/);
+  assert.match(homePage, /document\.removeEventListener\('visibilitychange', refreshWhenVisible\)/);
 });

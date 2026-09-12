@@ -544,10 +544,21 @@ export default function Home() {
           .in('classroom_id', classIds)
           .order('created_at', { ascending: false }),
       ]);
-      connectedAssignments = (assignmentResult.data ??
-        []) as ConnectedAssignment[];
-      connectedAnnouncements = (announcementResult.data ??
-        []) as ConnectedAnnouncement[];
+      connectedAssignments = (assignmentResult.data ?? []).map((item) => {
+        const kind: ConnectedAssignment['kind'] =
+          item.kind === 'exam' ? 'exam' : 'task';
+        return {
+          id: item.id,
+          title: item.title,
+          subject: item.subject,
+          instructions: item.instructions,
+          due_at: item.due_at,
+          points: item.points,
+          created_at: item.created_at,
+          kind,
+        };
+      });
+      connectedAnnouncements = announcementResult.data ?? [];
       if (connectedAssignments.length) {
         const submissionResult = await studentSupabase
           .from('submissions')
@@ -556,8 +567,7 @@ export default function Home() {
             'assignment_id',
             connectedAssignments.map((item) => item.id),
           );
-        connectedSubmissions = (submissionResult.data ??
-          []) as ConnectedSubmission[];
+        connectedSubmissions = submissionResult.data ?? [];
       }
     }
     if (session.user.user_metadata?.student_appearance) {
@@ -599,6 +609,17 @@ export default function Home() {
       void refreshStudentSummary();
     });
     return () => data.subscription.unsubscribe();
+  }, [refreshStudentSummary]);
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void refreshStudentSummary();
+    };
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
   }, [refreshStudentSummary]);
   useEffect(() => {
     if (
