@@ -38,6 +38,10 @@ const teacherPortal = readFileSync(
   new URL('../components/teacher-portal.tsx', import.meta.url),
   'utf8',
 );
+const institutionalAdmin = readFileSync(
+  new URL('../components/institutional-admin.tsx', import.meta.url),
+  'utf8',
+);
 const homePage = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
 
 test('classroom content is readable only by members and writable by teachers', () => {
@@ -187,6 +191,17 @@ test('institutional foundation is additive and protects scoped RBAC data', () =>
   assert.doesNotMatch(institutionalFoundation, /drop table public\./i);
   assert.doesNotMatch(institutionalFoundation, /drop column/i);
   assert.doesNotMatch(institutionalFoundation, /revoke all on all functions in schema private/i);
+});
+
+test('institutional roles enter a real scoped administration interface', () => {
+  assert.match(teacherPortal, /isInstitutionalRole\(profile\.role\)/);
+  assert.match(teacherPortal, /<InstitutionalAdmin/);
+  for (const table of ['networks', 'schools', 'academic_years', 'school_years']) {
+    assert.match(institutionalAdmin, new RegExp(`supabase\\.from\\('${table}'\\)`));
+  }
+  assert.match(institutionalAdmin, /profile\.role === 'network_admin'/);
+  assert.match(institutionalAdmin, /profile\.role === 'manager'/);
+  assert.doesNotMatch(institutionalAdmin, /service_role|serviceRole/i);
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {

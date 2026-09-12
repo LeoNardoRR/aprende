@@ -1,8 +1,9 @@
 # Matriz de conformidade - Pregão Eletrônico nº 40/2026
 
-**Projeto:** Aprendê (`LeoNardoRR/aprende`)  
-**Versão auditada:** `fc28ed7` (`master`)  
-**Data da auditoria:** 12/09/2026  
+**Projeto:** Aprendê (`LeoNardoRR/aprende`)
+**Versão-base auditada:** `fc28ed7` (`master`)
+**Implementação da Fase 1:** branch `codex/poc-phase-1`
+**Data da auditoria:** 12/09/2026
 **Fonte usada nesta rodada:** requisitos funcionais fornecidos na solicitação e o edital retificado anexado em `93578c201e504a12a59cfb9149717ea8Edital+Retificado+PregAo+EletrOnico+n++402026.pdf`. A leitura confirmou que a PoC oficial está nas páginas 67–77 e cobre aproximadamente 70% do Termo de Referência.
 
 ## Regra de leitura
@@ -11,9 +12,9 @@ Os estados abaixo descrevem o que foi confirmado no código e nos testes atuais.
 
 | ID | Requisito | Fonte | Status | Tela | Backend | Teste | Observações |
 |---:|---|---|---|---|---|---|---|
-| 1 | Rede → escolas → anos/séries → turmas → profissionais → alunos | Escopo 1 | 🟡 PARCIAL | Portal atual de aluno/professor | Perfis, turmas e memberships existem; hierarquia institucional entra na Fase 1 | Testes atuais cobrem isolamento por turma | Rede e escola ainda não existem na versão auditada |
-| 2 | Papéis network_admin, manager, reviewer, approver, teacher e student com RBAC | Escopo 2 | 🟡 PARCIAL | Professor/aluno | Enum atual contém apenas teacher/student | Regressão de professor/aluno | Fase 1 cria papéis e permissões escopadas |
-| 3 | Matrícula, importação CSV, promoção, transferência, suspensão e remoção lógica | Escopo 3 | 🟡 PARCIAL | Vínculo do aluno à turma | Memberships permitem vínculo por código; sem matrícula institucional | Teste de join por código | Importador e movimentações ainda pendentes |
+| 1 | Rede → escolas → anos/séries → turmas → profissionais → alunos | Escopo 1 | 🟡 PARCIAL | Administração institucional e portais atuais | Rede, escola, ano letivo, série e escopo opcional da turma implementados | Integração local cobre hierarquia e isolamento inicial | Vínculo administrativo de profissionais e gestão de turmas institucionais ainda serão ampliados |
+| 2 | Papéis network_admin, manager, reviewer, approver, teacher e student com RBAC | Escopo 2 | 🟡 PARCIAL | Entrada administrativa por papel | Enum, catálogo de permissões, memberships escopadas e RLS implementados | Regressão estática e integração autenticada | Interface de concessão/revogação de acessos ainda pendente |
+| 3 | Matrícula, importação CSV, promoção, transferência, suspensão e remoção lógica | Escopo 3 | 🟡 PARCIAL | Vínculo atual e fundação administrativa | Matrículas e histórico de movimentações existem; importador ainda não | Integração cobre leitura escopada de matrícula | CSV, conflitos, credenciais e fluxos de movimentação entram em etapa posterior |
 | 4 | BNCC, SAEB, currículo, habilidades e vínculo avaliativo | Escopo 4 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Depende de modelagem e conteúdo/referências oficiais |
 | 5 | Banco de itens com workflow e versões imutáveis | Escopo 5 | ❌ NÃO ATENDE | Não existe | Assignments não são banco de itens | Não existe | Infraestrutura e conteúdo pedagógico pendentes |
 | 6 | Construtor de provas, cadernos e mapa por habilidade | Escopo 6 | 🟡 PARCIAL | Professor publica tarefas/provas simples | Assignments distinguem task/exam | Testes cobrem a distinção | Sem itens aprovados, cadernos ou mapas |
@@ -40,16 +41,16 @@ Os estados abaixo descrevem o que foi confirmado no código e nos testes atuais.
 | 27 | Matriz de conformidade versionada | Escopo 27 | ✅ ATENDE | Este documento | Não aplicável | Revisão manual nesta rodada | Atualizar a cada fase |
 | 28 | Implementação em fases funcionais | Escopo 28 | 🟡 PARCIAL | Não aplicável | Fase 1 iniciada nesta branch/master | Testes por fase | Demais fases ainda não iniciadas |
 | 29 | Preservar recursos, RLS e CI/CD | Escopo 29 | ✅ ATENDE | Portais preservados | Migrations aditivas; RLS/grants existentes preservados | Regressões atuais verdes | Cada migration nova precisa de auditoria própria |
-| 30 | Validação obrigatória por fase | Escopo 30 | 🟡 PARCIAL | Não aplicável | CI executa Supabase local + migrations | Lint, typecheck, build e testes atuais | Fase 1 adicionará cenários institucionais |
+| 30 | Validação obrigatória por fase | Escopo 30 | ✅ ATENDE | Não aplicável | CI executa Supabase local + migrations | Testes, integração RLS, lint, typecheck e build:pages verdes na branch | Revalidar a cada incremento da fase |
 | 31 | Relatório final com aderência, riscos e dependências | Escopo 31 | 🟡 PARCIAL | Não aplicável | Não aplicável | Não aplicável | Este é o relatório inicial; o final depende das fases restantes |
 
 ## Checklist rastreável da PoC oficial
 
-Esta tabela condensa os itens de demonstração do **Anexo VI, Item 1**, nas páginas 67–76 do edital. O status é do código auditado em `fc28ed7`; ele não presume conteúdo pedagógico que ainda não foi fornecido.
+Esta tabela condensa os itens de demonstração do **Anexo VI, Item 1**, nas páginas 67–76 do edital. O status considera a versão-base e os incrementos registrados na branch da Fase 1; ele não presume conteúdo pedagógico que ainda não foi fornecido.
 
 | Item da PoC | Exigência oficial agrupada | Página | Status | Evidência atual / lacuna |
 |---|---|---:|---|---|
-| 1.1 | Nuvem para 1º–9º ano, acesso individual, versão visível, login de docentes/alunos, troca de senha inicial, token de prova, CPF/RA/RG, CAPTCHA, perfis revisor/aprovador/gestor, rede/escola/ano/turma, cartas-senha e movimentações | 67–68 | 🟡 PARCIAL | PWA, login, teacher/student e turmas existem; versão, token, CAPTCHA, credenciais em lote e escopo institucional entram nas próximas fases |
+| 1.1 | Nuvem para 1º–9º ano, acesso individual, versão visível, login de docentes/alunos, troca de senha inicial, token de prova, CPF/RA/RG, CAPTCHA, perfis revisor/aprovador/gestor, rede/escola/ano/turma, cartas-senha e movimentações | 67–68 | 🟡 PARCIAL | PWA, login e turmas foram preservados; papéis e hierarquia institucional têm backend, RLS, testes e tela inicial; versão, token, CAPTCHA, credenciais em lote e fluxos completos de movimentação ainda estão pendentes |
 | 1.2 | Matrizes BNCC/SAEB/próprias, áreas, componentes, anos, unidades, objetos, habilidades/códigos e filtro curricular na prova | 68 | ❌ NÃO ATENDE | Não há módulo curricular nem catálogo de habilidades |
 | 1.3 | Importação/atualização CSV em lote, conflitos assistidos, credenciais, rejeições, promoção e exportação | 69 | ❌ NÃO ATENDE | Membership por código não substitui matrícula/importação |
 | 1.4 | Banco com 1.500 itens, avaliações de Português/Matemática, tabela de autoria/revisão/aprovação, filtros, quatro alternativas, imagens/fórmulas, distratores, IA revisável e versões imutáveis | 69–70 | ❌ NÃO ATENDE | Assignments são tarefas/provas simples; conteúdo real é dependência pedagógica |
@@ -77,7 +78,7 @@ Os itens 2.1–2.2 (regime, carga horária e contratação dos monitores) e 3.1 
 - A aplicação usa React/TypeScript/Vinext, Supabase e GitHub Actions.
 - O banco atual possui perfis, turmas, memberships, assignments, submissions, announcements, attendance, lesson records e materiais.
 - O escopo de leitura/escrita de conteúdo da turma já usa funções privadas e RLS; as regras atuais devem ser mantidas durante a expansão.
-- O papel persistido atualmente é limitado a `teacher` e `student`.
+- A versão-base possuía apenas `teacher` e `student`; a Fase 1 adiciona `network_admin`, `manager`, `reviewer` e `approver`, com permissões por vínculo institucional.
 - A suíte atual cobre fluxos conectados, bloqueio de submissão, frequência, materiais/storage, grants e alguns cenários de isolamento.
 - A publicação Pages executa migrations locais, integração RLS, lint, typecheck e build antes do deploy.
 
@@ -91,7 +92,7 @@ Os itens 2.1–2.2 (regime, carga horária e contratação dos monitores) e 3.1 
 
 ## Fase 1 iniciada
 
-A migration `20260912153902_add_institutional_rbac_foundation.sql` cria a base aditiva de rede, escola, ano letivo, série, memberships institucionais, matrículas, movimentações e permissões. Ela mantém as colunas legadas de `classrooms` opcionais para não quebrar turmas já existentes e acrescenta políticas institucionais sem remover as políticas atuais.
+A migration `20260912153902_add_institutional_rbac_foundation.sql` cria a base aditiva de rede, escola, ano letivo, série, memberships institucionais, matrículas, movimentações e permissões. Ela mantém as colunas legadas de `classrooms` opcionais para não quebrar turmas já existentes e acrescenta políticas institucionais sem remover as políticas atuais. A interface `InstitutionalAdmin` permite cadastrar rede, escola, ano letivo e série usando essas tabelas e abre automaticamente para os novos papéis após o login.
 
 Antes de aplicar qualquer migration em produção, o fluxo obrigatório é: reset local, testes RLS/integrados, revisão de grants/policies e somente então `db push` no projeto autorizado.
 

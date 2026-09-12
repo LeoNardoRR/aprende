@@ -31,11 +31,12 @@ import {
   isEmailConfirmationRequired,
   passwordRecoveryUrl,
 } from '@/lib/auth-flow';
+import type { Database } from '@/lib/database.types';
 
 type Profile = {
   id: string;
   display_name: string;
-  role: 'teacher' | 'student';
+  role: Database['public']['Enums']['app_role'];
 };
 type Classroom = { id: string; name: string; subject: string };
 type Membership = { classroom_id: string; classrooms: Classroom | null };

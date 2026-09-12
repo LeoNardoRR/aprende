@@ -164,30 +164,45 @@ export type Database = {
       }
       classrooms: {
         Row: {
+          academic_year_id: string | null
+          classroom_status: string
           created_at: string
           id: string
           image_url: string | null
           join_code: string
           name: string
+          network_id: string | null
           owner_id: string
+          school_id: string | null
+          school_year_id: string | null
           subject: string
         }
         Insert: {
+          academic_year_id?: string | null
+          classroom_status?: string
           created_at?: string
           id?: string
           image_url?: string | null
           join_code?: string
           name: string
+          network_id?: string | null
           owner_id: string
+          school_id?: string | null
+          school_year_id?: string | null
           subject: string
         }
         Update: {
+          academic_year_id?: string | null
+          classroom_status?: string
           created_at?: string
           id?: string
           image_url?: string | null
           join_code?: string
           name?: string
+          network_id?: string | null
           owner_id?: string
+          school_id?: string | null
+          school_year_id?: string | null
           subject?: string
         }
         Relationships: [
@@ -355,6 +370,105 @@ export type Database = {
           },
         ]
       }
+      academic_years: {
+        Row: {
+          created_at: string
+          ends_on: string
+          id: string
+          label: string
+          network_id: string
+          starts_on: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ends_on: string
+          id?: string
+          label: string
+          network_id: string
+          starts_on: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string
+          id?: string
+          label?: string
+          network_id?: string
+          starts_on?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      institutional_memberships: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          network_id: string
+          role: string
+          school_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          network_id: string
+          role: string
+          school_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          network_id?: string
+          role?: string
+          school_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      networks: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          municipality: string | null
+          name: string
+          state_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          municipality?: string | null
+          name: string
+          state_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          municipality?: string | null
+          name?: string
+          state_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -376,6 +490,153 @@ export type Database = {
           display_name?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      schools: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          network_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          network_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          network_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      school_years: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          school_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          school_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          school_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      student_enrollments: {
+        Row: {
+          academic_year_id: string
+          classroom_id: string | null
+          created_at: string
+          created_by: string | null
+          ends_on: string | null
+          external_key: string | null
+          id: string
+          network_id: string
+          school_id: string
+          source: string
+          starts_on: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          academic_year_id: string
+          classroom_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string | null
+          external_key?: string | null
+          id?: string
+          network_id: string
+          school_id: string
+          source?: string
+          starts_on?: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          academic_year_id?: string
+          classroom_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string | null
+          external_key?: string | null
+          id?: string
+          network_id?: string
+          school_id?: string
+          source?: string
+          starts_on?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      student_movements: {
+        Row: {
+          created_at: string
+          created_by: string
+          effective_on: string
+          enrollment_id: string
+          from_classroom_id: string | null
+          id: string
+          movement_type: string
+          reason: string | null
+          student_id: string
+          to_classroom_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          effective_on?: string
+          enrollment_id: string
+          from_classroom_id?: string | null
+          id?: string
+          movement_type: string
+          reason?: string | null
+          student_id: string
+          to_classroom_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          effective_on?: string
+          enrollment_id?: string
+          from_classroom_id?: string | null
+          id?: string
+          movement_type?: string
+          reason?: string | null
+          student_id?: string
+          to_classroom_id?: string | null
         }
         Relationships: []
       }
@@ -451,7 +712,7 @@ export type Database = {
       join_class_by_code: { Args: { code: string }; Returns: string }
     }
     Enums: {
-      app_role: "teacher" | "student"
+      app_role: "teacher" | "student" | "network_admin" | "manager" | "reviewer" | "approver"
       submission_status: "draft" | "submitted"
     }
     CompositeTypes: {
@@ -580,9 +841,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["teacher", "student"],
+      app_role: ["teacher", "student", "network_admin", "manager", "reviewer", "approver"],
       submission_status: ["draft", "submitted"],
     },
   },
 } as const
-

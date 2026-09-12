@@ -44,11 +44,16 @@ import {
 } from '@/lib/auth-flow';
 import { AccountSettings } from '@/components/account-settings';
 import { BrandLogo } from '@/components/brand-logo';
+import {
+  InstitutionalAdmin,
+  type InstitutionalRole,
+} from '@/components/institutional-admin';
+import type { Database } from '@/lib/database.types';
 
 type Profile = {
   id: string;
   display_name: string;
-  role: 'teacher' | 'student';
+  role: Database['public']['Enums']['app_role'];
   avatar_url: string | null;
 };
 type Classroom = {
@@ -120,6 +125,12 @@ function normalizeJoinedProfile(value: unknown): { display_name: string } | null
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+function isInstitutionalRole(
+  role: Database['public']['Enums']['app_role'],
+): role is InstitutionalRole {
+  return ['network_admin', 'manager', 'reviewer', 'approver'].includes(role);
 }
 
 function mergePresence(
@@ -205,17 +216,18 @@ const teacherDensityIds: TeacherAppearance['density'][] = [
 ];
 
 export function TeacherPortal({ onClose }: { onClose: () => void }) {
-  const previewMode =
+  const previewTarget =
     typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('qa') ===
-      'teacher-dashboard';
+    new URLSearchParams(window.location.search).get('qa');
+  const previewMode = previewTarget === 'teacher-dashboard';
+  const institutionalPreview = previewTarget === 'institution-admin';
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (previewMode) {
+    if (previewMode || institutionalPreview) {
       setLoading(false);
       return;
     }
@@ -230,10 +242,10 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
       setSession(nextSession),
     );
     return () => data.subscription.unsubscribe();
-  }, [previewMode]);
+  }, [institutionalPreview, previewMode]);
 
   useEffect(() => {
-    if (previewMode) return;
+    if (previewMode || institutionalPreview) return;
     let active = true;
     async function readProfile() {
       if (!session) {
@@ -256,7 +268,20 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
     return () => {
       active = false;
     };
-  }, [previewMode, session]);
+  }, [institutionalPreview, previewMode, session]);
+
+  if (institutionalPreview)
+    return (
+      <InstitutionalAdmin
+        profile={{
+          id: 'preview-admin',
+          display_name: 'Gestora Municipal',
+          role: 'network_admin',
+          avatar_url: null,
+        }}
+        preview
+      />
+    );
 
   if (previewMode)
     return (
@@ -295,6 +320,8 @@ export function TeacherPortal({ onClose }: { onClose: () => void }) {
         />
       </PortalShell>
     );
+  if (isInstitutionalRole(profile.role))
+    return <InstitutionalAdmin profile={{ ...profile, role: profile.role }} />;
   if (profile.role !== 'teacher')
     return (
       <PortalShell onClose={onClose}>

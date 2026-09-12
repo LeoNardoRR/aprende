@@ -414,7 +414,10 @@ export default function Home() {
     let active = true;
     const params = new URLSearchParams(window.location.search);
     const authMode = params.get('auth');
-    if (params.get('qa') === 'teacher-dashboard') {
+    if (
+      params.get('qa') === 'teacher-dashboard' ||
+      params.get('qa') === 'institution-admin'
+    ) {
       setShowStudentConnect(false);
       setShowTeacher(true);
       setAuthModeReady(true);
