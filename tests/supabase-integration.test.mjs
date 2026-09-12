@@ -40,6 +40,23 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
   const admin = createClient(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  for (const table of [
+    'profiles',
+    'classrooms',
+    'memberships',
+    'assignments',
+    'submissions',
+    'announcements',
+    'attendance',
+    'lesson_records',
+    'lesson_materials',
+  ]) {
+    const tableResult = await admin.from(table).select('*', { head: true, count: 'exact' });
+    assert.ifError(tableResult.error);
+  }
+  assert.ifError((await admin.from('assignments').select('kind', { head: true })).error);
+  assert.ifError((await admin.from('classrooms').select('image_url', { head: true })).error);
+
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const password = `Local-only-${suffix}!`;
   const identities = {

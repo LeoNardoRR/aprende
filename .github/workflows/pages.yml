@@ -26,6 +26,8 @@ jobs:
         run: |
           npx supabase start
           npx supabase db reset --local
+          npx supabase migration list --local
+          npx supabase db push --dry-run --local
       - name: Run unit and authenticated RLS integration tests
         run: |
           eval "$(npx supabase status -o env)"
