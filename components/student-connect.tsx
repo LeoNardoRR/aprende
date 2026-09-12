@@ -672,7 +672,7 @@ export function StudentConnect({
                 </button>
               )}
               <span>
-                {profile?.display_name}
+                <strong>{profile?.display_name}</strong>
                 <AccountSettings role="student" />
                 <button onClick={() => void supabase.auth.signOut()}>
                   <LogOut />

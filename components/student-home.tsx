@@ -1,10 +1,9 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ArrowRight, ChevronRight, Coins, SlidersHorizontal, UserRound, GraduationCap } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronRight, Clock3, Coins, SlidersHorizontal, UserRound, GraduationCap } from 'lucide-react';
 import { ClipboardTextIcon, BookOpenIcon, ChatCircleDotsIcon, GraduationCapIcon, GameControllerIcon, YoutubeLogoIcon } from '@phosphor-icons/react';
 import { StudentCharacter } from './student-character';
-import { StudentLearningPath } from './student-learning-path';
 import type { LearningPathStep } from './student-learning-path';
 import type { Preferences } from '@/lib/classroom';
 
@@ -47,7 +46,26 @@ export function StudentHome({ name, preferences, earned, possible, steps, calend
     <nav className="student-home-shortcuts" aria-label="Atalhos da sala">
       {links.map(({label,view,Icon,tone})=><button key={view} className={`student-home-shortcut ${tone}`} onClick={()=>onNavigate(view)}><Icon weight="fill" aria-hidden="true"/><strong>{label}</strong><ArrowRight aria-hidden="true"/></button>)}
     </nav>
-    <StudentLearningPath preferences={preferences} steps={steps} onOpen={onActivity} onAll={()=>onNavigate('tasks')}/>
+    <section className="student-home-assignments" aria-labelledby="student-home-assignments-title">
+      <header>
+        <div>
+          <span className="student-home-assignments-icon" aria-hidden="true"><ClipboardTextIcon weight="fill"/></span>
+          <span><small>ATIVIDADES DA TURMA</small><h2 id="student-home-assignments-title">Próximas atividades</h2></span>
+        </div>
+        <button className="student-home-view-all" onClick={()=>onNavigate('tasks')}>Ver todas <ArrowRight aria-hidden="true"/></button>
+      </header>
+      {steps.length ? <div className="student-home-assignment-list">
+        {steps.slice(0,2).map((step,index)=><button key={step.id} onClick={()=>onActivity(step.id)}>
+          <span className={`student-home-assignment-status${step.completed?' completed':''}`} aria-hidden="true">{step.completed?<CheckCircle2/>:<Clock3/>}</span>
+          <span><small>TAREFA {index+1}</small><strong>{step.title}</strong><em>{step.completed?'Entregue':'Aguardando você'}</em></span>
+          <ArrowRight aria-hidden="true"/>
+        </button>)}
+      </div> : <button className="student-home-assignment-empty" onClick={()=>onNavigate('tasks')}>
+        <span className="student-home-assignment-status" aria-hidden="true"><Clock3/></span>
+        <span><strong>Nenhuma atividade pendente</strong><small>As tarefas aparecem aqui quando o professor enviar.</small></span>
+        <ArrowRight aria-hidden="true"/>
+      </button>}
+    </section>
     <div className="student-home-calendar">{calendar}</div>
   </div>;
 }
