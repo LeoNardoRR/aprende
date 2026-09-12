@@ -93,7 +93,10 @@ test('Phase 2 protects curricula and enforces the professional item workflow', a
   assert.ifError(official.error); cleanup.curricula.push(official.data.id);
   assert.equal((await teacher.from('curricula').select('id').eq('id', official.data.id)).data?.length, 1);
   assert.equal((await student.from('curricula').select('id').eq('id', official.data.id)).data?.length, 0);
-  assert.ok((await teacher.from('curricula').update({ name: 'Não permitido' }).eq('id', official.data.id)).error);
+  const officialUpdate = await teacher.from('curricula').update({ name: 'Não permitido' }).eq('id', official.data.id).select('id');
+  assert.ifError(officialUpdate.error); assert.equal(officialUpdate.data.length, 0);
+  const unchangedOfficial = await service.from('curricula').select('name').eq('id', official.data.id).single();
+  assert.equal(unchangedOfficial.data.name, `BNCC teste ${suffix}`);
 
   const curriculum = await manager.from('curricula').insert({
     network_id: scopeA.network, name: `Currículo DEMO ${suffix}`, curriculum_type: 'custom',
