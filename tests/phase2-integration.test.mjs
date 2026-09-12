@@ -156,7 +156,11 @@ test('Phase 2 protects curricula and enforces the professional item workflow', a
     assert.ifError(option.error);
   }
 
-  assert.ok((await otherTeacher.from('assessment_items').update({ statement: 'Tentativa indevida' }).eq('id', item.data.id)).error);
+  const unauthorizedUpdate = await otherTeacher.from('assessment_items').update({ statement: 'Tentativa indevida' }).eq('id', item.data.id);
+  assert.ifError(unauthorizedUpdate.error);
+  const protectedItem = await service.from('assessment_items').select('statement').eq('id', item.data.id).single();
+  assert.ifError(protectedItem.error);
+  assert.equal(protectedItem.data.statement, 'Qual alternativa representa a resposta demonstrativa correta?');
   assert.ifError((await teacher.rpc('transition_assessment_item', { target_item: item.data.id, target_action: 'submit', action_comment: 'Pronto para revisão' })).error);
   assert.ok((await otherTeacher.rpc('transition_assessment_item', { target_item: item.data.id, target_action: 'review' })).error);
   assert.ifError((await reviewer.rpc('transition_assessment_item', { target_item: item.data.id, target_action: 'review', action_comment: 'Revisado' })).error);

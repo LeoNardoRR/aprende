@@ -36,6 +36,9 @@ const institutionalOperations = readMigration(
 const phase2Foundation = readMigration(
   '20260912173208_add_curriculum_and_item_bank_foundation.sql',
 );
+const phase2Hardening = readMigration(
+  '20260912175310_harden_phase_2_writes_and_audit.sql',
+);
 const studentConnect = readFileSync(
   new URL('../components/student-connect.tsx', import.meta.url),
   'utf8',
@@ -250,6 +253,9 @@ test('Phase 2 separates curricula, item workflow and immutable versions', () => 
   assert.match(phase2Foundation, /limit least\(greatest\(page_size, 1\), 100\)/);
   assert.match(phase2Foundation, /curriculum_type = 'custom'/);
   assert.doesNotMatch(phase2Foundation, /service_role|serviceRole/i);
+  assert.match(phase2Hardening, /revoke update on public\.assessment_items from authenticated/);
+  assert.doesNotMatch(phase2Hardening, /grant update \([^)]*(status|author_id|network_id)/);
+  assert.match(phase2Hardening, /create trigger curricula_audit_change/);
 });
 
 test('institutional UI exposes curriculum, safe authorship and paginated workflow', () => {

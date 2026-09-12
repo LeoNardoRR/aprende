@@ -145,9 +145,16 @@ export function InstitutionalPedagogy({
       setCurricula((current) => [...current, { id: crypto.randomUUID(), network_id: networkId, name: String(form.get('name')), curriculum_type: 'custom', version: String(form.get('version')), active: true, created_by: profile.id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }]);
       setNotice('Currículo criado na prévia.');
     } else {
-      const result = await supabase.from('curricula').insert({ network_id: networkId, name: String(form.get('name')).trim(), curriculum_type: 'custom', version: String(form.get('version')).trim(), created_by: profile.id }).select('id').single();
+      const curriculumName = String(form.get('name')).trim();
+      const curriculumVersion = String(form.get('version')).trim();
+      const result = await supabase.from('curricula').insert({ network_id: networkId, name: curriculumName, curriculum_type: 'custom', version: curriculumVersion, created_by: profile.id });
       if (result.error) setNotice(`Não foi possível criar: ${result.error.message}`);
-      else { setSelectedCurriculum(result.data.id); setNotice('Currículo próprio criado.'); await loadCurricula(); }
+      else {
+        await loadCurricula();
+        const created = await supabase.from('curricula').select('id').eq('network_id', networkId).eq('name', curriculumName).eq('version', curriculumVersion).maybeSingle();
+        if (created.data?.id) setSelectedCurriculum(created.data.id);
+        setNotice('Currículo próprio criado.');
+      }
     }
     setBusy(false); setShowCurriculumForm(false);
   }
