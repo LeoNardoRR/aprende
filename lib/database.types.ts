@@ -696,7 +696,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_student_enrollment: {
+        Args: {
+          target_academic_year: string
+          target_classroom: string
+          target_email: string
+          target_network: string
+          target_school: string
+        }
+        Returns: string
+      }
       delete_my_account: { Args: { confirmation: string }; Returns: undefined }
+      find_profile_for_institution: {
+        Args: {
+          target_email: string
+          target_network: string
+          target_school?: string | null
+        }
+        Returns: {
+          display_name: string
+          email: string
+          profile_role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }[]
+      }
       grade_submission: {
         Args: {
           new_feedback: string
@@ -710,6 +733,105 @@ export type Database = {
         Returns: boolean
       }
       join_class_by_code: { Args: { code: string }; Returns: string }
+      link_classroom_to_institution: {
+        Args: {
+          target_academic_year: string
+          target_classroom: string
+          target_network: string
+          target_school: string
+          target_school_year: string
+        }
+        Returns: undefined
+      }
+      list_institutional_users: {
+        Args: {
+          page_offset?: number
+          page_size?: number
+          search_query?: string
+          target_network: string
+        }
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          membership_id: string
+          membership_role: string
+          membership_status: string
+          network_id: string
+          network_name: string
+          profile_role: Database["public"]["Enums"]["app_role"]
+          school_id: string | null
+          school_name: string | null
+          user_id: string
+        }[]
+      }
+      list_legacy_classrooms: {
+        Args: {
+          page_size?: number
+          search_query?: string
+          target_network: string
+        }
+        Returns: {
+          classroom_id: string
+          classroom_name: string
+          owner_email: string
+          owner_id: string
+          owner_name: string
+          subject: string
+        }[]
+      }
+      list_student_enrollments: {
+        Args: {
+          page_offset?: number
+          page_size?: number
+          search_query?: string
+          status_filter?: string
+          target_network: string
+        }
+        Returns: {
+          academic_year_id: string
+          academic_year_label: string
+          classroom_id: string | null
+          classroom_name: string | null
+          ends_on: string | null
+          enrollment_id: string
+          enrollment_status: string
+          network_id: string
+          school_id: string
+          school_name: string
+          starts_on: string
+          student_email: string
+          student_id: string
+          student_name: string
+        }[]
+      }
+      set_institutional_classroom_status: {
+        Args: { target_classroom: string; target_status: string }
+        Returns: undefined
+      }
+      set_institutional_membership: {
+        Args: {
+          target_email: string
+          target_network: string
+          target_role: string
+          target_school: string | null
+          target_status?: string
+        }
+        Returns: string
+      }
+      set_institutional_membership_status: {
+        Args: { target_membership: string; target_status: string }
+        Returns: undefined
+      }
+      transition_student_enrollment: {
+        Args: {
+          action_reason?: string | null
+          target_action: string
+          target_classroom?: string | null
+          target_enrollment: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "teacher" | "student" | "network_admin" | "manager" | "reviewer" | "approver"

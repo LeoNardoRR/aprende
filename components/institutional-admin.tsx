@@ -15,6 +15,9 @@ import {
   Users,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
+import { InstitutionalClassrooms } from '@/components/institutional-classrooms';
+import { InstitutionalEnrollments } from '@/components/institutional-enrollments';
+import { InstitutionalUsers } from '@/components/institutional-users';
 import { supabase } from '@/lib/supabase';
 import type { Database, Tables } from '@/lib/database.types';
 
@@ -36,6 +39,7 @@ type SchoolRow = Tables<'schools'>;
 type AcademicYearRow = Tables<'academic_years'>;
 type SchoolYearRow = Tables<'school_years'>;
 type MembershipRow = Tables<'institutional_memberships'>;
+type ClassroomRow = Tables<'classrooms'>;
 
 const roleLabels: Record<InstitutionalRole, string> = {
   network_admin: 'Administrador da rede',
@@ -70,12 +74,30 @@ const previewSchoolYears: SchoolYearRow[] = [
   { id: 'grade-2', school_id: 'school-1', name: '7º ano', code: '7EF', sort_order: 7, created_at: '2026-09-12T12:00:00Z', updated_at: '2026-09-12T12:00:00Z' },
 ];
 
+const previewInstitutionalClassrooms: ClassroomRow[] = [
+  {
+    id: 'class-1', owner_id: 'teacher-1', name: '6º A', subject: 'Matemática',
+    join_code: 'MONTE6A', created_at: '2026-09-12T12:00:00Z', image_url: null,
+    network_id: 'network-preview', school_id: 'school-1',
+    academic_year_id: 'year-preview', school_year_id: 'grade-1',
+    classroom_status: 'active',
+  },
+  {
+    id: 'class-2', owner_id: 'teacher-1', name: '6º B', subject: 'Matemática',
+    join_code: 'MONTE6B', created_at: '2026-09-12T12:00:00Z', image_url: null,
+    network_id: 'network-preview', school_id: 'school-1',
+    academic_year_id: 'year-preview', school_year_id: 'grade-1',
+    classroom_status: 'active',
+  },
+];
+
 export function InstitutionalAdmin({ profile, preview = false }: { profile: InstitutionalProfile; preview?: boolean }) {
   const [networks, setNetworks] = useState<NetworkRow[]>(preview ? previewNetworks : []);
   const [schools, setSchools] = useState<SchoolRow[]>(preview ? previewSchools : []);
   const [academicYears, setAcademicYears] = useState<AcademicYearRow[]>(preview ? previewYears : []);
   const [schoolYears, setSchoolYears] = useState<SchoolYearRow[]>(preview ? previewSchoolYears : []);
   const [memberships, setMemberships] = useState<MembershipRow[]>([]);
+  const [classrooms, setClassrooms] = useState<ClassroomRow[]>([]);
   const [loading, setLoading] = useState(!preview);
   const [notice, setNotice] = useState('');
   const [form, setForm] = useState<InstitutionalForm | null>(null);
@@ -91,6 +113,7 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
       supabase.from('academic_years').select('*').order('starts_on', { ascending: false }),
       supabase.from('school_years').select('*').order('sort_order'),
       supabase.from('institutional_memberships').select('*').eq('status', 'active'),
+      supabase.from('classrooms').select('*').not('network_id', 'is', null).order('name'),
     ]);
     const firstError = results.find((result) => result.error)?.error;
     if (firstError) setNotice(`Não foi possível carregar toda a estrutura: ${firstError.message}`);
@@ -99,6 +122,7 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
     setAcademicYears(results[2].data ?? []);
     setSchoolYears(results[3].data ?? []);
     setMemberships(results[4].data ?? []);
+    setClassrooms(results[5].data ?? []);
     setLoading(false);
   }, [preview]);
 
@@ -156,6 +180,8 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
           <a href="#overview" className="active"><Building2 /> Visão geral</a>
           <a href="#schools"><School /> Escolas</a>
           <a href="#years"><CalendarRange /> Anos e séries</a>
+          <a href="#classrooms"><GraduationCap /> Turmas</a>
+          <a href="#enrollments"><Users /> Matrículas</a>
           <a href="#access"><ShieldCheck /> Acessos</a>
         </nav>
         <button type="button" onClick={() => void supabase.auth.signOut()}><LogOut /> Sair</button>
@@ -193,12 +219,9 @@ export function InstitutionalAdmin({ profile, preview = false }: { profile: Inst
                 {schoolYears.map((grade) => <article key={grade.id}><GraduationCap /><div><strong>{grade.name}</strong><span className="institutional-badge">{grade.code}</span><small>{schools.find((school) => school.id === grade.school_id)?.name ?? 'Escola'}</small></div></article>)}
               </div>
             </section>
-
-            <section id="access" className="institutional-panel">
-              <div className="institutional-panel-head"><div><span>CONTROLE DE ACESSO</span><h2>Perfis institucionais</h2></div><ShieldCheck /></div>
-              <p className="institutional-help">Os acessos são limitados por rede e escola. Administrador, gestor, revisor e aprovador recebem somente as permissões previstas para seu papel e vínculo ativo.</p>
-              <div className="institutional-role-grid">{Object.entries(roleLabels).map(([role, label]) => <article key={role}><strong>{label}</strong><span>{memberships.filter((membership) => membership.role === role).length} vínculo(s) ativo(s)</span></article>)}</div>
-            </section>
+            <InstitutionalClassrooms profile={profile} networks={networks} schools={schools} academicYears={academicYears} schoolYears={schoolYears} preview={preview} />
+            <InstitutionalEnrollments profile={profile} networks={networks} schools={schools} academicYears={academicYears} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
+            <InstitutionalUsers profile={profile} networks={networks} schools={schools} preview={preview} />
           </>
         )}
       </main>

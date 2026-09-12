@@ -82,6 +82,9 @@ test('RLS and grants isolate classes on a local Supabase instance', async (t) =>
       await admin.storage.from('lesson-materials').remove(storagePaths);
     }
     if (networkIds.length) {
+      await admin.from('student_enrollments').delete().in('network_id', networkIds);
+      await admin.from('institutional_memberships').delete().in('network_id', networkIds);
+      await admin.from('classrooms').delete().in('network_id', networkIds);
       await admin.from('networks').delete().in('id', networkIds);
     }
     for (const id of userIds.reverse()) {

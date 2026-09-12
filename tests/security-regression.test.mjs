@@ -30,6 +30,9 @@ const hardenedGrants = readMigration(
 const institutionalFoundation = readMigration(
   '20260912153902_add_institutional_rbac_foundation.sql',
 );
+const institutionalOperations = readMigration(
+  '20260912171627_finalize_phase_1_operations.sql',
+);
 const studentConnect = readFileSync(
   new URL('../components/student-connect.tsx', import.meta.url),
   'utf8',
@@ -202,6 +205,23 @@ test('institutional roles enter a real scoped administration interface', () => {
   assert.match(institutionalAdmin, /profile\.role === 'network_admin'/);
   assert.match(institutionalAdmin, /profile\.role === 'manager'/);
   assert.doesNotMatch(institutionalAdmin, /service_role|serviceRole/i);
+});
+
+test('Phase 1 mutations use guarded RPCs and preserve movement history', () => {
+  for (const rpc of [
+    'set_institutional_membership',
+    'set_institutional_membership_status',
+    'link_classroom_to_institution',
+    'set_institutional_classroom_status',
+    'create_student_enrollment',
+    'transition_student_enrollment',
+  ]) assert.match(institutionalOperations, new RegExp(`function public\\.${rpc}`));
+  assert.match(institutionalOperations, /private\.can_assign_institutional_role/);
+  assert.match(institutionalOperations, /Responsible teacher must be linked to school/);
+  assert.match(institutionalOperations, /insert into public\.student_movements/);
+  assert.match(institutionalOperations, /revoke update on public\.classrooms from authenticated/);
+  assert.match(institutionalOperations, /classrooms_complete_institutional_scope_check/);
+  assert.doesNotMatch(institutionalOperations, /service_role|serviceRole/i);
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {
