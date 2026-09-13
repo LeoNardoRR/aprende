@@ -154,6 +154,9 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
     await page.getByLabel('E-mail').fill(fixture.email);
     await page.getByLabel('Senha').fill(fixture.password);
     await page.locator('form').getByRole('button', { name: 'Entrar', exact: true }).click();
+    const openClassroom = page.getByRole('button', { name: /Abrir minha turma|Entrar em uma turma/ });
+    await expect(openClassroom).toBeVisible();
+    await openClassroom.click();
     await expect(page.getByRole('heading', { name: 'Minhas aplicações' })).toBeVisible();
 
     const application = page.locator('.assessment-entry-list article').filter({ hasText: fixture.title });
