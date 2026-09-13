@@ -41,6 +41,7 @@ jobs:
           eval "$(npx supabase status -o env)"
           test -n "$API_URL" && test -n "$ANON_KEY" && test -n "$SERVICE_ROLE_KEY"
           SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:poc | tee /tmp/poc-seed.log
+          SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:poc | tee -a /tmp/poc-seed.log
       - name: Validate executable compliance matrix
         run: npm run poc:matrix
       - name: Run all Phase 1-5 tests including the 12,849-row load case

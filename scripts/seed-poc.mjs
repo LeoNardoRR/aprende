@@ -25,8 +25,22 @@ console.log('Reconstruindo exclusivamente o conjunto POC local...');
 const priorNetworks = value(await db.from('networks').select('id').eq('name', 'POC DEMO Monte Mor - dados sinteticos'), 'find POC network');
 if (priorNetworks.length) {
   const networkIds = priorNetworks.map((row) => row.id);
+  const assessments = value(await db.from('diagnostic_assessments').select('id').in('network_id', networkIds), 'find POC assessments');
+  const assessmentIds = assessments.map((row) => row.id);
+  const items = value(await db.from('assessment_items').select('id').in('network_id', networkIds), 'find POC items');
+  const itemIds = items.map((row) => row.id);
+  if (assessmentIds.length) value(await db.from('assessment_proficiency_scales').delete().in('assessment_id', assessmentIds), 'delete POC scale assignments');
+  value(await db.from('proficiency_scales').delete().in('network_id', networkIds), 'delete POC proficiency scales');
+  value(await db.from('analytics_report_jobs').delete().in('network_id', networkIds), 'delete POC report jobs');
   value(await db.from('assessment_attempts').delete().in('network_id', networkIds), 'delete POC attempts');
+  value(await db.from('diagnostic_assessments').delete().in('network_id', networkIds), 'delete POC assessments');
+  if (itemIds.length) value(await db.from('assessment_item_versions').delete().in('item_id', itemIds), 'delete POC item versions');
+  value(await db.from('assessment_items').delete().in('network_id', networkIds), 'delete POC items');
   value(await db.from('audit_logs').delete().in('network_id', networkIds), 'delete POC audit logs');
+  value(await db.from('student_enrollments').delete().in('network_id', networkIds), 'delete POC enrollments');
+  value(await db.from('institutional_memberships').delete().in('network_id', networkIds), 'delete POC memberships');
+  value(await db.from('classrooms').delete().in('network_id', networkIds), 'delete POC classrooms');
+  value(await db.from('curricula').delete().in('network_id', networkIds), 'delete POC curricula');
   value(await db.from('networks').delete().in('id', networkIds), 'delete POC network');
 }
 const existingUsers = [];
