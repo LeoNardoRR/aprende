@@ -1,9 +1,9 @@
 # Matriz de conformidade - Pregão Eletrônico nº 40/2026
 
 **Projeto:** Aprendê (`LeoNardoRR/aprende`)
-**Versão-base auditada:** `fc28ed7` (`master`)
-**Implementação da Fase 1:** branch `codex/poc-phase-1`
-**Data da auditoria:** 12/09/2026
+**Versão-base auditada:** `4a96e2b` (`master`)
+**Estabilização das Fases 1–3:** branch `codex/estabiliza-pre-fase4`
+**Data da auditoria:** 13/09/2026
 **Fonte usada nesta rodada:** requisitos funcionais fornecidos na solicitação e o edital retificado anexado em `93578c201e504a12a59cfb9149717ea8Edital+Retificado+PregAo+EletrOnico+n++402026.pdf`. A leitura confirmou que a PoC oficial está nas páginas 67–77 e cobre aproximadamente 70% do Termo de Referência.
 
 ## Regra de leitura
@@ -12,14 +12,14 @@ Os estados abaixo descrevem o que foi confirmado no código e nos testes atuais.
 
 | ID | Requisito | Fonte | Status | Tela | Backend | Teste | Observações |
 |---:|---|---|---|---|---|---|---|
-| 1 | Rede → escolas → anos/séries → turmas → profissionais → alunos | Escopo 1 | 🟡 PARCIAL | Administração institucional e portais atuais | Rede, escola, ano letivo, série e escopo opcional da turma implementados | Integração local cobre hierarquia e isolamento inicial | Vínculo administrativo de profissionais e gestão de turmas institucionais ainda serão ampliados |
-| 2 | Papéis network_admin, manager, reviewer, approver, teacher e student com RBAC | Escopo 2 | 🟡 PARCIAL | Entrada administrativa por papel | Enum, catálogo de permissões, memberships escopadas e RLS implementados | Regressão estática e integração autenticada | Interface de concessão/revogação de acessos ainda pendente |
-| 3 | Matrícula, importação CSV, promoção, transferência, suspensão e remoção lógica | Escopo 3 | 🟡 PARCIAL | Vínculo atual e fundação administrativa | Matrículas e histórico de movimentações existem; importador ainda não | Integração cobre leitura escopada de matrícula | CSV, conflitos, credenciais e fluxos de movimentação entram em etapa posterior |
-| 4 | BNCC, SAEB, currículo, habilidades e vínculo avaliativo | Escopo 4 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Depende de modelagem e conteúdo/referências oficiais |
-| 5 | Banco de itens com workflow e versões imutáveis | Escopo 5 | ❌ NÃO ATENDE | Não existe | Assignments não são banco de itens | Não existe | Infraestrutura e conteúdo pedagógico pendentes |
-| 6 | Construtor de provas, cadernos e mapa por habilidade | Escopo 6 | 🟡 PARCIAL | Professor publica tarefas/provas simples | Assignments distinguem task/exam | Testes cobrem a distinção | Sem itens aprovados, cadernos ou mapas |
-| 7 | Calendário e janela de aplicação de avaliações | Escopo 7 | 🟡 PARCIAL | Calendário do aluno | due_at existe em assignments | Testes básicos de fluxo | Agendamento multi-turma e bloqueios pendentes |
-| 8 | Execução de prova com token, autosave, retomada, tempo e randomização | Escopo 8 | 🟡 PARCIAL | Rota de tarefa/prova | Submissions draft/submitted e bloqueio após envio | Testes de submissão | Token, autosave resiliente e cronômetro ainda pendentes |
+| 1 | Rede → escolas → anos/séries → turmas → profissionais → alunos | Escopo 1 | ✅ ATENDE | Administração institucional, diretório e importação | Rede, escola, ano, série, turma, memberships e matrículas escopadas | Integração cobre hierarquia, diretório, importação, movimentações e isolamento | Fluxo institucional das Fases 1–3 demonstrado em banco descartável |
+| 2 | Papéis network_admin, manager, reviewer, approver, teacher e student com RBAC | Escopo 2 | ✅ ATENDE | Entrada e administração institucional por papel | Permissões, memberships, RLS, ativação, desativação e revogação | Integração autenticada cobre operações permitidas e negadas | Concessão de `network_admin` permanece restrita ao administrador de rede |
+| 3 | Matrícula, importação CSV, promoção, transferência, suspensão e remoção lógica | Escopo 3 | ✅ ATENDE | Preview, importação e diretório exportável | Importação CREATE/UPDATE/SKIP, conflitos, idempotência e histórico | Integração cobre promoção, transferência, suspensão, reativação, conclusão e remoção | Dados DEMO são criados somente durante o teste descartável |
+| 4 | BNCC, SAEB, currículo, habilidades e vínculo avaliativo | Escopo 4 | 🟡 PARCIAL | Gestão e importação curricular | Estrutura de áreas, componentes, anos, unidades, objetos e habilidades | Importação atômica, idempotência, identidade natural e escopo | Software implementado; conteúdo oficial BNCC/SAEB continua como dependência externa |
+| 5 | Banco de itens com workflow e versões imutáveis | Escopo 5 | 🟡 PARCIAL | Banco paginado, filtros e editor pedagógico | Autoria, revisão, aprovação, rejeição, imagens privadas e snapshots | Workflow, 1.500 linhas DEMO, paginação integral e imutabilidade | Plataforma demonstrada; o acervo real de 1.500 itens depende de conteúdo autorizado |
+| 6 | Construtor de provas, cadernos e mapa por habilidade | Escopo 6 | ✅ ATENDE | Ciclos, provas, cadernos A–E e mapa curricular | Até cinco cadernos, itens aprovados congelados, pontos, reorder e deduplicação | Integração da Fase 3 cobre criação, remoção, ordem, duplicação e mapa | O runtime de aplicação pertence à Fase 4 e não foi incluído |
+| 7 | Calendário e janela de aplicação de avaliações | Escopo 7 | ✅ ATENDE | Calendário e aplicações programadas | Janelas, turmas e estudantes programados com escopo de rede/escola | Integração cobre programação e isolamento | A execução da prova continua reservada à Fase 4 |
+| 8 | Execução de prova com token, autosave, retomada, tempo e randomização | Escopo 8 | ❌ NÃO ATENDE | Não existe runtime diagnóstico | Migration reservada da Fase 4 permanece vazia | Não existe teste de runtime | Implementação deliberadamente fora desta estabilização |
 | 9 | Analytics por aluno, turma, escola e rede com estatística | Escopo 9 | 🟡 PARCIAL | Pontos e frequência do aluno | Cálculo de pontos e presença | Testes de progresso/presença | Estatística educacional e agregações institucionais pendentes |
 | 10 | Dashboard municipal com filtros e alunos em risco | Escopo 10 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Depende da Fase 5 |
 | 11 | Relatórios PDF/DOCX individuais, sintéticos e analíticos | Escopo 11 | ❌ NÃO ATENDE | Impressão local de materiais apenas | Não existe gerador institucional | Não existe | Geração em lote/ZIP pendente |
@@ -34,29 +34,29 @@ Os estados abaixo descrevem o que foi confirmado no código e nos testes atuais.
 | 20 | Help desk | Escopo 20 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Pendente |
 | 21 | Aplicativos iOS e Android | Escopo 21 | 🟡 PARCIAL | PWA responsivo | Wrapper nativo não existe | Build web/PWA | Capacitor ou equivalente depende de configuração e contas |
 | 22 | Versão visível do sistema | Escopo 22 | ❌ NÃO ATENDE | Não existe | `package.json` possui versão técnica | Não existe | Pendente |
-| 23 | Escala de 12.849 alunos/33 escolas | Escopo 23 | 🟡 PARCIAL | Paginação visual parcial | Índices e consultas escopadas existem | Integração local pequena | Sem teste de volume representativo |
+| 23 | Escala de 12.849 alunos/33 escolas | Escopo 23 | 🟡 PARCIAL | Banco de itens usa paginação server-side | Índices e consultas escopadas existem | 1.500 itens DEMO percorrem primeira, intermediária, última página e conjunto total sem perdas | Ainda não há ensaio de 12.849 alunos e 33 escolas |
 | 24 | Migrations sem alterar histórico aplicado | Escopo 24 | ✅ ATENDE | Não aplicável | Histórico reconciliado e versionado | CI reinicia Supabase local | Push remoto/produção deve continuar via migration |
-| 25 | Cobertura de RBAC, RLS, importação, provas e analytics | Escopo 25 | 🟡 PARCIAL | Não aplicável | Suíte atual cobre fluxos conectados e RLS | `npm test` e integração local | Cobertura dos módulos novos ainda pendente |
+| 25 | Cobertura de RBAC, RLS, importação, provas e analytics | Escopo 25 | 🟡 PARCIAL | Não aplicável | Suíte cobre RBAC, RLS, importação e construção de provas | 60 testes conectados/verificações verdes na estabilização | Runtime e analytics das fases futuras ainda não têm cobertura |
 | 26 | Rota restrita `/poc` demonstrando a PoC | Escopo 26 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Depende do conteúdo oficial da PoC |
 | 27 | Matriz de conformidade versionada | Escopo 27 | ✅ ATENDE | Este documento | Não aplicável | Revisão manual nesta rodada | Atualizar a cada fase |
-| 28 | Implementação em fases funcionais | Escopo 28 | 🟡 PARCIAL | Não aplicável | Fase 1 iniciada nesta branch/master | Testes por fase | Demais fases ainda não iniciadas |
-| 29 | Preservar recursos, RLS e CI/CD | Escopo 29 | ✅ ATENDE | Portais preservados | Migrations aditivas; RLS/grants existentes preservados | Regressões atuais verdes | Cada migration nova precisa de auditoria própria |
-| 30 | Validação obrigatória por fase | Escopo 30 | ✅ ATENDE | Não aplicável | CI executa Supabase local + migrations | Testes, integração RLS, lint, typecheck e build:pages verdes na branch | Revalidar a cada incremento da fase |
+| 28 | Implementação em fases funcionais | Escopo 28 | 🟡 PARCIAL | Não aplicável | Fases 1, 2 e 3 implementadas; Fase 4 preservada vazia | Suítes separadas por fase e estabilização conjunta | Fases 4 e posteriores ainda não iniciadas |
+| 29 | Preservar recursos, RLS e CI/CD | Escopo 29 | ✅ ATENDE | Portais preservados | Migration corretiva aditiva; RLS e grants revistos | Advisors locais e regressões verdes | Produção não foi alterada |
+| 30 | Validação obrigatória por fase | Escopo 30 | ✅ ATENDE | Não aplicável | CI inicia Supabase descartável, reseta e verifica migrations | Testes sem skip, lint, typecheck, build e build:pages verdes | Workflow também executa advisors e `npm audit` |
 | 31 | Relatório final com aderência, riscos e dependências | Escopo 31 | 🟡 PARCIAL | Não aplicável | Não aplicável | Não aplicável | Este é o relatório inicial; o final depende das fases restantes |
 
 ## Checklist rastreável da PoC oficial
 
-Esta tabela condensa os itens de demonstração do **Anexo VI, Item 1**, nas páginas 67–76 do edital. O status considera a versão-base e os incrementos registrados na branch da Fase 1; ele não presume conteúdo pedagógico que ainda não foi fornecido.
+Esta tabela condensa os itens de demonstração do **Anexo VI, Item 1**, nas páginas 67–76 do edital. O status considera o `master` e a estabilização das Fases 1–3; ele não presume conteúdo pedagógico que ainda não foi fornecido.
 
 | Item da PoC | Exigência oficial agrupada | Página | Status | Evidência atual / lacuna |
 |---|---|---:|---|---|
-| 1.1 | Nuvem para 1º–9º ano, acesso individual, versão visível, login de docentes/alunos, troca de senha inicial, token de prova, CPF/RA/RG, CAPTCHA, perfis revisor/aprovador/gestor, rede/escola/ano/turma, cartas-senha e movimentações | 67–68 | 🟡 PARCIAL | PWA, login e turmas foram preservados; papéis e hierarquia institucional têm backend, RLS, testes e tela inicial; versão, token, CAPTCHA, credenciais em lote e fluxos completos de movimentação ainda estão pendentes |
-| 1.2 | Matrizes BNCC/SAEB/próprias, áreas, componentes, anos, unidades, objetos, habilidades/códigos e filtro curricular na prova | 68 | ❌ NÃO ATENDE | Não há módulo curricular nem catálogo de habilidades |
-| 1.3 | Importação/atualização CSV em lote, conflitos assistidos, credenciais, rejeições, promoção e exportação | 69 | ❌ NÃO ATENDE | Membership por código não substitui matrícula/importação |
-| 1.4 | Banco com 1.500 itens, avaliações de Português/Matemática, tabela de autoria/revisão/aprovação, filtros, quatro alternativas, imagens/fórmulas, distratores, IA revisável e versões imutáveis | 69–70 | ❌ NÃO ATENDE | Assignments são tarefas/provas simples; conteúdo real é dependência pedagógica |
-| 1.5 | Tabela/construtor de provas, até cinco cadernos, elegibilidade, quantidade de questões, itens aprovados e mapa por habilidade em tabela/gráficos | 70 | 🟡 PARCIAL | Há `assignments.kind = exam`; não há itens, cadernos ou mapa |
-| 1.6 | Ciclos, avaliações, calendário mês/semana/dia, janela protegida, agendamento em massa, relatórios por turma e tabela de alunos programados | 70–71 | 🟡 PARCIAL | Existe `due_at` e calendário de sala; aplicação multi-turma ainda não existe |
-| 1.7 | Prova online sequencial por token, autosave/retomada, cronômetro, estados, randomização, tipos de questão e fechamento automático | 71 | 🟡 PARCIAL | Draft/submitted e bloqueio após envio existem; o modo de prova diagnóstico ainda não |
+| 1.1 | Nuvem para 1º–9º ano, acesso individual, versão visível, login de docentes/alunos, troca de senha inicial, token de prova, CPF/RA/RG, CAPTCHA, perfis revisor/aprovador/gestor, rede/escola/ano/turma, cartas-senha e movimentações | 67–68 | 🟡 PARCIAL | Papéis, hierarquia, convites, ativação, diretório, importação e movimentações estão implementados e testados; versão visível, token de prova, CAPTCHA e cartas-senha ainda faltam |
+| 1.2 | Matrizes BNCC/SAEB/próprias, áreas, componentes, anos, unidades, objetos, habilidades/códigos e filtro curricular na prova | 68 | 🟡 PARCIAL | Estrutura, importação e filtros curriculares existem; conteúdo oficial BNCC/SAEB não foi inventado e depende de fonte autorizada |
+| 1.3 | Importação/atualização CSV em lote, conflitos assistidos, credenciais, rejeições, promoção e exportação | 69 | 🟡 PARCIAL | Preview, CREATE/UPDATE/SKIP, conflitos, idempotência, promoção e exportação estão testados; emissão de cartas-senha permanece pendente |
+| 1.4 | Banco com 1.500 itens, avaliações de Português/Matemática, tabela de autoria/revisão/aprovação, filtros, quatro alternativas, imagens/fórmulas, distratores, IA revisável e versões imutáveis | 69–70 | 🟡 PARCIAL | Workflow, editor, imagens privadas, fórmulas, distratores, snapshots e paginação de 1.500 registros DEMO estão testados; conteúdo real e IA permanecem pendentes |
+| 1.5 | Tabela/construtor de provas, até cinco cadernos, elegibilidade, quantidade de questões, itens aprovados e mapa por habilidade em tabela/gráficos | 70 | ✅ ATENDE | Construtor da Fase 3, cadernos A–E, elegibilidade por aprovação, pontos e mapa curricular deduplicado estão implementados e testados |
+| 1.6 | Ciclos, avaliações, calendário mês/semana/dia, janela protegida, agendamento em massa, relatórios por turma e tabela de alunos programados | 70–71 | 🟡 PARCIAL | Ciclos, avaliações, calendário, janelas, turmas e alunos programados existem; relatórios de aplicação dependem do runtime e analytics posteriores |
+| 1.7 | Prova online sequencial por token, autosave/retomada, cronômetro, estados, randomização, tipos de questão e fechamento automático | 71 | ❌ NÃO ATENDE | O runtime diagnóstico da Fase 4 não foi implementado; a migration reservada permanece vazia |
 | 1.8 | Dashboards e PDF/DOCX por aluno/turma/escola/rede, habilidades, comparação, Alfa de Cronbach, análise de itens, ranking, lote/ZIP e identificação institucional | 72 | ❌ NÃO ATENDE | Pontos/frequência não são o painel estatístico exigido |
 | 1.9 | Níveis Abaixo do Básico, Básico, Adequado e Avançado, evolução e exportação | 73 | ❌ NÃO ATENDE | Não existe escala de proficiência |
 | 1.10 | VAAR/equidade: perfil socioeconômico, gap, presets, mapa de calor, risco e qualidade do cadastro | 73 | ❌ NÃO ATENDE | Não existe módulo; dados de menores exigem desenho LGPD antes de carga |
@@ -73,26 +73,27 @@ Os itens 2.1–2.2 (regime, carga horária e contratação dos monitores) e 3.1 
 
 ## Auditoria inicial
 
-### Confirmado
+### Confirmado após as Fases 1–3
 
 - A aplicação usa React/TypeScript/Vinext, Supabase e GitHub Actions.
 - O banco atual possui perfis, turmas, memberships, assignments, submissions, announcements, attendance, lesson records e materiais.
 - O escopo de leitura/escrita de conteúdo da turma já usa funções privadas e RLS; as regras atuais devem ser mantidas durante a expansão.
-- A versão-base possuía apenas `teacher` e `student`; a Fase 1 adiciona `network_admin`, `manager`, `reviewer` e `approver`, com permissões por vínculo institucional.
-- A suíte atual cobre fluxos conectados, bloqueio de submissão, frequência, materiais/storage, grants e alguns cenários de isolamento.
-- A publicação Pages executa migrations locais, integração RLS, lint, typecheck e build antes do deploy.
+- A Fase 1 acrescentou `network_admin`, `manager`, `reviewer` e `approver`, com permissões por vínculo institucional, convites e operações de matrícula.
+- A Fase 2 acrescentou currículos customizados, importação atômica, banco de itens, workflow editorial, imagens privadas e versões imutáveis.
+- A Fase 3 acrescentou ciclos, avaliações diagnósticas, cadernos A–E, mapa curricular e agendamentos escopados.
+- A suíte de estabilização cobre fluxos conectados, RLS, Storage, importações, snapshots, paginação de 1.500 itens DEMO e o construtor da Fase 3.
+- O workflow de estabilização executa Supabase local descartável, todas as migrations, testes sem skip, lint, typecheck, dois builds, advisors e auditoria de dependências.
 
 ### Lacunas prioritárias
 
-1. Hierarquia institucional e papéis escopados.
-2. Banco curricular/BNCC e banco de itens.
-3. Construtor e execução de avaliações diagnósticas.
-4. Analytics e relatórios institucionais.
-5. Acessibilidade auditada, LGPD operacional, help desk e mobile nativo.
+1. Runtime de aplicação das avaliações diagnósticas, reservado para a Fase 4.
+2. Analytics e relatórios institucionais.
+3. Conteúdo pedagógico oficial BNCC/SAEB e acervo real autorizado.
+4. Acessibilidade auditada, LGPD operacional, help desk e mobile nativo.
 
-## Fase 1 iniciada
+## Fases 1–3 estabilizadas
 
-A migration `20260912153902_add_institutional_rbac_foundation.sql` cria a base aditiva de rede, escola, ano letivo, série, memberships institucionais, matrículas, movimentações e permissões. Ela mantém as colunas legadas de `classrooms` opcionais para não quebrar turmas já existentes e acrescenta políticas institucionais sem remover as políticas atuais. A interface `InstitutionalAdmin` permite cadastrar rede, escola, ano letivo e série usando essas tabelas e abre automaticamente para os novos papéis após o login.
+A base institucional, o currículo e banco de itens e o construtor de avaliações foram estabilizados por migrations aditivas. A correção `20260913080728_stabilize_item_storage_and_snapshots.sql` qualifica referências das policies de Storage e congela explicitamente todos os campos pedagógicos no snapshot. A migration `20260912231327_add_assessment_runtime.sql` continua vazia; uma futura Fase 4 deverá criar uma migration posterior.
 
 Antes de aplicar qualquer migration em produção, o fluxo obrigatório é: reset local, testes RLS/integrados, revisão de grants/policies e somente então `db push` no projeto autorizado.
 
