@@ -127,7 +127,7 @@ async function createFixture(): Promise<Fixture> {
   for (const [index, itemId] of itemIds.entries()) {
     data(await teacher.rpc('add_approved_item_to_booklet', { target_booklet: bookletId, target_item: itemId, target_position: index + 1, item_points: 10 }));
   }
-  data(await teacher.rpc('transition_diagnostic_assessment', { target_assessment: assessment.id, target_action: 'ready' }));
+  success(await teacher.rpc('transition_diagnostic_assessment', { target_assessment: assessment.id, target_action: 'ready' }));
   const scheduleId = data(await teacher.rpc('schedule_diagnostic_assessment', {
     target_assessment: assessment.id, target_school: school.id, target_classrooms: [classroom.id],
     window_starts_at: startsAt, window_ends_at: endsAt,
