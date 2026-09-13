@@ -2,9 +2,9 @@ name: Validate Phase 4 assessment runtime
 
 on:
   push:
-    branches: [codex/fase4-aplicacao-avaliacoes]
+    branches: [codex/fase4-aplicacao-avaliacoes, codex/finaliza-fase4]
   pull_request:
-    branches: [master]
+    branches: [master, codex/fase4-aplicacao-avaliacoes]
   workflow_dispatch:
 
 permissions:
@@ -25,6 +25,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - name: Start disposable Supabase and verify migrations
         run: |
           npx supabase start
@@ -43,6 +44,16 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
           npm test | tee /tmp/aprende-test.log
           test "$(awk '/# skipped / { print $3 }' /tmp/aprende-test.log | tail -1)" = "0"
+      - name: Run critical browser flow
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" \
+          NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" \
+          npm run test:e2e
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x

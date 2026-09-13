@@ -1,6 +1,6 @@
 export type AssessmentItemType = 'multiple_choice' | 'true_false' | 'essay';
 export type AssessmentAnswer = { option_id?: string; text?: string };
-export type SaveState = 'idle' | 'saving' | 'saved' | 'offline' | 'pending';
+export type SaveState = 'idle' | 'saving' | 'saved' | 'offline' | 'pending' | 'sync_error';
 
 export type PendingAssessmentSave = {
   idempotencyKey: string;
@@ -9,6 +9,7 @@ export type PendingAssessmentSave = {
   answer: AssessmentAnswer;
   markedForReview: boolean;
   queuedAt: string;
+  expectedRevision: number;
 };
 
 export type RuntimeResponse = {
@@ -69,15 +70,22 @@ export function parseAssessmentQueue(raw: string | null): PendingAssessmentSave[
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (entry): entry is PendingAssessmentSave =>
-        typeof entry?.idempotencyKey === 'string' &&
-        typeof entry?.attemptId === 'string' &&
-        typeof entry?.attemptItemId === 'string' &&
-        typeof entry?.answer === 'object' &&
-        typeof entry?.markedForReview === 'boolean' &&
-        typeof entry?.queuedAt === 'string',
-    );
+    return parsed.flatMap((entry) => {
+      if (
+        typeof entry?.idempotencyKey !== 'string' ||
+        typeof entry?.attemptId !== 'string' ||
+        typeof entry?.attemptItemId !== 'string' ||
+        typeof entry?.answer !== 'object' ||
+        typeof entry?.markedForReview !== 'boolean' ||
+        typeof entry?.queuedAt !== 'string'
+      ) return [];
+      return [{
+        ...entry,
+        expectedRevision: Number.isInteger(entry.expectedRevision) && entry.expectedRevision >= 0
+          ? entry.expectedRevision
+          : 0,
+      } as PendingAssessmentSave];
+    });
   } catch {
     return [];
   }
@@ -140,6 +148,7 @@ export function formatAssessmentTime(totalSeconds: number): string {
 export function saveStateLabel(state: SaveState, queuedCount: number): string {
   if (state === 'saving') return 'Salvando...';
   if (state === 'offline') return 'Sem conexão';
+  if (state === 'sync_error') return 'Erro ao sincronizar';
   if (state === 'pending' || queuedCount > 0) return 'Pendente para sincronizar';
   if (state === 'saved') return 'Salvo';
   return 'Pronto para responder';

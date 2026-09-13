@@ -3,18 +3,22 @@
 import katex from 'katex';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, ClipboardCheck, Clock3, CloudOff,
+  ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, ClipboardCheck, Clock3, CloudOff,
   Flag, LoaderCircle, LockKeyhole, RefreshCw, Send, ShieldCheck,
 } from 'lucide-react';
 import { studentSupabase } from '@/lib/supabase';
 import {
   acknowledgeAssessmentSave, answeredQuestionCount, createServerClock,
   enqueueAssessmentSave, formatAssessmentTime, normalizeAssessmentAnswer,
-  overlayPendingResponses, parseAssessmentQueue, remainingServerSeconds,
+  overlayPendingResponses, remainingServerSeconds,
   saveStateLabel, type AssessmentAnswer, type AssessmentItemType,
   type PendingAssessmentSave, type RuntimeResponses, type SaveState,
   type ServerClock,
 } from '@/lib/assessment-runtime';
+import {
+  loadPendingAssessmentSaves, migrateLegacyAssessmentQueue,
+  removePendingAssessmentSave, replacePendingAssessmentSave,
+} from '@/lib/assessment-offline-queue';
 
 type RpcError = { message: string };
 type RpcResponse<T> = { data: T | null; error: RpcError | null };
@@ -74,7 +78,7 @@ type AttemptPayload = {
 };
 
 const finalStatuses = new Set(['pending_review', 'graded', 'submitted', 'auto_submitted', 'cancelled', 'invalidated']);
-const queueStorageKey = (attemptId: string) => `aprende-assessment-queue:${attemptId}`;
+const pendingSubmitMessage = 'Estamos sincronizando suas respostas antes de finalizar. Verifique sua conexão e tente novamente.';
 
 export function StudentAssessmentRuntime() {
   const [available, setAvailable] = useState<AvailableAssessment[]>([]);
@@ -91,15 +95,14 @@ export function StudentAssessmentRuntime() {
   const queueRef = useRef<PendingAssessmentSave[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoSubmitRef = useRef(false);
+  const persistenceRef = useRef<Promise<unknown>>(Promise.resolve());
+  const retryDelayRef = useRef(2_000);
+  const questionHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
-  const persistQueue = useCallback((next: PendingAssessmentSave[], attemptId?: string) => {
+  const setQueueSnapshot = useCallback((next: PendingAssessmentSave[]) => {
     queueRef.current = next;
     setQueue(next);
-    const id = attemptId ?? runtime?.attempt.id;
-    if (!id) return;
-    if (next.length) localStorage.setItem(queueStorageKey(id), JSON.stringify(next));
-    else localStorage.removeItem(queueStorageKey(id));
-  }, [runtime?.attempt.id]);
+  }, []);
 
   const loadAvailable = useCallback(async () => {
     const result = await runtimeApi.rpc<AvailableAssessment[]>('list_available_assessments');
@@ -109,9 +112,10 @@ export function StudentAssessmentRuntime() {
 
   useEffect(() => { void loadAvailable(); }, [loadAvailable]);
 
-  const applyRuntime = useCallback((payload: AttemptPayload) => {
-    const localQueue = parseAssessmentQueue(localStorage.getItem(queueStorageKey(payload.attempt.id)));
-    persistQueue(localQueue, payload.attempt.id);
+  const applyRuntime = useCallback(async (payload: AttemptPayload) => {
+    await migrateLegacyAssessmentQueue(payload.attempt.id);
+    const localQueue = await loadPendingAssessmentSaves(payload.attempt.id);
+    setQueueSnapshot(localQueue);
     setRuntime(payload);
     setResponses(overlayPendingResponses(payload.responses ?? {}, localQueue, payload.attempt.id));
     setPosition(Math.min(Math.max(payload.attempt.current_position || 1, 1), payload.items.length || 1));
@@ -120,7 +124,7 @@ export function StudentAssessmentRuntime() {
       setClock(nextClock);
       setSeconds(remainingServerSeconds(nextClock));
     }
-  }, [persistQueue]);
+  }, [setQueueSnapshot]);
 
   const loadAttempt = useCallback(async (attemptId: string, resume = false) => {
     setLoading(true); setNotice('');
@@ -128,12 +132,13 @@ export function StudentAssessmentRuntime() {
       resume ? 'resume_assessment_attempt' : 'get_assessment_attempt',
       { target_attempt: attemptId },
     );
-    setLoading(false);
     if (result.error || !result.data) {
+      setLoading(false);
       setNotice(result.error?.message ?? 'Tentativa indisponível.');
       return;
     }
-    applyRuntime(result.data);
+    await applyRuntime(result.data);
+    setLoading(false);
   }, [applyRuntime]);
 
   async function accessAssessment(assessment: AvailableAssessment) {
@@ -161,26 +166,41 @@ export function StudentAssessmentRuntime() {
   }
 
   const flushQueue = useCallback(async () => {
+    await persistenceRef.current;
     if (!runtime || !queueRef.current.length) return true;
     if (!navigator.onLine) { setSaveState('offline'); return false; }
     setSaveState('saving');
-    for (const entry of queueRef.current) {
-      const result = await runtimeApi.rpc('save_assessment_response', {
+    const entries = queueRef.current;
+    for (const entry of entries) {
+      const result = await runtimeApi.rpc<{ revision: number; saved_at: string }>('save_assessment_response', {
         target_attempt: entry.attemptId,
         target_attempt_item: entry.attemptItemId,
         response_payload: entry.answer,
         mark_for_review: entry.markedForReview,
         idempotency_key: entry.idempotencyKey,
+        expected_revision: entry.expectedRevision,
       });
       if (result.error) {
-        setSaveState(navigator.onLine ? 'pending' : 'offline');
+        setSaveState(navigator.onLine ? 'sync_error' : 'offline');
         return false;
       }
-      persistQueue(acknowledgeAssessmentSave(queueRef.current, entry.idempotencyKey), entry.attemptId);
+      await removePendingAssessmentSave(entry.attemptId, entry.idempotencyKey);
+      setQueueSnapshot(acknowledgeAssessmentSave(queueRef.current, entry.idempotencyKey));
+      setResponses((current) => ({
+        ...current,
+        [entry.attemptItemId]: {
+          ...current[entry.attemptItemId],
+          answer: entry.answer,
+          marked_for_review: entry.markedForReview,
+          revision: result.data?.revision ?? current[entry.attemptItemId]?.revision,
+          saved_at: result.data?.saved_at ?? current[entry.attemptItemId]?.saved_at,
+        },
+      }));
     }
+    retryDelayRef.current = 2_000;
     setSaveState('saved');
     return true;
-  }, [persistQueue, runtime]);
+  }, [runtime, setQueueSnapshot]);
 
   useEffect(() => {
     const reconnect = () => { if (queueRef.current.length) void flushQueue(); };
@@ -195,36 +215,86 @@ export function StudentAssessmentRuntime() {
   }, [flushQueue]);
 
   useEffect(() => {
+    if (saveState !== 'sync_error' || !queue.length || !navigator.onLine) return;
+    const delay = retryDelayRef.current;
+    const retry = window.setTimeout(() => {
+      retryDelayRef.current = Math.min(retryDelayRef.current * 2, 30_000);
+      void flushQueue();
+    }, delay);
+    return () => window.clearTimeout(retry);
+  }, [flushQueue, queue.length, saveState]);
+
+  useEffect(() => {
+    if (!queue.length) return;
+    const warnOnExit = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warnOnExit);
+    return () => window.removeEventListener('beforeunload', warnOnExit);
+  }, [queue.length]);
+
+  useEffect(() => {
     if (!clock || !runtime || finalStatuses.has(runtime.attempt.status)) return;
     const timer = window.setInterval(() => setSeconds(remainingServerSeconds(clock)), 1000);
     return () => window.clearInterval(timer);
   }, [clock, runtime]);
 
+  useEffect(() => { questionHeadingRef.current?.focus(); }, [position]);
+
   const finish = useCallback(async (automatic = false) => {
     if (!runtime || autoSubmitRef.current) return;
+    let timeoutNotice = '';
     const unanswered = runtime.items.length - answeredQuestionCount(runtime.items.map((item) => item.id), responses);
     if (!automatic && !window.confirm(unanswered ? `Há ${unanswered} questão(ões) sem resposta. Deseja finalizar mesmo assim?` : 'Finalizar e enviar a avaliação?')) return;
     autoSubmitRef.current = true;
-    await flushQueue();
+    const synchronized = await flushQueue();
+    const pendingCount = queueRef.current.length;
+    if (!automatic && (!synchronized || pendingCount > 0)) {
+      autoSubmitRef.current = false;
+      setNotice(pendingSubmitMessage);
+      return;
+    }
+    if (automatic && pendingCount > 0) {
+      timeoutNotice = `O prazo do servidor terminou. ${pendingCount} resposta(s) local(is) não foram confirmadas e permanecem neste dispositivo. O backend encerrará a tentativa sem ampliar o tempo.`;
+      setNotice(timeoutNotice);
+    }
     const result = await runtimeApi.rpc('submit_assessment_attempt', { target_attempt: runtime.attempt.id });
     autoSubmitRef.current = false;
-    if (result.error) { setNotice(result.error.message); return; }
+    if (result.error) {
+      if (automatic && !navigator.onLine) return;
+      setNotice(result.error.message);
+      return;
+    }
     await loadAttempt(runtime.attempt.id);
     await loadAvailable();
+    if (timeoutNotice) {
+      setNotice(`${timeoutNotice} A tentativa foi encerrada pelo prazo do servidor.`);
+    }
   }, [flushQueue, loadAttempt, loadAvailable, responses, runtime]);
 
   useEffect(() => {
     if (runtime && seconds === 0 && clock && !finalStatuses.has(runtime.attempt.status)) void finish(true);
   }, [clock, finish, runtime, seconds]);
 
+  useEffect(() => {
+    const closeExpiredOnReconnect = () => {
+      if (runtime && clock && remainingServerSeconds(clock) === 0 && !finalStatuses.has(runtime.attempt.status)) void finish(true);
+    };
+    window.addEventListener('online', closeExpiredOnReconnect);
+    return () => window.removeEventListener('online', closeExpiredOnReconnect);
+  }, [clock, finish, runtime]);
+
   function queueAnswer(item: RuntimeItem, answer: AssessmentAnswer, markedForReview: boolean) {
     if (!runtime || finalStatuses.has(runtime.attempt.status)) return;
     const entry: PendingAssessmentSave = {
       idempotencyKey: crypto.randomUUID(), attemptId: runtime.attempt.id,
       attemptItemId: item.id, answer, markedForReview, queuedAt: new Date().toISOString(),
+      expectedRevision: responses[item.id]?.revision ?? 0,
     };
     const next = enqueueAssessmentSave(queueRef.current, entry);
-    persistQueue(next, runtime.attempt.id);
+    setQueueSnapshot(next);
+    persistenceRef.current = persistenceRef.current.then(async () => {
+      const target = await replacePendingAssessmentSave(entry);
+      if (target === 'memory') setSaveState('sync_error');
+    });
     setResponses((current) => ({ ...current, [item.id]: { ...current[item.id], answer, marked_for_review: markedForReview } }));
     setSaveState(navigator.onLine ? 'pending' : 'offline');
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -252,6 +322,7 @@ export function StudentAssessmentRuntime() {
 
   if (finalStatuses.has(runtime.attempt.status)) return <section className="assessment-finished">
     <CheckCircle2 /><span>AVALIAÇÃO ENVIADA</span><h2>{runtime.attempt.assessment_title}</h2><p>{runtime.attempt.status === 'pending_review' ? 'Suas respostas objetivas foram corrigidas. A questão discursiva aguarda revisão do professor.' : runtime.attempt.status === 'graded' ? 'A correção foi concluída.' : 'A tentativa está encerrada.'}</p>
+    {notice && <output className="assessment-runtime-notice" aria-live="polite">{notice}</output>}
     {runtime.attempt.status === 'graded' && <strong>{Number(runtime.attempt.score ?? 0).toLocaleString('pt-BR')} de {Number(runtime.attempt.max_score).toLocaleString('pt-BR')} pontos</strong>}
     <button onClick={() => { setRuntime(null); void loadAvailable(); }}><ArrowLeft /> Voltar às avaliações</button>
   </section>;
@@ -262,17 +333,17 @@ export function StudentAssessmentRuntime() {
   const formula = item.content.formula ? katex.renderToString(item.content.formula, { throwOnError: false, output: 'html' }) : '';
 
   return <section className="assessment-runtime" aria-labelledby="assessment-runtime-title">
-    <header><div><span>AVALIAÇÃO EM ANDAMENTO · CADERNO {runtime.attempt.booklet_code}</span><h2 id="assessment-runtime-title">{runtime.attempt.assessment_title}</h2></div><div className={seconds < 300 ? 'urgent' : ''}><Clock3 /><strong>{formatAssessmentTime(seconds)}</strong><small>tempo do servidor</small></div></header>
+    <header><div><span>AVALIAÇÃO EM ANDAMENTO · CADERNO {runtime.attempt.booklet_code}</span><h2 id="assessment-runtime-title">{runtime.attempt.assessment_title}</h2></div><div className={seconds < 300 ? 'urgent' : ''} role="timer" aria-label={`${formatAssessmentTime(seconds)} restantes, tempo controlado pelo servidor`}><Clock3 /><strong aria-hidden="true">{formatAssessmentTime(seconds)}</strong><small>tempo do servidor</small></div></header>
     {notice && <output className="assessment-runtime-notice">{notice}</output>}
     <div className="assessment-progress"><span style={{ width: `${(answered / Math.max(runtime.items.length, 1)) * 100}%` }} /><small>{answered} de {runtime.items.length} respondidas</small></div>
     <div className="assessment-question-layout">
-      <nav aria-label="Mapa de questões">{runtime.items.map((candidate) => <button key={candidate.id} className={`${candidate.position === position ? 'current' : ''} ${responses[candidate.id]?.answer?.option_id || responses[candidate.id]?.answer?.text?.trim() ? 'answered' : ''} ${responses[candidate.id]?.marked_for_review ? 'marked' : ''}`} disabled={!runtime.attempt.allow_back_navigation && candidate.position < position} onClick={() => void navigate(candidate.position)} aria-label={`Questão ${candidate.position}`}>{candidate.position}</button>)}</nav>
-      <article className="assessment-question"><div className="assessment-question-head"><span>Questão {item.position} de {runtime.items.length}</span><strong>{Number(item.max_points)} pontos</strong></div>{item.content.support_text && <p className="assessment-support">{item.content.support_text}</p>}<h3>{item.content.statement}</h3>{formula && <div className="assessment-formula" dangerouslySetInnerHTML={{ __html: formula }} />}{item.content.image_paths?.map((path) => <AssessmentImage key={path} path={path} />)}
+      <nav aria-label="Mapa de questões">{runtime.items.map((candidate) => { const answeredQuestion = Boolean(responses[candidate.id]?.answer?.option_id || responses[candidate.id]?.answer?.text?.trim()); const marked = Boolean(responses[candidate.id]?.marked_for_review); return <button key={candidate.id} className={`${candidate.position === position ? 'current' : ''} ${answeredQuestion ? 'answered' : ''} ${marked ? 'marked' : ''}`} disabled={!runtime.attempt.allow_back_navigation && candidate.position < position} onClick={() => void navigate(candidate.position)} aria-current={candidate.position === position ? 'step' : undefined} aria-label={`Questão ${candidate.position}, ${answeredQuestion ? 'respondida' : 'não respondida'}${marked ? ', marcada para revisão' : ''}`}>{candidate.position}</button>; })}</nav>
+      <article className="assessment-question"><div className="assessment-question-head"><span>Questão {item.position} de {runtime.items.length}</span><strong>{Number(item.max_points)} pontos</strong></div>{item.content.support_text && <p className="assessment-support">{item.content.support_text}</p>}<h3 ref={questionHeadingRef} tabIndex={-1}>{item.content.statement}</h3>{formula && <div className="assessment-formula" dangerouslySetInnerHTML={{ __html: formula }} />}{item.content.image_paths?.map((path) => <AssessmentImage key={path} path={path} />)}
         {item.content.item_type === 'essay' ? <label className="assessment-essay"><span>Sua resposta</span><textarea value={response.answer.text ?? ''} onChange={(event) => queueAnswer(item, normalizeAssessmentAnswer('essay', event.target.value), response.marked_for_review)} maxLength={20_000} placeholder="Digite sua resposta..." /></label> : <fieldset className="assessment-options"><legend>Selecione uma alternativa</legend>{item.content.options.map((option) => <label key={option.id} className={response.answer.option_id === option.id ? 'selected' : ''}><input type="radio" name={`answer-${item.id}`} checked={response.answer.option_id === option.id} onChange={() => queueAnswer(item, normalizeAssessmentAnswer(item.content.item_type, option.id), response.marked_for_review)} /><b>{option.label}</b><span>{option.content}</span></label>)}</fieldset>}
         <label className="assessment-mark"><input type="checkbox" checked={response.marked_for_review} onChange={(event) => queueAnswer(item, response.answer, event.target.checked)} /><Flag /> Marcar para revisar</label>
       </article>
     </div>
-    <footer><div className={`assessment-save-state ${saveState}`} aria-live="polite">{saveState === 'offline' ? <CloudOff /> : saveState === 'saving' ? <LoaderCircle className="spin" /> : <CheckCircle2 />}<span>{saveStateLabel(saveState, queue.length)}</span></div><div><button disabled={position === 1 || !runtime.attempt.allow_back_navigation} onClick={() => void navigate(position - 1)}><ArrowLeft /> Anterior</button>{position < runtime.items.length ? <button onClick={() => void navigate(position + 1)}>Próxima <ArrowRight /></button> : <button className="assessment-submit" onClick={() => void finish(false)}><Send /> Finalizar prova</button>}</div></footer>
+    <footer><div className={`assessment-save-state ${saveState}`} aria-live="polite">{saveState === 'offline' ? <CloudOff /> : saveState === 'sync_error' ? <CircleAlert /> : saveState === 'saving' ? <LoaderCircle className="spin" /> : <CheckCircle2 />}<span>{saveStateLabel(saveState, queue.length)}{queue.length > 0 ? ` · ${queue.length} resposta(s) aguardando sincronização` : ''}</span>{queue.length > 0 && <button type="button" onClick={() => void flushQueue()}>Tentar sincronizar novamente</button>}</div><div><button disabled={position === 1 || !runtime.attempt.allow_back_navigation} onClick={() => void navigate(position - 1)}><ArrowLeft /> Anterior</button>{position < runtime.items.length ? <button onClick={() => void navigate(position + 1)}>Próxima <ArrowRight /></button> : <button className="assessment-submit" onClick={() => void finish(false)}><Send /> {queue.length > 0 ? 'Sincronizar e finalizar' : 'Finalizar prova'}</button>}</div></footer>
   </section>;
 }
 

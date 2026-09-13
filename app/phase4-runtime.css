@@ -127,6 +127,8 @@
 .assessment-save-state.offline,
 .assessment-save-state.pending { color: #aa641e; }
 .assessment-save-state.saved { color: #27764f; }
+.assessment-save-state > button { min-height: 30px; padding: 0 9px; border: 1px solid currentColor; border-radius: 7px; background: transparent; color: inherit; font-size: 9px; font-weight: 850; }
+.assessment-question h3:focus { outline: 3px solid #287aa829; outline-offset: 5px; }
 .assessment-finished { display: grid; justify-items: center; gap: 7px; padding: 40px 24px; text-align: center; }
 .assessment-finished > svg { width: 48px; height: 48px; color: #2b8b5d; }
 .assessment-finished p { max-width: 560px; color: #637d8e; font-size: 12px; line-height: 1.6; }
