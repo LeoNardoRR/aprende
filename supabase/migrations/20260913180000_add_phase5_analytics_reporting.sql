@@ -265,6 +265,11 @@ begin
     join public.proficiency_levels level on level.scale_id = assignment.scale_id
       and d.percentage >= level.lower_bound
       and (d.percentage < level.upper_bound or (level.upper_bound = 100 and d.percentage <= 100))
+  ), proficiency_catalog as (
+    select distinct level.code,level.label,level.sort_order
+    from scoped
+    join public.assessment_proficiency_scales assignment on assignment.assessment_id=scoped.assessment_id
+    join public.proficiency_levels level on level.scale_id=assignment.scale_id
   ), skill_rows as (
     select item.skill_id, skill.code, skill.description,
       count(distinct item.attempt_id)::integer as students_evaluated,
@@ -277,6 +282,27 @@ begin
     left join public.curriculum_skills skill on skill.id::text = item.skill_id
     where item.skill_id is not null
     group by item.skill_id, skill.code, skill.description
+  ), curriculum_rows as (
+    select dimension.kind,dimension.entity_id,dimension.label,
+      count(distinct item.attempt_id)::integer students_evaluated,
+      count(*) filter(where not item.is_annulled)::integer item_count,
+      count(item.response_id) filter(where not item.is_annulled and item.answer<>'{}'::jsonb)::integer answered,
+      count(*) filter(where not item.is_annulled and item.is_correct is true)::integer correct,
+      count(*) filter(where not item.is_annulled and item.is_correct is false)::integer incorrect
+    from private.analytics_item_facts item
+    join scoped on scoped.attempt_id=item.attempt_id
+    left join public.curriculum_subjects subject on subject.id=item.subject_id
+    left join public.curriculum_thematic_units thematic_unit on thematic_unit.id::text=item.thematic_unit_id
+    left join public.curriculum_knowledge_objects knowledge_object on knowledge_object.id::text=item.knowledge_object_id
+    left join public.curriculum_skills skill on skill.id::text=item.skill_id
+    cross join lateral (values
+      ('component',item.subject_id::text,subject.name),
+      ('thematic_unit',item.thematic_unit_id,thematic_unit.name),
+      ('knowledge_object',item.knowledge_object_id,knowledge_object.name),
+      ('skill',item.skill_id,coalesce(skill.code||' · ','')||skill.description)
+    ) dimension(kind,entity_id,label)
+    where dimension.entity_id is not null
+    group by dimension.kind,dimension.entity_id,dimension.label
   ), ranked_items as (
     select item.*, percent_rank() over(partition by item.assessment_id order by item.attempt_percentage) as performance_rank
     from private.analytics_item_facts item join scoped s on s.attempt_id=item.attempt_id
@@ -302,9 +328,22 @@ begin
     where not item.is_annulled and item.item_type in ('multiple_choice','true_false')
     group by item.item_id, item.statement, item.item_type
   ), evolution_rows as (
-    select assessment_id, assessment_title, min(submitted_at) as performed_at,
-      round(avg(percentage),2) as percentage, count(*)::integer as observations
-    from definitive group by assessment_id, assessment_title
+    select definitive.assessment_id, definitive.assessment_title, min(definitive.submitted_at) as performed_at,
+      round(avg(definitive.percentage),2) as percentage, count(*)::integer as observations,
+      coalesce(assignment.scale_id::text,definitive.subject_id::text||':'||definitive.curriculum_school_year_id::text) as methodology_key,
+      case when count(distinct definitive.student_id)=1 then max(proficiency.label) end as proficiency_label
+    from definitive
+    left join public.assessment_proficiency_scales assignment on assignment.assessment_id=definitive.assessment_id
+    left join proficiency on proficiency.attempt_id=definitive.attempt_id
+    group by definitive.assessment_id,definitive.assessment_title,definitive.subject_id,definitive.curriculum_school_year_id,assignment.scale_id
+  ), evolution_with_change as (
+    select evolution_rows.*,
+      lag(percentage) over(partition by methodology_key order by performed_at,assessment_id) as previous_percentage,
+      round(percentage-lag(percentage) over(partition by methodology_key order by performed_at,assessment_id),2) as absolute_difference,
+      case when lag(percentage) over(partition by methodology_key order by performed_at,assessment_id) not in (0)
+        then round(100*(percentage-lag(percentage) over(partition by methodology_key order by performed_at,assessment_id))/lag(percentage) over(partition by methodology_key order by performed_at,assessment_id),2) end as percentage_difference,
+      lag(proficiency_label) over(partition by methodology_key order by performed_at,assessment_id) as previous_proficiency
+    from evolution_rows
   ), stats as (
     select count(*)::integer n, round(avg(percentage),4) mean,
       round(percentile_cont(0.5) within group(order by percentage)::numeric,4) median,
@@ -331,15 +370,21 @@ begin
     ) from scoped),
     'statistics', (select to_jsonb(stats) from stats),
     'proficiency', coalesce((select jsonb_agg(row_data order by sort_order) from (
-      select p.code, p.label, p.sort_order, count(*)::integer count,
-        round(100.0 * count(*) / nullif((select count(*) from proficiency),0),2) percentage
-      from proficiency p group by p.code,p.label,p.sort_order
+      select catalog.code,catalog.label,catalog.sort_order,count(proficiency.attempt_id)::integer count,
+        case when (select count(*) from proficiency)>0 then round(100.0*count(proficiency.attempt_id)/(select count(*) from proficiency),2) end percentage
+      from proficiency_catalog catalog left join proficiency using(code,label,sort_order)
+      group by catalog.code,catalog.label,catalog.sort_order
     ) row_data), '[]'::jsonb),
     'skills', coalesce((select jsonb_agg(jsonb_build_object(
       'skill_id',skill_id,'code',code,'description',description,'students_evaluated',students_evaluated,
       'item_count',item_count,'answered',answered,'correct',correct,'incorrect',incorrect,
       'percentage',case when answered > 0 then round(100.0*correct/answered,2) else null end
     ) order by code) from skill_rows), '[]'::jsonb),
+    'curriculum', coalesce((select jsonb_agg(jsonb_build_object(
+      'dimension',kind,'id',entity_id,'label',label,'students_evaluated',students_evaluated,
+      'item_count',item_count,'answered',answered,'correct',correct,'incorrect',incorrect,
+      'percentage',case when answered>0 then round(100.0*correct/answered,2) else null end
+    ) order by kind,label) from curriculum_rows), '[]'::jsonb),
     'students', coalesce((select jsonb_agg(to_jsonb(student_row) order by student_name, attempt_id) from (
       select attempt_id,student_id,student_name,school_id,school_name,classroom_id,classroom_name,
         assessment_id,assessment_title,status,submitted_at,total_questions,answered_questions,correct_answers,
@@ -348,7 +393,13 @@ begin
       limit least(greatest(coalesce((filters->>'page_size')::integer,50),1),200)
       offset greatest(coalesce((filters->>'page')::integer,1)-1,0) * least(greatest(coalesce((filters->>'page_size')::integer,50),1),200)
     ) student_row), '[]'::jsonb),
-    'evolution', coalesce((select jsonb_agg(to_jsonb(evolution_rows) order by performed_at,assessment_id) from evolution_rows), '[]'::jsonb),
+    'comparison', jsonb_build_object(
+      'compatible',(select count(distinct methodology_key)<=1 from evolution_rows),
+      'methodology_groups',(select count(distinct methodology_key) from evolution_rows),
+      'message',case when (select count(distinct methodology_key) from evolution_rows)>1 then 'Avaliações com escalas ou componentes incompatíveis foram separadas; refine os filtros para comparar.' else null end
+    ),
+    'evolution', coalesce((select jsonb_agg(to_jsonb(evolution_with_change) order by performed_at,assessment_id) from evolution_with_change
+      where (select count(distinct methodology_key) from evolution_rows)<=1), '[]'::jsonb),
     'items', coalesce((select jsonb_agg(to_jsonb(item_rows) order by statement,item_id) from item_rows), '[]'::jsonb)
   ) into result;
   return result;
@@ -499,7 +550,8 @@ begin
     or network is null or not private.analytics_can_access_scope(network,school,classroom,null) then raise exception 'Not authorized'; end if;
   insert into public.analytics_report_jobs(network_id,school_id,classroom_id,report_type,format,filters,idempotency_key,requested_by)
   values(network,school,classroom,report_type,report_format,filters,idempotency_key,auth.uid())
-  on conflict(requested_by,idempotency_key) do update set updated_at=public.analytics_report_jobs.updated_at
+  on conflict on constraint analytics_report_jobs_requested_by_idempotency_key_key
+  do update set updated_at=public.analytics_report_jobs.updated_at
   returning id into job_id;
   return job_id;
 end;

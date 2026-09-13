@@ -10,8 +10,10 @@ export type AnalyticsReportPayload = {
     statistics: Record<string, number | null>;
     proficiency: Array<Record<string, string | number>>;
     skills: Array<Record<string, string | number | null>>;
+    curriculum?: Array<Record<string, string | number | null>>;
     students: Array<Record<string, string | number | boolean | null>>;
     evolution: Array<Record<string, string | number | null>>;
+    comparison?: { compatible: boolean; methodology_groups: number; message: string | null };
   };
 };
 
@@ -38,6 +40,8 @@ const reportLines = (payload: AnalyticsReportPayload) => {
     ...(payload.data.proficiency?.length ? payload.data.proficiency.map((row) => `${row.label}: ${textValue(row.count)} (${textValue(row.percentage)}%)`) : ['Sem dados suficientes']),
     '', 'Desempenho por habilidade',
     ...(payload.data.skills?.length ? payload.data.skills.map((row) => `${row.code ?? 'Sem código'} — ${row.description ?? ''}: ${textValue(row.percentage)}% (${textValue(row.students_evaluated)} estudantes)`) : ['Sem dados suficientes']),
+    '', 'Evolução',
+    ...(payload.data.comparison?.compatible === false ? [payload.data.comparison.message ?? 'Avaliações incompatíveis para comparação.'] : payload.data.evolution?.map((row) => `${row.assessment_title}: ${textValue(row.percentage)}% · variação ${textValue(row.absolute_difference)} p.p.`) ?? ['Sem dados suficientes']),
   ];
   return lines;
 };

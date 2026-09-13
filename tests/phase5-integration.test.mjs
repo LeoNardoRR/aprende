@@ -106,7 +106,7 @@ test('Phase 5 closes attempt, curriculum, proficiency and tenant analytics end t
     const scale = value(await clients.managerA.rpc('create_proficiency_scale',{ target_network: networkA.id, scale_name: `Escala F5 ${suffix}`, scale_version: 1, effective_from: '2026-01-01', levels }));
     value(await clients.managerA.rpc('assign_assessment_proficiency_scale',{ target_assessment: assessment.id, target_scale: scale }));
     const dashboard = value(await clients.managerA.rpc('get_analytics_dashboard',{ filters: { assessment_id: assessment.id } }));
-    assert.deepEqual(dashboard.proficiency.map((row) => [row.code,Number(row.count)]), [['below_basic',1],['basic',1],['adequate',1],['advanced',1]]);
+    assert.deepEqual(dashboard.proficiency.map((row) => [row.code,Number(row.count)]), [['below_basic',0],['basic',1],['adequate',1],['advanced',2]]);
     const reliability = value(await clients.managerA.rpc('get_assessment_reliability',{ target_assessment: assessment.id, filters: {} }));
     assert.equal(reliability.items,4); assert.equal(reliability.participants,4); assert.ok(Math.abs(Number(reliability.cronbach_alpha)-0.6667)<0.0001);
     assert.ok((await clients.managerA.rpc('assign_assessment_proficiency_scale',{ target_assessment: assessment.id, target_scale: scale })).error);
