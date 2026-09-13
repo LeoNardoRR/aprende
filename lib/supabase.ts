@@ -1,8 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
-const supabaseUrl = 'https://egroulwtaofnnzenbwsr.supabase.co';
-const supabasePublishableKey = 'sb_publishable_8SzfeiUXLTQ2XXX0Iv-06Q_HDsZLFrn';
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  'https://egroulwtaofnnzenbwsr.supabase.co';
+const supabasePublishableKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  'sb_publishable_8SzfeiUXLTQ2XXX0Iv-06Q_HDsZLFrn';
 const callbackMode = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('auth');
 export const initialAuthCallbackType =
   typeof window === 'undefined'

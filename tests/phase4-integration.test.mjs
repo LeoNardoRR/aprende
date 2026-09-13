@@ -26,6 +26,7 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
   }
 
   const service = createClient(url, serviceRoleKey, options);
+  const anonymous = createClient(url, anonKey, options);
   const suffix = randomUUID().slice(0, 8);
   const password = `Local-phase4-${suffix}-!Aa12345`;
   const roles = ['adminA', 'adminB', 'teacherA', 'teacherB', 'reviewer', 'studentA', 'studentB', 'studentExpired', 'studentUnissued', 'outsider'];
@@ -233,6 +234,9 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
     assert.equal(value(await clients.teacherB.from('assessment_attempts').select('id').eq('id', attemptA)).length, 0);
     assert.equal(value(await clients.reviewer.from('assessment_attempts').select('id').eq('id', attemptA)).length, 0);
     assert.ok((await clients.adminB.rpc('list_assessment_attempt_monitor', { target_assessment: assessment.id, page_size: 50, page_offset: 0 })).error);
+    assert.ok((await anonymous.rpc('get_assessment_attempt', { target_attempt: attemptA })).error);
+    assert.ok((await anonymous.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: randomUUID(), response_payload: {}, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: 0 })).error);
+    assert.ok((await anonymous.rpc('student_owns_active_attempt', { target_attempt: attemptA })).error);
   });
 
   await t.test('responses update idempotently before submission and navigation rules run on the backend', async () => {
@@ -242,30 +246,59 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
     assert.ok(mc && tf && essayItem);
 
     const key = randomUUID();
-    const first = value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: mc.id, response_payload: { option_id: multipleChoice.correctOption.id }, mark_for_review: false, idempotency_key: key }));
-    const replay = value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: mc.id, response_payload: { option_id: 'ignored-on-replay' }, mark_for_review: true, idempotency_key: key }));
+    const first = value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: mc.id, response_payload: { option_id: multipleChoice.correctOption.id }, mark_for_review: false, idempotency_key: key, expected_revision: 0 }));
+    const replay = value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: mc.id, response_payload: { option_id: 'ignored-on-replay' }, mark_for_review: true, idempotency_key: key, expected_revision: 0 }));
     assert.equal(first.response_id, replay.response_id); assert.equal(first.revision, replay.revision); assert.equal(replay.idempotent_replay, true);
     const wrongOption = mc.content.options.find((option) => option.id !== multipleChoice.correctOption.id);
-    const updated = value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: mc.id, response_payload: { option_id: wrongOption.id }, mark_for_review: true, idempotency_key: randomUUID() }));
-    const corrected = value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: mc.id, response_payload: { option_id: multipleChoice.correctOption.id }, mark_for_review: false, idempotency_key: randomUUID() }));
+    const updated = value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: mc.id, response_payload: { option_id: wrongOption.id }, mark_for_review: true, idempotency_key: randomUUID(), expected_revision: first.revision }));
+    const corrected = value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: mc.id, response_payload: { option_id: multipleChoice.correctOption.id }, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: updated.revision }));
     assert.ok(updated.revision > first.revision); assert.ok(corrected.revision > updated.revision);
-    value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: tf.id, response_payload: { option_id: trueFalse.correctOption.id }, mark_for_review: false, idempotency_key: randomUUID() }));
-    value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: essayItem.id, response_payload: { text: 'Resposta discursiva DEMO para revisão.' }, mark_for_review: true, idempotency_key: randomUUID() }));
+    value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: tf.id, response_payload: { option_id: trueFalse.correctOption.id }, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: 0 }));
+    value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: essayItem.id, response_payload: { text: 'Resposta discursiva DEMO para revisão.' }, mark_for_review: true, idempotency_key: randomUUID(), expected_revision: 0 }));
 
     value(await clients.studentA.rpc('set_assessment_attempt_position', { target_attempt: attemptA, target_position: 3 }));
     assert.ok((await clients.studentA.rpc('set_assessment_attempt_position', { target_attempt: attemptA, target_position: 2 })).error);
-    assert.ok((await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: randomUUID(), response_payload: { text: 'fora do escopo' }, mark_for_review: false, idempotency_key: randomUUID() })).error);
+    assert.ok((await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: randomUUID(), response_payload: { text: 'fora do escopo' }, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: 0 })).error);
+  });
+
+  await t.test('simultaneous tabs use optimistic revisions and a stale save cannot overwrite the winner', async () => {
+    const tf = runtimeA.items.find((item) => item.content.id === trueFalse.item.id);
+    const wrong = tf.content.options.find((option) => option.id !== trueFalse.correctOption.id);
+    const concurrent = await Promise.all([
+      clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: tf.id, response_payload: { option_id: wrong.id }, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: 1 }),
+      clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: tf.id, response_payload: { option_id: trueFalse.correctOption.id }, mark_for_review: true, idempotency_key: randomUUID(), expected_revision: 1 }),
+    ]);
+    const winners = concurrent.filter((result) => !result.error);
+    const conflicts = concurrent.filter((result) => result.error);
+    assert.equal(winners.length, 1); assert.equal(conflicts.length, 1);
+    assert.match(conflicts[0].error.message, /revision conflict/i);
+    const winnerRevision = winners[0].data.revision;
+    const corrected = value(await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: tf.id, response_payload: { option_id: trueFalse.correctOption.id }, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: winnerRevision }));
+    assert.ok(corrected.revision > winnerRevision);
+    assert.ok((await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: tf.id, response_payload: { option_id: wrong.id }, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: 1 })).error);
+    const persisted = value(await clients.studentA.from('assessment_responses').select('answer,revision').eq('attempt_item_id', tf.id).single());
+    assert.equal(persisted.answer.option_id, trueFalse.correctOption.id);
+    assert.equal(persisted.revision, corrected.revision);
   });
 
   await t.test('submission is transactional, objective grading is server-side and essay awaits review', async () => {
-    assert.ok((await clients.studentA.from('assessment_responses').update({ points_awarded: 999 }).eq('attempt_id', attemptA)).error);
+    assert.ok((await clients.studentA.from('assessment_responses').update({
+      points_awarded: 999,
+      review_status: 'reviewed',
+      reviewer_comment: 'alteração indevida',
+      reviewed_by: ids.studentA,
+      reviewed_at: new Date().toISOString(),
+    }).eq('attempt_id', attemptA)).error);
     const submitted = value(await clients.studentA.rpc('submit_assessment_attempt', { target_attempt: attemptA }));
     const repeated = value(await clients.studentA.rpc('submit_assessment_attempt', { target_attempt: attemptA }));
     assert.equal(submitted.status, 'pending_review');
     assert.equal(submitted.submission_kind, 'submitted');
     assert.deepEqual(repeated, submitted);
     assert.equal(Number(submitted.score), 20);
-    assert.ok((await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: runtimeA.items[0].id, response_payload: {}, mark_for_review: false, idempotency_key: randomUUID() })).error);
+    const submissionEvents = value(await clients.teacherA.rpc('list_assessment_attempt_events', { target_attempt: attemptA }));
+    assert.equal(submissionEvents.filter((event) => event.event_type === 'submitted').length, 1);
+    assert.equal(submissionEvents.filter((event) => event.event_type === 'pending_review').length, 1);
+    assert.ok((await clients.studentA.rpc('save_assessment_response', { target_attempt: attemptA, target_attempt_item: runtimeA.items[0].id, response_payload: {}, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: 0 })).error);
   });
 
   await t.test('authorized teacher reviews essay and other roles cannot grade it', async () => {
@@ -284,6 +317,14 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
   await t.test('server deadline auto-submits and blocks late or duplicate writes', async () => {
     const attemptBefore = value(await service.from('assessment_attempts').select('started_at,deadline_at').eq('id', attemptB).single());
     assert.ok(attemptBefore.started_at && attemptBefore.deadline_at);
+    const runtimeB = value(await clients.studentB.rpc('get_assessment_attempt', { target_attempt: attemptB }));
+    const confirmedItem = runtimeB.items.find((item) => item.content.options.length > 0);
+    assert.ok(confirmedItem);
+    const localOnlyItem = runtimeB.items.find((item) => item.id !== confirmedItem.id);
+    assert.ok(localOnlyItem);
+    const confirmedOption = confirmedItem.content.options[0]?.id;
+    value(await clients.studentB.rpc('save_assessment_response', { target_attempt: attemptB, target_attempt_item: confirmedItem.id, response_payload: { option_id: confirmedOption }, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: 0 }));
+    const localOnlyAnswer = { attempt_item_id: localOnlyItem.id, answer: { option_id: localOnlyItem.content.options[0]?.id }, confirmed: false };
     value(await service.from('assessment_attempts').update({
       started_at: new Date(Date.now() - 60_000).toISOString(),
       deadline_at: new Date(Date.now() - 1000).toISOString(),
@@ -291,7 +332,10 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
     const expired = value(await clients.studentB.rpc('get_assessment_attempt', { target_attempt: attemptB }));
     assert.equal(expired.attempt.submission_kind, 'auto_submitted');
     assert.equal(expired.attempt.status, 'pending_review');
-    assert.ok((await clients.studentB.rpc('save_assessment_response', { target_attempt: attemptB, target_attempt_item: expired.items[0].id, response_payload: {}, mark_for_review: false, idempotency_key: randomUUID() })).error);
+    assert.equal(expired.responses[confirmedItem.id].answer.option_id, confirmedOption);
+    assert.deepEqual(expired.responses[localOnlyAnswer.attempt_item_id].answer, {});
+    assert.equal(localOnlyAnswer.confirmed, false);
+    assert.ok((await clients.studentB.rpc('save_assessment_response', { target_attempt: attemptB, target_attempt_item: expired.items[0].id, response_payload: {}, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: 0 })).error);
   });
 
   await t.test('expired token is rejected and brute-force attempts lock access', async () => {
@@ -321,7 +365,7 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
     assert.ok((await clients.teacherB.rpc('manage_assessment_attempt', { target_attempt: attemptExpired, target_action: 'close', action_reason: 'Fora da escola' })).error);
     const closed = value(await clients.teacherA.rpc('manage_assessment_attempt', { target_attempt: attemptExpired, target_action: 'close', action_reason: 'Encerramento supervisionado' }));
     assert.equal(closed.status, 'pending_review');
-    assert.ok((await clients.studentExpired.rpc('save_assessment_response', { target_attempt: attemptExpired, target_attempt_item: randomUUID(), response_payload: {}, mark_for_review: false, idempotency_key: randomUUID() })).error);
+    assert.ok((await clients.studentExpired.rpc('save_assessment_response', { target_attempt: attemptExpired, target_attempt_item: randomUUID(), response_payload: {}, mark_for_review: false, idempotency_key: randomUUID(), expected_revision: 0 })).error);
     const administrativeEvents = value(await clients.teacherA.rpc('list_assessment_attempt_events', { target_attempt: attemptExpired }));
     for (const event of ['cancelled', 'reopened', 'started', 'submitted', 'pending_review']) assert.ok(administrativeEvents.some((row) => row.event_type === event), event);
   });

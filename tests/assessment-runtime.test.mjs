@@ -16,7 +16,7 @@ import {
 const pending = (overrides = {}) => ({
   idempotencyKey: 'key-1', attemptId: 'attempt-1', attemptItemId: 'item-1',
   answer: { option_id: 'A' }, markedForReview: false,
-  queuedAt: '2026-09-13T10:00:00.000Z', ...overrides,
+  queuedAt: '2026-09-13T10:00:00.000Z', expectedRevision: 0, ...overrides,
 });
 
 test('offline assessment queue is deterministic, compact and idempotent', () => {
@@ -38,6 +38,7 @@ test('pending local answers overlay remote state without pretending they were sa
   assert.equal(merged['item-1'].marked_for_review, true);
   assert.equal(remote['item-1'].answer.option_id, 'A');
   assert.equal(saveStateLabel('offline', 1), 'Sem conexão');
+  assert.equal(saveStateLabel('sync_error', 1), 'Erro ao sincronizar');
   assert.equal(saveStateLabel('saved', 1), 'Pendente para sincronizar');
 });
 

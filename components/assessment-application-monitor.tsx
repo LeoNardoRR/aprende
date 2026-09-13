@@ -178,7 +178,7 @@ export function AssessmentApplicationMonitor({
 function statusLabel(row: MonitorRow) {
   if (row.attempt_status === 'in_progress' && row.last_activity_at && Date.now() - new Date(row.last_activity_at).getTime() > 3 * 60_000) return 'Sem atividade recente';
   if (row.submission_kind === 'auto_submitted') return row.attempt_status === 'pending_review' ? 'Autoenvio · correção pendente' : 'Enviado automaticamente';
-  return ({ scheduled: 'Não iniciado', available: 'Disponível', in_progress: 'Em andamento', paused: 'Pausada', pending_review: 'Pendente de correção', graded: 'Finalizado', cancelled: 'Cancelada', invalidated: 'Invalidada' } as Record<string, string>)[row.attempt_status] ?? row.attempt_status;
+  return ({ scheduled: 'Não iniciado', available: 'Disponível', in_progress: 'Em andamento', paused: 'Pausado', submitted: 'Enviado', auto_submitted: 'Auto enviado', pending_review: 'Pendente de revisão', graded: 'Corrigido', cancelled: 'Cancelado', invalidated: 'Invalidado' } as Record<string, string>)[row.attempt_status] ?? row.attempt_status;
 }
 function statusTone(status?: string) { return ['graded','submitted','auto_submitted'].includes(status ?? '') ? 'completed' : status === 'in_progress' ? 'enrolled' : ['cancelled','invalidated'].includes(status ?? '') ? 'removed' : 'suspended'; }
 function eventLabel(event: string) { return ({ attempt_created: 'Tentativa criada', token_rotated: 'Token emitido', token_revoked: 'Token revogado', started: 'Iniciada', resumed: 'Retomada', answer_saved: 'Resposta salva', submitted: 'Enviada', auto_submitted: 'Envio automático', pending_review: 'Aguardando correção', graded: 'Corrigida', cancelled: 'Cancelada', invalidated: 'Invalidada', reopened: 'Reaberta' } as Record<string, string>)[event] ?? event; }

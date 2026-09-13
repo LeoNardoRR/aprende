@@ -230,7 +230,7 @@ export function StudentConnect({
       });
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
-      void loadStudent(nextSession);
+      window.setTimeout(() => void loadStudent(nextSession), 0);
     });
     return () => data.subscription.unsubscribe();
   }, [loadStudent]);

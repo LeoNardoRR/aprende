@@ -50,6 +50,7 @@ const phase4ReservedMigration = readMigration('20260912231327_add_assessment_run
 const phase4Runtime = readMigration('20260913111359_add_assessment_application_runtime.sql');
 const phase4Monitor = readMigration('20260913153000_complete_phase4_application_monitor.sql');
 const phase4PolicyHelpers = readMigration('20260913160000_fix_phase4_policy_helper_execution.sql');
+const phase4Concurrency = readMigration('20260913170100_harden_phase4_response_concurrency.sql');
 const phase4Workflow = readFileSync(
   new URL('../.github/workflows/phase4-application-validation.yml', import.meta.url),
   'utf8',
@@ -68,6 +69,14 @@ const studentAssessmentRuntime = readFileSync(
 );
 const assessmentApplicationMonitor = readFileSync(
   new URL('../components/assessment-application-monitor.tsx', import.meta.url),
+  'utf8',
+);
+const assessmentOfflineQueue = readFileSync(
+  new URL('../lib/assessment-offline-queue.ts', import.meta.url),
+  'utf8',
+);
+const phase4E2e = readFileSync(
+  new URL('./e2e/phase4-runtime.spec.ts', import.meta.url),
   'utf8',
 );
 const teacherPortal = readFileSync(
@@ -362,6 +371,10 @@ test('Phase 4 runtime keeps tokens, timing, grading and writes behind guarded RP
   assert.match(phase4PolicyHelpers, /grant execute on function private\.student_owns_active_attempt\(uuid\) to authenticated/);
   assert.match(phase4PolicyHelpers, /grant execute on function private\.can_read_attempt_item_image\(text\) to authenticated/);
   assert.doesNotMatch(phase4PolicyHelpers, /to anon/);
+  assert.match(phase4Concurrency, /expected_revision integer/);
+  assert.match(phase4Concurrency, /Response revision conflict/);
+  assert.match(phase4Concurrency, /revoke all on function public\.save_assessment_response\(uuid,uuid,jsonb,boolean,uuid\) from authenticated/);
+  assert.match(phase4Concurrency, /revoke all on function public\.save_assessment_response\(uuid,uuid,jsonb,boolean,uuid,integer\) from public, anon/);
   assert.match(phase4Workflow, /set -o pipefail/);
   assert.doesNotMatch(phase4Runtime, /service_role/i);
   assert.equal(phase4ReservedMigration, '');
@@ -374,6 +387,12 @@ test('Phase 4 UI exposes real autosave, resume, timing, monitoring and guarded s
   assert.match(studentAssessmentRuntime, /tempo do servidor/);
   assert.match(studentAssessmentRuntime, /saveStateLabel/);
   assert.match(studentAssessmentRuntime, /allow_back_navigation/);
+  assert.match(studentAssessmentRuntime, /beforeunload/);
+  assert.match(studentAssessmentRuntime, /Estamos sincronizando suas respostas antes de finalizar/);
+  assert.match(assessmentOfflineQueue, /indexedDB\.open/);
+  assert.match(assessmentOfflineQueue, /migrateLegacyAssessmentQueue/);
+  assert.match(phase4E2e, /page\.route\('\*\*\/rest\/v1\/rpc\/save_assessment_response'/);
+  assert.match(phase4E2e, /page\.reload\(\)/);
   assert.match(assessmentApplicationMonitor, /list_assessment_attempt_monitor/);
   assert.match(assessmentApplicationMonitor, /window\.setInterval/);
   assert.match(assessmentApplicationMonitor, /window\.clearInterval/);
