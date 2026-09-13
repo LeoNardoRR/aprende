@@ -65,6 +65,7 @@ async function createFixture(): Promise<Fixture> {
   const student = data(await service.auth.admin.createUser({ email: studentEmail, password, email_confirm: true, user_metadata: { display_name: 'Aluno E2E Fase 4' } })).user;
   const teacherUser = data(await service.auth.admin.createUser({ email: teacherEmail, password, email_confirm: true, user_metadata: { display_name: 'Professor E2E Fase 4' } })).user;
   if (!student || !teacherUser) throw new Error('The E2E fixture users could not be created.');
+  success(await service.from('profiles').update({ role: 'teacher' }).eq('id', teacherUser.id));
   const teacher = await signIn(teacherEmail, password);
 
   const network = data(await service.from('networks').insert({ name: `Rede E2E F4 ${suffix}`, created_by: teacherUser.id }).select().single());

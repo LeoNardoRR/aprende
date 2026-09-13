@@ -543,17 +543,21 @@ end;
 $$;
 
 create or replace function public.request_analytics_report(
-  report_type text, report_format text, filters jsonb, idempotency_key uuid
+  report_type text, report_format text, filters jsonb, request_key uuid
 ) returns uuid language plpgsql security definer set search_path = '' as $$
-declare network uuid; school uuid; classroom uuid; job_id uuid;
+declare network uuid; school uuid; classroom uuid; job_id uuid; existing public.analytics_report_jobs%rowtype;
 begin
   network := nullif(filters->>'network_id','')::uuid; school := nullif(filters->>'school_id','')::uuid; classroom := nullif(filters->>'classroom_id','')::uuid;
   if report_type not in ('student','classroom','school','network','student_batch') or report_format not in ('pdf','docx','csv','zip')
     or network is null or not private.analytics_can_access_scope(network,school,classroom,null) then raise exception 'Not authorized'; end if;
+  select job.* into existing from public.analytics_report_jobs job
+  where job.requested_by=auth.uid() and job.idempotency_key=request_key;
+  if existing.id is not null then
+    if existing.report_type<>report_type or existing.format<>report_format or existing.filters<>filters then raise exception 'Idempotency key conflict'; end if;
+    return existing.id;
+  end if;
   insert into public.analytics_report_jobs(network_id,school_id,classroom_id,report_type,format,filters,idempotency_key,requested_by)
-  values(network,school,classroom,report_type,report_format,filters,idempotency_key,auth.uid())
-  on conflict on constraint analytics_report_jobs_requested_by_idempotency_key_key
-  do update set updated_at=public.analytics_report_jobs.updated_at
+  values(network,school,classroom,report_type,report_format,filters,request_key,auth.uid())
   returning id into job_id;
   return job_id;
 end;

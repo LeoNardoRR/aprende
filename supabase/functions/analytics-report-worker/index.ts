@@ -49,7 +49,9 @@ async function studentPdf(student: StudentRow) {
 
 async function processJob(service: ReturnType<typeof createClient>, caller: ReturnType<typeof createClient>, job: Job) {
   try {
-    await service.from('analytics_report_jobs').update({ status: 'processing', progress: 1, started_at: new Date().toISOString(), attempt_count: job.attempt_count + 1, updated_at: new Date().toISOString() }).eq('id', job.id).eq('status', 'queued');
+    const claimed = await service.from('analytics_report_jobs').update({ status: 'processing', progress: 1, started_at: new Date().toISOString(), attempt_count: job.attempt_count + 1, updated_at: new Date().toISOString() }).eq('id', job.id).eq('status', 'queued').select('id').maybeSingle();
+    if (claimed.error) throw claimed.error;
+    if (!claimed.data) return;
     const students: StudentRow[] = [];
     let page = 1;
     for (;;) {

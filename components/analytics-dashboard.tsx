@@ -114,7 +114,7 @@ export function AnalyticsDashboard({ mode, networks = [], schools = [], classroo
     if (!networkId || !classroomId) { setMessage('Selecione uma rede e uma turma para gerar o lote.'); return; }
     setBatchBusy(true);
     batchKeyRef.current ??= crypto.randomUUID();
-    const result = await api.rpc<string>('request_analytics_report', { report_type: 'student_batch', report_format: 'zip', filters, idempotency_key: batchKeyRef.current });
+    const result = await api.rpc<string>('request_analytics_report', { report_type: 'student_batch', report_format: 'zip', filters, request_key: batchKeyRef.current });
     if (result.error || !result.data) setMessage(result.error?.message ?? 'Não foi possível enfileirar o lote.');
     else {
       const invoked = await client.functions.invoke('analytics-report-worker', { body: { job_id: result.data } });

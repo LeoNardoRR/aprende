@@ -130,9 +130,10 @@ test('Phase 5 closes attempt, curriculum, proficiency and tenant analytics end t
 
   await t.test('report jobs are idempotent and restricted to the requester', async () => {
     const key = randomUUID(); const filters = { network_id: networkA.id, school_id: schoolA.id, classroom_id: classA.id, assessment_id: assessment.id };
-    const first = value(await clients.managerA.rpc('request_analytics_report',{ report_type:'student_batch', report_format:'zip', filters, idempotency_key:key }));
-    const replay = value(await clients.managerA.rpc('request_analytics_report',{ report_type:'student_batch', report_format:'zip', filters, idempotency_key:key }));
+    const first = value(await clients.managerA.rpc('request_analytics_report',{ report_type:'student_batch', report_format:'zip', filters, request_key:key }));
+    const replay = value(await clients.managerA.rpc('request_analytics_report',{ report_type:'student_batch', report_format:'zip', filters, request_key:key }));
     assert.equal(first,replay); assert.equal(value(await clients.managerA.rpc('list_analytics_report_jobs')).filter((job) => job.id===first).length,1);
+    assert.ok((await clients.managerA.rpc('request_analytics_report',{ report_type:'student_batch', report_format:'zip', filters:{...filters,skill_id:skill.id}, request_key:key })).error);
     assert.equal(value(await clients.teacherA.rpc('list_analytics_report_jobs')).some((job) => job.id===first),false);
   });
 
