@@ -53,6 +53,8 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
           NEXT_PUBLIC_SUPABASE_URL="$API_URL" \
           NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" \
+          VITE_SUPABASE_URL="$API_URL" \
+          VITE_SUPABASE_ANON_KEY="$ANON_KEY" \
           npm run test:e2e
       - uses: denoland/setup-deno@v2
         with:
