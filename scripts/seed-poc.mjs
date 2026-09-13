@@ -54,7 +54,8 @@ for (const [schoolIndex, school] of demonstrationSchools.entries()) {
   for (const [gradeIndex, grade] of ['6º ano', '7º ano', '8º ano'].entries()) schoolYears.push(await one('school_years', { school_id: school.id, name: grade, code: `POC-${6 + gradeIndex}EF`, sort_order: 6 + gradeIndex }));
   for (const [key, role] of [[`manager${schoolIndex + 1}`, 'manager'], [`teacher${schoolIndex + 1}`, 'teacher']]) await one('institutional_memberships', { user_id: ids[key], network_id: network.id, school_id: school.id, role, status: 'active', created_by: ids.admin });
 }
-for (const [key, role] of [['admin', 'network_admin'], ['reviewer', 'reviewer'], ['approver', 'approver']]) await one('institutional_memberships', { user_id: ids[key], network_id: network.id, school_id: null, role, status: 'active', created_by: ids.admin });
+// A trigger de criacao da rede provisiona o owner como network_admin.
+for (const [key, role] of [['reviewer', 'reviewer'], ['approver', 'approver']]) await one('institutional_memberships', { user_id: ids[key], network_id: network.id, school_id: null, role, status: 'active', created_by: ids.admin });
 
 const classrooms = [];
 for (let index = 0; index < 6; index += 1) {
