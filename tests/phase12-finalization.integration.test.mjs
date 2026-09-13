@@ -76,7 +76,20 @@ test('Phases 1 and 2 finalization: real operations and authorization', async (t)
   });
   await t.test('invitation lifecycle, acceptance, expiration, revocation, directory and history',async()=>{
     const args={target_network:network.id,target_school:school.id,target_email:emails.otherStudent,target_role:'student'};
-    const invitation=ok(await clients.manager.rpc('manage_institutional_invitation',args));
+    let readiness;
+    for(let attempt=0;attempt<20;attempt+=1){
+      try{
+        readiness=await fetch(`${url}/functions/v1/institutional-invite`,{method:'POST',headers:{apikey:anon,'content-type':'application/json'},body:JSON.stringify(args)});
+        break;
+      }catch(error){if(attempt===19)throw error;await new Promise(resolve=>setTimeout(resolve,250));}
+    }
+    assert.equal(readiness.status,401,'invitation endpoint must reject anonymous requests');
+    const token=ok(await clients.manager.auth.getSession()).session.access_token;
+    const sent=await fetch(`${url}/functions/v1/institutional-invite`,{method:'POST',headers:{apikey:anon,authorization:`Bearer ${token}`,'content-type':'application/json'},body:JSON.stringify({network_id:network.id,school_id:school.id,email:emails.otherStudent,role:'student'})});
+    if(sent.status!==200)assert.fail(`invitation endpoint returned ${sent.status}: ${await sent.text()}`);
+    const invitation=await sent.json();
+    assert.equal(invitation.status,'pending');
+    assert.match(invitation.message,/ativação enviada/i);
     assert.ok((await clients.student.rpc('accept_institutional_invitation',{invitation_id:invitation.id})).error);
     ok(await clients.otherStudent.rpc('accept_institutional_invitation',{invitation_id:invitation.id}));
     const member=ok(await service.from('institutional_memberships').select('id').eq('user_id',ids.otherStudent).eq('network_id',network.id).single());

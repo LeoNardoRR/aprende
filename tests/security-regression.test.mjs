@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import test from 'node:test';
 
 const readMigration = (name) =>
@@ -68,6 +68,13 @@ const institutionalPedagogy = readFileSync(
   'utf8',
 );
 const homePage = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
+const frontendSource = ['app', 'components']
+  .flatMap((directory) =>
+    readdirSync(new URL(`../${directory}/`, import.meta.url), { recursive: true })
+      .filter((file) => /\.[cm]?[jt]sx?$/.test(file))
+      .map((file) => readFileSync(new URL(`../${directory}/${file}`, import.meta.url), 'utf8')),
+  )
+  .join('\n');
 
 test('classroom content is readable only by members and writable by teachers', () => {
   assert.match(core, /create policy classrooms_read[\s\S]*private\.is_class_member\(id\)/);
@@ -321,6 +328,7 @@ test('pre-Phase 4 stabilization qualifies item storage and freezes complete snap
   assert.match(prePhase4Stabilization, /'distractor_analysis', item_option\.distractor_analysis/);
   assert.doesNotMatch(prePhase4Stabilization, /assessment_attempts/);
   assert.equal(phase4ReservedMigration, '');
+  assert.doesNotMatch(frontendSource, /service[_ -]?role|SUPABASE_SERVICE/i);
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {

@@ -40,7 +40,8 @@ jobs:
           SUPABASE_URL="$API_URL" \
           SUPABASE_ANON_KEY="$ANON_KEY" \
           SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
-          npm test
+          npm test | tee /tmp/aprende-test.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/aprende-test.log | tail -1)" = "0"
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
@@ -49,8 +50,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm run build:pages
-      - name: Run local security advisors
-        run: npx supabase db advisors --local --type security --level error --fail-on error
+      - name: Run all local database advisors
+        run: npx supabase db advisors --local --type all --level info --fail-on error
       - name: Report dependency audit without accepting critical findings
         run: npm audit --audit-level=critical
       - name: Stop disposable Supabase
