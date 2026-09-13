@@ -241,9 +241,9 @@ export type Database = {
         Relationships: []
       }
       diagnostic_assessments: {
-        Row: { id: string; cycle_id: string; network_id: string; curriculum_id: string; subject_id: string; curriculum_school_year_id: string; title: string; description: string | null; instructions: string; total_points: number; duration_minutes: number; starts_at: string | null; ends_at: string | null; status: string; randomize_questions: boolean; randomize_options: boolean; created_by: string; created_at: string; updated_at: string }
-        Insert: { id?: string; cycle_id: string; network_id: string; curriculum_id: string; subject_id: string; curriculum_school_year_id: string; title: string; description?: string | null; instructions: string; total_points?: number; duration_minutes: number; starts_at?: string | null; ends_at?: string | null; status?: string; randomize_questions?: boolean; randomize_options?: boolean; created_by: string; created_at?: string; updated_at?: string }
-        Update: { title?: string; description?: string | null; instructions?: string; duration_minutes?: number; starts_at?: string | null; ends_at?: string | null; randomize_questions?: boolean; randomize_options?: boolean; updated_at?: string }
+        Row: { id: string; cycle_id: string; network_id: string; curriculum_id: string; subject_id: string; curriculum_school_year_id: string; title: string; description: string | null; instructions: string; total_points: number; duration_minutes: number; starts_at: string | null; ends_at: string | null; status: string; randomize_questions: boolean; randomize_options: boolean; allow_back_navigation: boolean; created_by: string; created_at: string; updated_at: string }
+        Insert: { id?: string; cycle_id: string; network_id: string; curriculum_id: string; subject_id: string; curriculum_school_year_id: string; title: string; description?: string | null; instructions: string; total_points?: number; duration_minutes: number; starts_at?: string | null; ends_at?: string | null; status?: string; randomize_questions?: boolean; randomize_options?: boolean; allow_back_navigation?: boolean; created_by: string; created_at?: string; updated_at?: string }
+        Update: { title?: string; description?: string | null; instructions?: string; duration_minutes?: number; starts_at?: string | null; ends_at?: string | null; randomize_questions?: boolean; randomize_options?: boolean; allow_back_navigation?: boolean; updated_at?: string }
         Relationships: []
       }
       assessment_booklets: {
@@ -268,6 +268,30 @@ export type Database = {
         Row: { id: string; schedule_id: string; assessment_id: string; classroom_id: string; booklet_assignment_strategy: string; created_at: string }
         Insert: { id?: string; schedule_id: string; assessment_id: string; classroom_id: string; booklet_assignment_strategy?: string; created_at?: string }
         Update: { booklet_assignment_strategy?: string }
+        Relationships: []
+      }
+      assessment_attempts: {
+        Row: { id: string; assessment_id: string; schedule_id: string; classroom_id: string; student_id: string; booklet_id: string; network_id: string; school_id: string; status: string; submission_kind: string | null; access_origin: string; access_token_hash: string | null; token_expires_at: string | null; token_generation: number; token_failed_attempts: number; token_locked_until: string | null; allowed_minutes: number; current_position: number; created_at: string; started_at: string | null; deadline_at: string | null; last_activity_at: string | null; submitted_at: string | null; closed_at: string | null; score: number | null; max_score: number; updated_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      assessment_attempt_items: {
+        Row: { id: string; attempt_id: string; source_booklet_item_id: string; assessment_item_version_id: string; position: number; snapshot: Json; option_order: Json; max_points: number; created_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      assessment_responses: {
+        Row: { id: string; attempt_id: string; attempt_item_id: string; answer: Json; marked_for_review: boolean; revision: number; is_correct: boolean | null; points_awarded: number | null; review_status: string; reviewer_comment: string | null; reviewed_by: string | null; reviewed_at: string | null; saved_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      assessment_attempt_events: {
+        Row: { id: number; attempt_id: string; event_type: string; actor_id: string | null; reason: string | null; metadata: Json; created_at: string }
+        Insert: never
+        Update: never
         Relationships: []
       }
       classrooms: {

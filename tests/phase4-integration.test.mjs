@@ -28,7 +28,7 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
   const service = createClient(url, serviceRoleKey, options);
   const suffix = randomUUID().slice(0, 8);
   const password = `Local-phase4-${suffix}-!Aa12345`;
-  const roles = ['adminA', 'adminB', 'teacherA', 'teacherB', 'reviewer', 'studentA', 'studentB', 'studentExpired', 'outsider'];
+  const roles = ['adminA', 'adminB', 'teacherA', 'teacherB', 'reviewer', 'studentA', 'studentB', 'studentExpired', 'studentUnissued', 'outsider'];
   const ids = {};
   const emails = {};
   const clients = {};
@@ -70,6 +70,7 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
     ['teacherA', schoolA.id, 'teacher'], ['teacherB', schoolB.id, 'teacher'],
     ['reviewer', schoolA.id, 'reviewer'], ['studentA', schoolA.id, 'student'],
     ['studentB', schoolA.id, 'student'], ['studentExpired', schoolA.id, 'student'],
+    ['studentUnissued', schoolA.id, 'student'],
     ['outsider', schoolB.id, 'student'],
   ]) {
     value(await service.from('institutional_memberships').insert({
@@ -89,7 +90,7 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
     academic_year_id: year.id, school_year_id: gradeB.id, classroom_status: 'active',
   }).select().single());
 
-  for (const student of ['studentA', 'studentB', 'studentExpired']) {
+  for (const student of ['studentA', 'studentB', 'studentExpired', 'studentUnissued']) {
     value(await service.from('student_enrollments').insert({
       student_id: ids[student], network_id: networkA.id, school_id: schoolA.id,
       academic_year_id: year.id, classroom_id: classroomA.id, status: 'enrolled',
@@ -179,6 +180,7 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
 
   let attemptA;
   let attemptB;
+  let attemptExpired;
   let runtimeA;
 
   await t.test('tokens are hashed, scoped, revocable and rotate without duplicating attempts', async () => {
@@ -291,6 +293,7 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
 
   await t.test('expired token is rejected and brute-force attempts lock access', async () => {
     const issued = value(await clients.teacherA.rpc('issue_assessment_access_token', { target_schedule: scheduleId, target_student: ids.studentExpired, valid_minutes: 5 }))[0];
+    attemptExpired = issued.attempt_id;
     value(await service.from('assessment_attempts').update({ token_expires_at: new Date(Date.now() - 1000).toISOString() }).eq('id', issued.attempt_id));
     assert.equal((await clients.studentExpired.rpc('start_assessment_attempt', { target_schedule: scheduleId, access_token: issued.access_token, origin: 'token' })).data.ok, false);
     const rotated = value(await clients.teacherA.rpc('issue_assessment_access_token', { target_schedule: scheduleId, target_student: ids.studentExpired, valid_minutes: 5 }))[0];
@@ -302,9 +305,30 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
     assert.equal(locked.token_failed_attempts, 5); assert.ok(locked.token_locked_until);
   });
 
+  await t.test('administrative transitions are scoped, audited and cannot revive a final attempt arbitrarily', async () => {
+    assert.ok((await clients.studentExpired.rpc('manage_assessment_attempt', { target_attempt: attemptExpired, target_action: 'cancel', action_reason: 'Tentativa do próprio aluno' })).error);
+    assert.ok((await clients.teacherB.rpc('manage_assessment_attempt', { target_attempt: attemptExpired, target_action: 'cancel', action_reason: 'Outra escola não pode cancelar' })).error);
+    assert.ok((await clients.teacherA.rpc('manage_assessment_attempt', { target_attempt: attemptExpired, target_action: 'cancel', action_reason: 'x' })).error);
+    const cancelled = value(await clients.teacherA.rpc('manage_assessment_attempt', { target_attempt: attemptExpired, target_action: 'cancel', action_reason: 'Token bloqueado durante a aplicação' }));
+    assert.equal(cancelled.status, 'cancelled');
+    const reopened = value(await clients.teacherA.rpc('manage_assessment_attempt', { target_attempt: attemptExpired, target_action: 'reopen', action_reason: 'Novo acesso autorizado pela escola' }));
+    assert.equal(reopened.status, 'available');
+    const replacement = value(await clients.teacherA.rpc('issue_assessment_access_token', { target_schedule: scheduleId, target_student: ids.studentExpired, valid_minutes: 5 }))[0];
+    assert.equal(value(await clients.studentExpired.rpc('start_assessment_attempt', { target_schedule: scheduleId, access_token: replacement.access_token, origin: 'token' })).ok, true);
+    assert.ok((await clients.teacherB.rpc('manage_assessment_attempt', { target_attempt: attemptExpired, target_action: 'close', action_reason: 'Fora da escola' })).error);
+    const closed = value(await clients.teacherA.rpc('manage_assessment_attempt', { target_attempt: attemptExpired, target_action: 'close', action_reason: 'Encerramento supervisionado' }));
+    assert.equal(closed.status, 'pending_review');
+    assert.ok((await clients.studentExpired.rpc('save_assessment_response', { target_attempt: attemptExpired, target_attempt_item: randomUUID(), response_payload: {}, mark_for_review: false, idempotency_key: randomUUID() })).error);
+    const administrativeEvents = value(await clients.teacherA.rpc('list_assessment_attempt_events', { target_attempt: attemptExpired }));
+    for (const event of ['cancelled', 'reopened', 'started', 'submitted', 'pending_review']) assert.ok(administrativeEvents.some((row) => row.event_type === event), event);
+  });
+
   await t.test('monitoring and event log expose real scoped progress without N+1 reads', async () => {
     const monitor = value(await clients.teacherA.rpc('list_assessment_attempt_monitor', { target_assessment: assessment.id, page_size: 2, page_offset: 0 }));
-    assert.equal(monitor.length, 2); assert.equal(Number(monitor[0].total_count), 3);
+    const nextPage = value(await clients.teacherA.rpc('list_assessment_attempt_monitor', { target_assessment: assessment.id, page_size: 2, page_offset: 2 }));
+    assert.equal(monitor.length, 2); assert.equal(nextPage.length, 2); assert.equal(Number(monitor[0].total_count), 4);
+    const unissued = [...monitor, ...nextPage].find((row) => row.student_id === ids.studentUnissued);
+    assert.ok(unissued); assert.equal(unissued.attempt_id, null); assert.equal(unissued.attempt_status, 'scheduled'); assert.equal(Number(unissued.question_count), 0);
     assert.ok(monitor.some((row) => row.attempt_id === attemptA && row.attempt_status === 'graded' && Number(row.progress_percent) === 100));
     const events = value(await clients.teacherA.rpc('list_assessment_attempt_events', { target_attempt: attemptA }));
     for (const event of ['attempt_created', 'token_rotated', 'started', 'answer_saved', 'submitted', 'pending_review', 'graded']) {

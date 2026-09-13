@@ -48,12 +48,21 @@ const phase3Booklets = readMigration(
 const prePhase4Stabilization = readMigration('20260913080728_stabilize_item_storage_and_snapshots.sql');
 const phase4ReservedMigration = readMigration('20260912231327_add_assessment_runtime.sql');
 const phase4Runtime = readMigration('20260913111359_add_assessment_application_runtime.sql');
+const phase4Monitor = readMigration('20260913153000_complete_phase4_application_monitor.sql');
 const institutionalAssessments = readFileSync(
   new URL('../components/institutional-assessments.tsx', import.meta.url),
   'utf8',
 );
 const studentConnect = readFileSync(
   new URL('../components/student-connect.tsx', import.meta.url),
+  'utf8',
+);
+const studentAssessmentRuntime = readFileSync(
+  new URL('../components/student-assessment-runtime.tsx', import.meta.url),
+  'utf8',
+);
+const assessmentApplicationMonitor = readFileSync(
+  new URL('../components/assessment-application-monitor.tsx', import.meta.url),
   'utf8',
 );
 const teacherPortal = readFileSync(
@@ -342,8 +351,26 @@ test('Phase 4 runtime keeps tokens, timing, grading and writes behind guarded RP
   assert.match(phase4Runtime, /revoke all on public\.assessment_attempts from public, anon, authenticated/);
   assert.match(phase4Runtime, /create policy assessment_attempt_items_staff_read/);
   assert.match(phase4Runtime, /cron\.schedule/);
+  assert.match(phase4Monitor, /join public\.student_enrollments as enrollment/);
+  assert.match(phase4Monitor, /coalesce\(attempt\.status, 'scheduled'\)/);
+  assert.match(phase4Monitor, /limit least\(greatest\(page_size, 1\), 100\)/);
   assert.doesNotMatch(phase4Runtime, /service_role/i);
   assert.equal(phase4ReservedMigration, '');
+});
+
+test('Phase 4 UI exposes real autosave, resume, timing, monitoring and guarded staff actions', () => {
+  assert.match(studentConnect, /<StudentAssessmentRuntime \/>/);
+  assert.match(studentAssessmentRuntime, /save_assessment_response/);
+  assert.match(studentAssessmentRuntime, /resume_assessment_attempt/);
+  assert.match(studentAssessmentRuntime, /tempo do servidor/);
+  assert.match(studentAssessmentRuntime, /saveStateLabel/);
+  assert.match(studentAssessmentRuntime, /allow_back_navigation/);
+  assert.match(assessmentApplicationMonitor, /list_assessment_attempt_monitor/);
+  assert.match(assessmentApplicationMonitor, /window\.setInterval/);
+  assert.match(assessmentApplicationMonitor, /window\.clearInterval/);
+  assert.match(assessmentApplicationMonitor, /target_action: action/);
+  assert.match(assessmentApplicationMonitor, /list_assessment_attempt_events/);
+  assert.doesNotMatch(`${studentAssessmentRuntime}\n${assessmentApplicationMonitor}`, /service[_ -]?role|SUPABASE_SERVICE/i);
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {
