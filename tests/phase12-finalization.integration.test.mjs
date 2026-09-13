@@ -13,6 +13,7 @@ const ok = (r) => { assert.ifError(r.error); return r.data; };
 test('Phases 1 and 2 finalization: real operations and authorization', async (t) => {
   if (!local || !anon || !serviceKey) { t.skip('Requires disposable local Supabase'); return; }
   const service = createClient(url, serviceKey, opts);
+  const anonymous = createClient(url, anon, opts);
   const suffix = randomUUID().slice(0, 8);
   const password = `Local-only-${suffix}-!Aa12345`;
   const ids = {}, clients = {}, emails = {};
@@ -123,7 +124,13 @@ test('Phases 1 and 2 finalization: real operations and authorization', async (t)
     const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64');
     ok(await clients.teacher.storage.from('assessment-item-images').upload(imagePath,png,{contentType:'image/png'}));
     ok(await clients.teacher.rpc('set_item_images',{target_item:item,paths:[imagePath]}));
+    assert.ifError((await clients.teacher.storage.from('assessment-item-images').download(imagePath)).error);
     assert.ok((await clients.otherAdmin.storage.from('assessment-item-images').download(imagePath)).error);
+    assert.ok((await clients.student.storage.from('assessment-item-images').download(imagePath)).error);
+    assert.ok((await anonymous.storage.from('assessment-item-images').download(imagePath)).error);
+    assert.ok((await clients.student.storage.from('assessment-item-images').upload(`${network.id}/${item}/${randomUUID()}.png`,png,{contentType:'image/png'})).error);
+    assert.ok((await clients.otherAdmin.storage.from('assessment-item-images').upload(`${network.id}/${item}/${randomUUID()}.png`,png,{contentType:'image/png'})).error);
+    assert.ok((await clients.teacher.storage.from('assessment-item-images').upload(`${otherNetwork.id}/${item}/${randomUUID()}.png`,png,{contentType:'image/png'})).error);
     assert.ok((await clients.teacher.storage.from('assessment-item-images').upload(`${network.id}/${item}/${randomUUID()}.svg`,'<svg/>',{contentType:'image/svg+xml'})).error);
     assert.ok((await clients.teacher.storage.from('assessment-item-images').upload(`${network.id}/${item}/${randomUUID()}.png`,Buffer.alloc(5242881),{contentType:'image/png'})).error);
   });
@@ -136,19 +143,38 @@ test('Phases 1 and 2 finalization: real operations and authorization', async (t)
     assert.ok((await clients.approver.rpc('transition_assessment_item',{target_item:item,target_action:'reject'})).error);
     ok(await clients.approver.rpc('transition_assessment_item',{target_item:item,target_action:'approve',action_comment:'Aprovado pedagogicamente'}));
     const snapshots=ok(await clients.teacher.from('assessment_item_versions').select('*').eq('item_id',item).order('version_number'));
-    assert.equal(snapshots.length,5); assert.ok(snapshots.at(-1).snapshot.image_paths.includes(imagePath));
+    assert.equal(snapshots.length,5);
+    const approvedSnapshot=structuredClone(snapshots.at(-1).snapshot);
+    assert.ok(approvedSnapshot.image_paths.includes(imagePath));
+    assert.equal(approvedSnapshot.statement,payload.statement);
+    assert.equal(approvedSnapshot.formula,payload.formula);
+    assert.equal(approvedSnapshot.options.length,4);
+    assert.equal(approvedSnapshot.options.filter((option)=>option.is_correct).length,1);
+    assert.ok(approvedSnapshot.options.filter((option)=>!option.is_correct).every((option)=>option.distractor_analysis));
     assert.ok((await clients.teacher.rpc('save_assessment_item',{target_network:network.id,target_item:item,payload,item_options:options})).error);
     const revision=ok(await clients.teacher.rpc('revise_assessment_item',{target_item:item}));assert.notEqual(revision,item);
     ok(await clients.teacher.rpc('save_assessment_item',{target_network:network.id,target_item:revision,payload:{...payload,statement:'Enunciado revisado para o exemplo.'},item_options:options}));
     assert.deepEqual(ok(await clients.teacher.from('assessment_item_versions').select('*').eq('item_id',item).order('version_number')),snapshots);
+    assert.deepEqual(snapshots.at(-1).snapshot,approvedSnapshot);
     await clients.teacher.storage.from('assessment-item-images').remove([imagePath]);
     assert.ifError((await clients.teacher.storage.from('assessment-item-images').download(imagePath)).error);
   });
   await t.test('1500+ DEMO rows paginate on server; coverage and readiness use real counts',async()=>{
+    const beforeScale=await service.from('assessment_items').select('id',{count:'exact',head:true}).eq('network_id',network.id);
+    assert.ifError(beforeScale.error);assert.equal(beforeScale.count,2,'approved item and its draft revision must both exist');
     for(let n=0;n<1500;n+=100) ok(await service.from('assessment_items').insert(Array.from({length:100},(_,j)=>({...payload,network_id:network.id,author_id:ids.teacher,internal_title:`DEMO escala ${n+j}`,item_type:'essay'}))));
     const args={target_network:network.id,filters:{curriculum:curriculum.id,type:'essay',difficulty:'medium',author:ids.teacher},page_size:25};
-    const first=ok(await clients.teacher.rpc('item_bank_directory',args));const second=ok(await clients.teacher.rpc('item_bank_directory',{...args,page_offset:25}));
-    assert.equal(first.length,25);assert.equal(first[0].total_count,1500);assert.ok(!first.some(x=>second.some(y=>x.item_id===y.item_id)));
+    const first=ok(await clients.teacher.rpc('item_bank_directory',args));
+    const middle=ok(await clients.teacher.rpc('item_bank_directory',{...args,page_offset:725}));
+    const last=ok(await clients.teacher.rpc('item_bank_directory',{...args,page_offset:1475}));
+    for(const page of [first,middle,last]){assert.equal(page.length,25);assert.equal(page[0].total_count,1500);}
+    const allIds=new Set();
+    for(let offset=0;offset<1500;offset+=100){
+      const page=ok(await clients.teacher.rpc('item_bank_directory',{...args,page_size:100,page_offset:offset}));
+      for(const pageItem of page) assert.equal(allIds.has(pageItem.item_id),false,'server pagination must not duplicate items');
+      page.forEach((pageItem)=>allIds.add(pageItem.item_id));
+    }
+    assert.equal(allIds.size,1500,'server pagination must not lose items');
     assert.ok((await clients.otherAdmin.rpc('item_bank_directory',args)).error);
     const coverage=ok(await clients.teacher.rpc('item_bank_coverage',{target_network:network.id,target_curriculum:curriculum.id}));assert.equal(coverage.totals.total,1502);assert.equal(coverage.totals.approved,1);
     assert.equal(ok(await clients.teacher.rpc('item_content_readiness',{target_network:network.id,target_subject:skill.subject_id,target_year:skill.curriculum_school_year_id,minimum_items:5})).ready,false);

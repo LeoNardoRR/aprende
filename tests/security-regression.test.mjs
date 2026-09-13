@@ -45,6 +45,8 @@ const phase3Core = readMigration(
 const phase3Booklets = readMigration(
   '20260912181500_add_assessment_booklets_and_scheduling.sql',
 );
+const prePhase4Stabilization = readMigration('20260913080728_stabilize_item_storage_and_snapshots.sql');
+const phase4ReservedMigration = readMigration('20260912231327_add_assessment_runtime.sql');
 const institutionalAssessments = readFileSync(
   new URL('../components/institutional-assessments.tsx', import.meta.url),
   'utf8',
@@ -307,6 +309,18 @@ test('Phase 3 UI exposes the complete assessment construction route', () => {
   assert.match(institutionalAssessments, /transition_diagnostic_assessment/);
   assert.match(institutionalAssessments, /schedule_diagnostic_assessment/);
   assert.match(institutionalAssessments, /Banco de Itens → Avaliação → Cadernos/);
+});
+
+test('pre-Phase 4 stabilization qualifies item storage and freezes complete snapshots', () => {
+  assert.match(prePhase4Stabilization, /v_network_id := v_parts\[1\]::uuid/);
+  assert.match(prePhase4Stabilization, /assessment_item\.network_id = v_network_id/);
+  assert.match(prePhase4Stabilization, /private\.can_use_item_image\(storage\.objects\.name, false\)/);
+  assert.match(prePhase4Stabilization, /storage\.objects\.owner_id = \(select auth\.uid\(\)\)::text/);
+  assert.match(prePhase4Stabilization, /'image_paths', to_jsonb\(item\.image_paths\)/);
+  assert.match(prePhase4Stabilization, /'is_correct', item_option\.is_correct/);
+  assert.match(prePhase4Stabilization, /'distractor_analysis', item_option\.distractor_analysis/);
+  assert.doesNotMatch(prePhase4Stabilization, /assessment_attempts/);
+  assert.equal(phase4ReservedMigration, '');
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {
