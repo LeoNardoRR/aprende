@@ -47,6 +47,7 @@ const phase3Booklets = readMigration(
 );
 const prePhase4Stabilization = readMigration('20260913080728_stabilize_item_storage_and_snapshots.sql');
 const phase4ReservedMigration = readMigration('20260912231327_add_assessment_runtime.sql');
+const phase4Runtime = readMigration('20260913111359_add_assessment_application_runtime.sql');
 const institutionalAssessments = readFileSync(
   new URL('../components/institutional-assessments.tsx', import.meta.url),
   'utf8',
@@ -329,6 +330,20 @@ test('pre-Phase 4 stabilization qualifies item storage and freezes complete snap
   assert.doesNotMatch(prePhase4Stabilization, /assessment_attempts/);
   assert.equal(phase4ReservedMigration, '');
   assert.doesNotMatch(frontendSource, /service[_ -]?role|SUPABASE_SERVICE/i);
+});
+
+test('Phase 4 runtime keeps tokens, timing, grading and writes behind guarded RPCs', () => {
+  assert.match(phase4Runtime, /unique \(schedule_id, student_id\)/);
+  assert.match(phase4Runtime, /extensions\.digest\(generated_token, 'sha256'\)/);
+  assert.match(phase4Runtime, /for update skip locked/);
+  assert.match(phase4Runtime, /private\.grade_and_close_assessment_attempt/);
+  assert.match(phase4Runtime, /private\.student_owns_active_attempt/);
+  assert.match(phase4Runtime, /private\.has_permission\('assessment\.apply', attempt\.network_id, attempt\.school_id\)/);
+  assert.match(phase4Runtime, /revoke all on public\.assessment_attempts from public, anon, authenticated/);
+  assert.match(phase4Runtime, /create policy assessment_attempt_items_staff_read/);
+  assert.match(phase4Runtime, /cron\.schedule/);
+  assert.doesNotMatch(phase4Runtime, /service_role/i);
+  assert.equal(phase4ReservedMigration, '');
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {

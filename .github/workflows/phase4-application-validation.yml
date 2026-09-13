@@ -1,0 +1,59 @@
+name: Validate Phase 4 assessment runtime
+
+on:
+  push:
+    branches: [codex/fase4-aplicacao-avaliacoes]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase4-application-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Start disposable Supabase and verify migrations
+        run: |
+          npx supabase start
+          npx supabase db reset --local
+          npx supabase migration list --local
+          npx supabase db push --dry-run --local
+      - name: Serve Edge Functions locally
+        run: npx supabase functions serve institutional-invite > /tmp/aprende-functions.log 2>&1 &
+      - name: Run every test without skips
+        run: |
+          eval "$(npx supabase status -o env)"
+          test -n "$API_URL" && test -n "$ANON_KEY" && test -n "$SERVICE_ROLE_KEY"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          npm test | tee /tmp/aprende-test.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/aprende-test.log | tail -1)" = "0"
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/institutional-invite/index.ts
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run build:pages
+      - name: Run all local database advisors
+        run: npx supabase db advisors --local --type all --level info --fail-on error
+      - name: Report dependency audit
+        run: npm audit --audit-level=critical
+      - name: Stop disposable Supabase
+        if: always()
+        run: npx supabase stop --no-backup
