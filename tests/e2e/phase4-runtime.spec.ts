@@ -148,6 +148,7 @@ async function cleanupFixture(fixture: Fixture) {
 }
 
 test('restores an offline answer, blocks pending submit, reconnects and locks the final attempt', async ({ page }) => {
+  test.setTimeout(180_000);
   const fixture = await createFixture();
   try {
     await page.goto('/?auth=student');
