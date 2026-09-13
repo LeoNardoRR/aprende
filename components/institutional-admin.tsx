@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Building2,
+  ChartNoAxesCombined,
   CalendarRange,
   CheckCircle2,
   ClipboardList,
@@ -24,6 +25,7 @@ import { InstitutionalEnrollments } from '@/components/institutional-enrollments
 import { InstitutionalPedagogy } from '@/components/institutional-pedagogy';
 import { InstitutionalBulk } from '@/components/institutional-bulk';
 import { InstitutionalUsers } from '@/components/institutional-users';
+import { AnalyticsDashboard } from '@/components/analytics-dashboard';
 import { supabase } from '@/lib/supabase';
 import type { Database, Tables } from '@/lib/database.types';
 
@@ -214,6 +216,7 @@ export function InstitutionalAdmin({ profile, preview = false, onExit }: { profi
           <a href="#curricula"><LibraryBig /> Currículos</a>
           <a href="#item-bank"><BookOpenCheck /> Banco de Itens</a>
           <a href="#assessments"><ClipboardList /> Avaliações</a>
+          <a href="#analytics"><ChartNoAxesCombined /> Analytics</a>
         </nav>
         <button type="button" disabled={signingOut} onClick={() => void signOut()}><LogOut /> {signingOut ? 'Saindo…' : 'Sair'}</button>
       </aside>
@@ -256,6 +259,7 @@ export function InstitutionalAdmin({ profile, preview = false, onExit }: { profi
             <InstitutionalUsers profile={profile} networks={networks} schools={schools} preview={preview} />
             <InstitutionalPedagogy profile={profile} networks={networks} preview={preview} />
             <InstitutionalAssessments profile={profile} networks={networks} schools={schools} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
+            <div id="analytics"><AnalyticsDashboard mode="institutional" networks={networks} schools={schools} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} /></div>
           </>
         )}
       </main>
