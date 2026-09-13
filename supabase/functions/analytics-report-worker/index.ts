@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.116.0';
 import JSZip from 'npm:jszip@3.10.1';
 import { PDFDocument, StandardFonts, rgb } from 'npm:pdf-lib@1.17.1';
 
@@ -16,6 +16,7 @@ const csvCell = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""'
 type StudentRow = Record<string, string | number | boolean | null>;
 type Dashboard = { students?: StudentRow[]; summary?: Record<string, unknown> };
 type Job = { id: string; requested_by: string; network_id: string; report_type: string; status: string; filters: Record<string, unknown>; attempt_count: number };
+type WorkerClient = SupabaseClient<any, any, any, any, any>;
 
 async function studentPdf(student: StudentRow) {
   const pdf = await PDFDocument.create();
@@ -47,7 +48,7 @@ async function studentPdf(student: StudentRow) {
   return pdf.save();
 }
 
-async function processJob(service: ReturnType<typeof createClient>, caller: ReturnType<typeof createClient>, job: Job) {
+async function processJob(service: WorkerClient, caller: WorkerClient, job: Job) {
   try {
     const claimed = await service.from('analytics_report_jobs').update({ status: 'processing', progress: 1, started_at: new Date().toISOString(), attempt_count: job.attempt_count + 1, updated_at: new Date().toISOString() }).eq('id', job.id).eq('status', 'queued').select('id').maybeSingle();
     if (claimed.error) throw claimed.error;
