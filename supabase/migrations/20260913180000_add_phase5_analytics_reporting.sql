@@ -306,7 +306,7 @@ begin
   ), ranked_items as (
     select item.*, percent_rank() over(partition by item.assessment_id order by item.attempt_percentage) as performance_rank
     from private.analytics_item_facts item join scoped s on s.attempt_id=item.attempt_id
-    where item.attempt_percentage is not null and item.is_correct is not null
+    where item.attempt_percentage is not null and item.is_correct is not null and item.student_id<>(select auth.uid())
   ), item_rows as (
     select item.item_id, item.statement, item.item_type,
       count(item.response_id) filter (where item.answer <> '{}'::jsonb)::integer as responses,
@@ -414,6 +414,7 @@ returns jsonb language sql stable security definer set search_path = '' as $$
     join private.analytics_attempt_facts fact on fact.attempt_id = item.attempt_id
     where item.assessment_id = target_assessment and not item.is_annulled
       and private.analytics_can_access_attempt(item.attempt_id)
+      and item.student_id<>(select auth.uid())
       and private.analytics_filters_match(fact, filters)
       and item.item_type in ('multiple_choice','true_false')
   ), expanded as (
@@ -436,6 +437,7 @@ returns jsonb language sql stable security definer set search_path = '' as $$
     join private.analytics_attempt_facts fact on fact.attempt_id=item.attempt_id
     where item.assessment_id=target_assessment and not item.is_annulled
       and item.item_type in ('multiple_choice','true_false') and item.is_correct is not null
+      and item.student_id<>(select auth.uid())
       and fact.percentage is not null and private.analytics_can_access_attempt(item.attempt_id)
       and private.analytics_filters_match(fact, filters)
   ), participant as (

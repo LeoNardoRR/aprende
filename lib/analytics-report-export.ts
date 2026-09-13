@@ -19,19 +19,21 @@ export type AnalyticsReportPayload = {
 
 export type ExportFormat = 'pdf' | 'docx' | 'csv';
 const labels: Record<string, string> = {
-  attempts: 'Tentativas', students: 'Estudantes', completed: 'Concluídas', pending_review: 'Aguardando correção',
+  attempts: 'Tentativas', students: 'Estudantes', eligible_students: 'Estudantes agendados', completed: 'Concluídas', pending_review: 'Aguardando correção',
   questions: 'Questões', answered: 'Respondidas', unanswered: 'Não respondidas', correct: 'Acertos', incorrect: 'Erros',
   score: 'Pontuação', max_score: 'Pontuação máxima', participation_percentage: 'Participação (%)', average_time_seconds: 'Tempo médio (s)',
   observations: 'Observações', mean: 'Média', median: 'Mediana', minimum: 'Mínimo', maximum: 'Máximo', variance: 'Variância', standard_deviation: 'Desvio padrão',
 };
 const textValue = (value: unknown) => value == null ? 'Indisponível' : typeof value === 'number' ? value.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : String(value);
 const reportLines = (payload: AnalyticsReportPayload) => {
+  const student = payload.report_type === 'student' ? payload.data.students?.[0] : null;
   const lines = [
     'Aprendê — Relatório de Analytics Educacionais',
     `Tipo: ${payload.report_type}`,
     `Gerado em: ${new Date(payload.generated_at).toLocaleString('pt-BR')}`,
     `Metodologia: ${payload.methodology_version}${payload.provisional ? ' · RESULTADO PROVISÓRIO' : ''}`,
     `Filtros: ${Object.entries(payload.filters).filter(([, value]) => value).map(([key, value]) => `${key}=${value}`).join(', ') || 'escopo autorizado completo'}`,
+    ...(student ? [`Estudante: ${textValue(student.student_name)}`, `Escola: ${textValue(student.school_name)}`, `Turma: ${textValue(student.classroom_name)}`, `Avaliação: ${textValue(student.assessment_title)}`, `Data: ${textValue(student.submitted_at)}`] : []),
     '', 'Resumo',
     ...Object.entries(payload.data.summary ?? {}).map(([key, value]) => `${labels[key] ?? key}: ${textValue(value)}`),
     '', 'Estatística descritiva',

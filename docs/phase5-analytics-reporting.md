@@ -119,7 +119,7 @@ Nenhuma materialized view ou cache foi adotado nesta versão. Os dados são deri
 - `tests/analytics-statistics.test.mjs`: fórmulas, casos degenerados, proficiência, evolução e assinaturas reais dos arquivos PDF/DOCX/CSV.
 - `tests/phase5-integration.test.mjs`: rede, duas escolas, turmas, alunos, avaliação, quatro itens, habilidade, tentativas e respostas; confere totais em todos os escopos, RLS negativa, proficiência, Cronbach, jobs e idempotência.
 - `tests/e2e/phase4-runtime.spec.ts`: amplia o fluxo conectado até o dashboard do professor, habilidade, aluno e download de relatório.
-- Ensaio do CI: 12.849 tentativas, detalhes paginados a 200 e medição da RPC agregada. O tempo observado será registrado após a execução final do Actions.
+- Ensaio do CI: 12.849 tentativas, detalhes paginados a 200 e medição da RPC agregada. A execução de 13/09/2026 concluiu a agregação em 4.638 ms no runner compartilhado do GitHub Actions.
 
 ## Validação e riscos conhecidos
 

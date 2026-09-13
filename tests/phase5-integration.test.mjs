@@ -114,7 +114,9 @@ test('Phase 5 closes attempt, curriculum, proficiency and tenant analytics end t
 
   await t.test('student, teacher, manager, other network and anonymous calls are isolated server-side', async () => {
     const own = value(await clients.student1.rpc('get_analytics_dashboard',{ filters: { assessment_id: assessment.id } }));
-    assert.equal(Number(own.summary.students),1); assert.equal(own.students[0].student_id,ids.student1);
+    assert.equal(Number(own.summary.students),1); assert.equal(own.students[0].student_id,ids.student1); assert.equal(own.items.length,0);
+    assert.equal(value(await clients.student1.rpc('get_item_option_distribution',{ target_assessment:assessment.id,filters:{} })).length,0);
+    assert.equal(value(await clients.student1.rpc('get_assessment_reliability',{ target_assessment:assessment.id,filters:{} })).available,false);
     const manipulated = value(await clients.student1.rpc('get_analytics_dashboard',{ filters: { student_id: ids.student2 } }));
     assert.equal(manipulated.state,'empty'); assert.equal(Number(manipulated.summary.students),0);
     const teacher = value(await clients.teacherA.rpc('get_analytics_dashboard',{ filters: { network_id: networkA.id } })); assert.equal(Number(teacher.summary.students),4);
