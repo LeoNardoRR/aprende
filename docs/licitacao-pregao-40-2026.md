@@ -5,12 +5,15 @@
 **Estabilização das Fases 1–3:** branch `codex/estabiliza-pre-fase4`
 **Runtime de aplicação da Fase 4:** branch `codex/finaliza-fase4`
 **Analytics e relatórios da Fase 5:** branch `codex/fase5-analytics-relatorios`
+**Auditoria e preparação da PoC da Fase 6:** branch `codex/fase6-poc-licitacao`, base `89b336ab3dc89af02323ff5f8635beae3b869550`
 **Data da auditoria:** 13/09/2026
 **Fonte usada nesta rodada:** requisitos funcionais fornecidos na solicitação e o edital retificado anexado em `93578c201e504a12a59cfb9149717ea8Edital+Retificado+PregAo+EletrOnico+n++402026.pdf`. A leitura confirmou que a PoC oficial está nas páginas 67–77 e cobre aproximadamente 70% do Termo de Referência.
 
 ## Regra de leitura
 
 Os estados abaixo descrevem o que foi confirmado no código e nos testes atuais. Uma estrutura parecida não é considerada implementação do requisito. Conteúdo pedagógico, operação externa, contas de loja e configuração institucional ficam marcados como dependência quando ainda não há evidência no repositório.
+
+A matriz executável e mais conservadora da Fase 6 está em [`docs/poc/matriz-conformidade.json`](poc/matriz-conformidade.json). Ela é a fonte do Control Center interno, valida caminhos e impede classificar como atendido um requisito sem implementação, teste e evidência. A conformidade ponderada inicial é **47,2%**; há requisitos P0 das Fases 7/8, portanto o produto ainda não está pronto para a PoC integral.
 
 | ID | Requisito | Fonte | Status | Tela | Backend | Teste | Observações |
 |---:|---|---|---|---|---|---|---|

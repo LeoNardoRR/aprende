@@ -39,5 +39,6 @@ A conformidade ponderada atribui 1 ponto a `ATENDIDO`, 0,5 a `PARCIAL` e 0 a `N�
 - [Evidências](evidencias.md)
 - [Checklist pré-PoC](checklist-pre-poc.md)
 - [Performance](performance.md)
+- [Segurança e LGPD](security-lgpd.md)
 
 Produção não foi alterada.
