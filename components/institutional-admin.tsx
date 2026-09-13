@@ -7,6 +7,7 @@ import {
   CalendarRange,
   CheckCircle2,
   ClipboardList,
+  ClipboardCheck,
   GraduationCap,
   LoaderCircle,
   LogOut,
@@ -26,6 +27,7 @@ import { InstitutionalPedagogy } from '@/components/institutional-pedagogy';
 import { InstitutionalBulk } from '@/components/institutional-bulk';
 import { InstitutionalUsers } from '@/components/institutional-users';
 import { AnalyticsDashboard } from '@/components/analytics-dashboard';
+import { PocControlCenter } from '@/components/poc-control-center';
 import { supabase } from '@/lib/supabase';
 import type { Database, Tables } from '@/lib/database.types';
 
@@ -133,6 +135,7 @@ export function InstitutionalAdmin({ profile, preview = false, onExit }: { profi
   const [form, setForm] = useState<InstitutionalForm | null>(null);
 
   const canConfigure = profile.role === 'network_admin' || profile.role === 'manager';
+  const canAuditPoc = profile.role === 'network_admin' && (!preview || process.env.NODE_ENV !== 'production');
 
   const loadData = useCallback(async () => {
     if (preview) return;
@@ -217,7 +220,9 @@ export function InstitutionalAdmin({ profile, preview = false, onExit }: { profi
           <a href="#item-bank"><BookOpenCheck /> Banco de Itens</a>
           <a href="#assessments"><ClipboardList /> Avaliações</a>
           <a href="#analytics"><ChartNoAxesCombined /> Analytics</a>
+          {canAuditPoc && <a href="#poc"><ClipboardCheck /> Control Center PoC</a>}
         </nav>
+        <small className="institutional-version">Aprendê v0.1.0 · Fase 6</small>
         <button type="button" disabled={signingOut} onClick={() => void signOut()}><LogOut /> {signingOut ? 'Saindo…' : 'Sair'}</button>
       </aside>
       <main className="institutional-main">
@@ -260,6 +265,7 @@ export function InstitutionalAdmin({ profile, preview = false, onExit }: { profi
             <InstitutionalPedagogy profile={profile} networks={networks} preview={preview} />
             <InstitutionalAssessments profile={profile} networks={networks} schools={schools} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
             <div id="analytics"><AnalyticsDashboard mode="institutional" networks={networks} schools={schools} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} /></div>
+            {canAuditPoc && <PocControlCenter />}
           </>
         )}
       </main>
