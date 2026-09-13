@@ -158,7 +158,7 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
   const fixture = await createFixture();
   try {
     console.log('[e2e] fixture criada');
-    await page.goto('/?auth=student');
+    await page.goto('/?mode=student');
     await page.getByLabel('E-mail').fill(fixture.email);
     await page.getByLabel('Senha').fill(fixture.password);
     await page.locator('form').getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -214,7 +214,7 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
     await expect(page.getByText('AVALIAÇÃO ENVIADA')).toBeVisible();
     await expect(page.locator('.assessment-options input[type="radio"]')).toHaveCount(0);
 
-    await page.goto('/?auth=teacher');
+    await page.goto('/?mode=teacher');
     await page.getByLabel('E-mail').fill(fixture.teacherEmail);
     await page.getByLabel('Senha').fill(fixture.password);
     await page.locator('form').getByRole('button', { name: 'Entrar', exact: true }).click();
