@@ -1,0 +1,115 @@
+name: Validate Phase 6 POC readiness
+
+on:
+  push:
+    branches: [codex/fase6-poc-licitacao]
+  pull_request:
+    branches: [master, codex/fase5-analytics-relatorios]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase6-poc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start disposable Supabase and verify migrations from zero
+        run: |
+          set -o pipefail
+          npx supabase start
+          npx supabase db reset --local
+          npx supabase migration list --local | tee /tmp/poc-migrations.log
+          npx supabase db push --dry-run --local
+      - name: Serve local Edge Functions
+        run: npx supabase functions serve > /tmp/poc-functions.log 2>&1 &
+      - name: Seed deterministic synthetic POC data
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          test -n "$API_URL" && test -n "$ANON_KEY" && test -n "$SERVICE_ROLE_KEY"
+          SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:poc | tee /tmp/poc-seed.log
+      - name: Validate executable compliance matrix
+        run: npm run poc:matrix
+      - name: Run all Phase 1-5 tests including the 12,849-row load case
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          PHASE5_LOAD_TEST=1 \
+          npm test | tee /tmp/poc-regression.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/poc-regression.log | tail -1)" = "0"
+      - name: Run connected POC scenarios without skips
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          npm run test:poc | tee /tmp/poc-tests.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/poc-tests.log | tail -1)" = "0"
+      - name: Run pre-demonstration smoke test
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run poc:smoke | tee /tmp/poc-smoke.log
+      - name: Run Playwright application, offline, analytics and POC flows
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" \
+          NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" \
+          VITE_SUPABASE_URL="$API_URL" \
+          VITE_SUPABASE_ANON_KEY="$ANON_KEY" \
+          npm run test:e2e
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check every Edge Function
+        run: |
+          set -o pipefail
+          deno check supabase/functions/institutional-invite/index.ts
+          deno check supabase/functions/analytics-report-worker/index.ts
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run build:pages
+      - name: Run local database advisors
+        run: npx supabase db advisors --local --type all --level info --fail-on error | tee /tmp/poc-advisors.log
+      - name: Review dependencies without forced upgrades
+        run: npm audit --audit-level=critical --json > artifacts/poc/npm-audit.json
+      - name: Generate validation report
+        run: npm run poc:report
+      - name: Collect text diagnostics
+        if: always()
+        run: |
+          mkdir -p artifacts/poc/logs
+          find /tmp -maxdepth 1 -name 'poc-*.log' -exec cp {} artifacts/poc/logs/ \;
+      - name: Preserve POC evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase6-poc-evidence
+          path: |
+            artifacts/poc
+            test-results
+          retention-days: 7
+      - name: Stop disposable Supabase
+        if: always()
+        run: npx supabase stop --no-backup

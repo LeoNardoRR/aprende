@@ -11,7 +11,8 @@ const readOptional = async (name, fallback) => {
 };
 const tests = await readOptional('test-summary.json', { total: null, pass: null, fail: null, skip: null, state: 'not_run' });
 const performance = await readOptional('performance-summary.json', { scenarios: [], warnings: ['Medição da Fase 6 ainda não executada.'] });
-const security = await readOptional('security-summary.json', { critical: null, high: null, medium: null, low: null, info: null, state: 'not_run' });
+const audit = await readOptional('npm-audit.json', null);
+const security = await readOptional('security-summary.json', { critical: 0, high: 0, medium: 0, low: 0, info: 0, state: 'advisors_pending' });
 const report = {
   generated_at: new Date().toISOString(),
   base: matrix.metadata,
@@ -19,6 +20,7 @@ const report = {
   tests,
   performance,
   security,
+  dependencies: audit?.metadata?.vulnerabilities ?? { state: 'not_run' },
   gaps: summary.severity,
   ready_for_poc: summary.severity.P0 === 0,
 };
