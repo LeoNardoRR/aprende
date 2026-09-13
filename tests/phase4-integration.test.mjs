@@ -284,7 +284,10 @@ test('Phase 4 applies diagnostic assessments securely from token through grading
   await t.test('server deadline auto-submits and blocks late or duplicate writes', async () => {
     const attemptBefore = value(await service.from('assessment_attempts').select('started_at,deadline_at').eq('id', attemptB).single());
     assert.ok(attemptBefore.started_at && attemptBefore.deadline_at);
-    value(await service.from('assessment_attempts').update({ deadline_at: new Date(Date.now() - 1000).toISOString() }).eq('id', attemptB));
+    value(await service.from('assessment_attempts').update({
+      started_at: new Date(Date.now() - 60_000).toISOString(),
+      deadline_at: new Date(Date.now() - 1000).toISOString(),
+    }).eq('id', attemptB));
     const expired = value(await clients.studentB.rpc('get_assessment_attempt', { target_attempt: attemptB }));
     assert.equal(expired.attempt.submission_kind, 'auto_submitted');
     assert.equal(expired.attempt.status, 'pending_review');

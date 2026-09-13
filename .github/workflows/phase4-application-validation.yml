@@ -35,6 +35,7 @@ jobs:
         run: npx supabase functions serve institutional-invite > /tmp/aprende-functions.log 2>&1 &
       - name: Run every test without skips
         run: |
+          set -o pipefail
           eval "$(npx supabase status -o env)"
           test -n "$API_URL" && test -n "$ANON_KEY" && test -n "$SERVICE_ROLE_KEY"
           SUPABASE_URL="$API_URL" \

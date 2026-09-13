@@ -49,6 +49,11 @@ const prePhase4Stabilization = readMigration('20260913080728_stabilize_item_stor
 const phase4ReservedMigration = readMigration('20260912231327_add_assessment_runtime.sql');
 const phase4Runtime = readMigration('20260913111359_add_assessment_application_runtime.sql');
 const phase4Monitor = readMigration('20260913153000_complete_phase4_application_monitor.sql');
+const phase4PolicyHelpers = readMigration('20260913160000_fix_phase4_policy_helper_execution.sql');
+const phase4Workflow = readFileSync(
+  new URL('../.github/workflows/phase4-application-validation.yml', import.meta.url),
+  'utf8',
+);
 const institutionalAssessments = readFileSync(
   new URL('../components/institutional-assessments.tsx', import.meta.url),
   'utf8',
@@ -354,6 +359,10 @@ test('Phase 4 runtime keeps tokens, timing, grading and writes behind guarded RP
   assert.match(phase4Monitor, /join public\.student_enrollments as enrollment/);
   assert.match(phase4Monitor, /coalesce\(attempt\.status, 'scheduled'\)/);
   assert.match(phase4Monitor, /limit least\(greatest\(page_size, 1\), 100\)/);
+  assert.match(phase4PolicyHelpers, /grant execute on function private\.student_owns_active_attempt\(uuid\) to authenticated/);
+  assert.match(phase4PolicyHelpers, /grant execute on function private\.can_read_attempt_item_image\(text\) to authenticated/);
+  assert.doesNotMatch(phase4PolicyHelpers, /to anon/);
+  assert.match(phase4Workflow, /set -o pipefail/);
   assert.doesNotMatch(phase4Runtime, /service_role/i);
   assert.equal(phase4ReservedMigration, '');
 });
