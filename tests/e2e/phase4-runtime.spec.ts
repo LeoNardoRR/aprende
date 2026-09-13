@@ -155,6 +155,8 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
     await expect(page.getByRole('heading', { name: 'Minhas aplicações' })).toBeVisible();
 
     const application = page.locator('.assessment-entry-list article').filter({ hasText: fixture.title });
+    await page.getByRole('button', { name: 'Atualizar avaliações' }).click();
+    await expect(application).toBeVisible();
     await application.getByRole('textbox', { name: `Token para ${fixture.title}` }).fill(fixture.token);
     await application.getByRole('button', { name: 'Acessar' }).click();
     await expect(page.getByRole('heading', { name: fixture.title })).toBeVisible();
