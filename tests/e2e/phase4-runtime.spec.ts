@@ -23,6 +23,15 @@ function data(result: { data: unknown; error: unknown }): any {
   return result.data;
 }
 
+function success(result: { error: unknown }): void {
+  if (result.error) {
+    const message = typeof result.error === 'object' && result.error && 'message' in result.error
+      ? String(result.error.message)
+      : 'Unknown Supabase error';
+    throw new Error(message);
+  }
+}
+
 async function signIn(email: string, password: string) {
   const client = createClient(required(url, 'SUPABASE_URL'), required(anonKey, 'SUPABASE_ANON_KEY'), clientOptions);
   const signedIn = data(await client.auth.signInWithPassword({ email, password }));
@@ -62,13 +71,13 @@ async function createFixture(): Promise<Fixture> {
   const year = data(await service.from('academic_years').insert({ network_id: network.id, label: `2026 E2E ${suffix}`, starts_on: '2026-01-01', ends_on: '2026-12-31', status: 'open' }).select().single());
   const schoolYear = data(await service.from('school_years').insert({ school_id: school.id, name: '6º ano', code: `6E2E-${suffix}` }).select().single());
   for (const [userId, role] of [[teacherUser.id, 'teacher'], [student.id, 'student']] as const) {
-    data(await service.from('institutional_memberships').insert({ user_id: userId, network_id: network.id, school_id: school.id, role, status: 'active', created_by: teacherUser.id }));
+    success(await service.from('institutional_memberships').insert({ user_id: userId, network_id: network.id, school_id: school.id, role, status: 'active', created_by: teacherUser.id }));
   }
   const classroom = data(await service.from('classrooms').insert({
     owner_id: teacherUser.id, name: `Turma E2E ${suffix}`, subject: 'Matemática', join_code: `E${suffix.toUpperCase()}`,
     network_id: network.id, school_id: school.id, academic_year_id: year.id, school_year_id: schoolYear.id, classroom_status: 'active',
   }).select().single());
-  data(await service.from('student_enrollments').insert({
+  success(await service.from('student_enrollments').insert({
     student_id: student.id, network_id: network.id, school_id: school.id, academic_year_id: year.id,
     classroom_id: classroom.id, status: 'enrolled', source: 'manual', created_by: teacherUser.id,
   }));
@@ -92,7 +101,7 @@ async function createFixture(): Promise<Fixture> {
       is_correct: optionIndex === 1, feedback: null,
       distractor_analysis: optionIndex === 1 ? null : 'Análise DEMO do distrator.', sort_order: optionIndex - 1,
     }));
-    data(await service.from('assessment_item_versions').insert({
+    success(await service.from('assessment_item_versions').insert({
       item_id: item.id, version_number: 1, created_by: teacherUser.id,
       snapshot: {
         id: item.id, network_id: network.id, curriculum_id: curriculum.id,
