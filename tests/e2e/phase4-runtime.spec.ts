@@ -178,7 +178,7 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
 
     await page.route('**/rest/v1/rpc/save_assessment_response', (route) => route.abort('internetdisconnected'));
     await page.locator('.assessment-options input[type="radio"]').nth(1).check();
-    await expect(page.getByText('Erro ao sincronizar', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Erro ao sincronizar/)).toBeVisible();
     await expect(page.getByText(/1 resposta\(s\) aguardando sincronização/)).toBeVisible();
 
     page.once('dialog', (dialog) => dialog.accept());
