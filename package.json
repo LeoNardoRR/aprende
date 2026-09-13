@@ -15,6 +15,9 @@
     "build:pages": "vite build --config vite.pages.config.ts",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:e2e": "playwright test"
+    ,"poc:matrix": "node scripts/validate-poc-matrix.mjs"
+    ,"poc:report": "node scripts/generate-poc-report.mjs"
+    ,"test:poc": "node --test tests/poc/*.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
