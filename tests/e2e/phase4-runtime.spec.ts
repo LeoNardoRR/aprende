@@ -139,18 +139,25 @@ async function createFixture(): Promise<Fixture> {
 }
 
 async function cleanupFixture(fixture: Fixture) {
-  await fixture.service.from('assessment_attempts').delete().eq('network_id', fixture.networkId);
-  await fixture.service.from('audit_logs').delete().eq('network_id', fixture.networkId);
-  await fixture.service.from('networks').delete().eq('id', fixture.networkId);
-  await fixture.service.auth.admin.deleteUser(fixture.studentId);
-  const teacherProfile = data(await fixture.teacher.auth.getUser()).user;
-  if (teacherProfile) await fixture.service.auth.admin.deleteUser(teacherProfile.id);
+  const cleanup = async () => {
+    await fixture.service.from('assessment_attempts').delete().eq('network_id', fixture.networkId);
+    await fixture.service.from('audit_logs').delete().eq('network_id', fixture.networkId);
+    await fixture.service.from('networks').delete().eq('id', fixture.networkId);
+    await fixture.service.auth.admin.deleteUser(fixture.studentId);
+    const teacherProfile = data(await fixture.teacher.auth.getUser()).user;
+    if (teacherProfile) await fixture.service.auth.admin.deleteUser(teacherProfile.id);
+  };
+  await Promise.race([
+    cleanup(),
+    new Promise<void>((resolve) => setTimeout(resolve, 15_000)),
+  ]);
 }
 
 test('restores an offline answer, blocks pending submit, reconnects and locks the final attempt', async ({ page }) => {
   test.setTimeout(180_000);
   const fixture = await createFixture();
   try {
+    console.log('[e2e] fixture criada');
     await page.goto('/?auth=student');
     await page.getByLabel('E-mail').fill(fixture.email);
     await page.getByLabel('Senha').fill(fixture.password);
@@ -162,6 +169,7 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
     await application.getByRole('textbox', { name: `Token para ${fixture.title}` }).fill(fixture.token);
     await application.getByRole('button', { name: 'Acessar' }).click();
     await expect(page.getByRole('heading', { name: fixture.title })).toBeVisible();
+    console.log('[e2e] prova aberta');
 
     await page.locator('.assessment-options input[type="radio"]').first().check();
     await expect(page.getByText('Salvo', { exact: true })).toBeVisible();
@@ -195,6 +203,7 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
     page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Finalizar prova' }).click();
     await expect(page.getByText('AVALIAÇÃO ENVIADA')).toBeVisible();
+    console.log('[e2e] prova finalizada');
     const finished = data(await fixture.service.from('assessment_attempts').select('status,submitted_at').eq('id', fixture.attemptId).single());
     expect(finished.status).toBe('graded');
     expect(finished.submitted_at).not.toBeNull();
@@ -212,6 +221,7 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
     await expect(page.getByRole('heading', { name: /Olá,/ })).toBeVisible();
     await page.getByRole('button', { name: 'Notas' }).click();
     await expect(page.getByRole('heading', { name: 'Desempenho da turma' })).toBeVisible();
+    console.log('[e2e] analytics carregado');
     await expect(page.getByText('Participação', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Habilidades' })).toBeVisible();
     await page.getByRole('button', { name: 'Detalhar' }).first().click();
@@ -220,7 +230,9 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
     await page.getByRole('button', { name: 'PDF', exact: true }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/^aprende-classroom-.*\.pdf$/);
+    console.log('[e2e] relatório baixado');
   } finally {
     await cleanupFixture(fixture);
+    console.log('[e2e] fixture limpa');
   }
 });
