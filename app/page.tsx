@@ -434,6 +434,11 @@ function Home() {
     }
     if (authMode === 'teacher' || authMode === 'student') {
       rememberAuthMode(authMode);
+      if (authMode === 'student') {
+        autoCloseStudentConnect.current = false;
+        setShowTeacher(false);
+        setShowStudentConnect(true);
+      }
       setAuthModeReady(true);
       return () => {
         active = false;
