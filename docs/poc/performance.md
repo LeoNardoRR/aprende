@@ -8,7 +8,7 @@
 - Tempo observado no HEAD base: 7.269 ms.
 - Limite automatizado: 12.000 ms.
 
-Esse teste prova volume de agregação analítica. Ele não prova 12.849 logins concorrentes nem distribuição real por 33 escolas. A Fase 6 mede separadamente a distribuição sintética por 33 escolas e registra p50, p95 e pior caso sem converter o resultado em garantia de produção.
+Esse teste prova volume de agregação analítica. Ele não prova 12.849 logins concorrentes. O seed da Fase 6 cadastra 33 escolas sintéticas, mantém 3 escolas ativas no roteiro e mede o dashboard em 12 amostras para registrar p50, p95 e pior caso sem converter o resultado em garantia de produção.
 
 ## Critérios
 

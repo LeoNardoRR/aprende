@@ -66,6 +66,11 @@ jobs:
           set -o pipefail
           eval "$(npx supabase status -o env)"
           SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run poc:smoke | tee /tmp/poc-smoke.log
+      - name: Measure POC and 12,849-attempt analytics performance
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run poc:performance -- /tmp/poc-regression.log | tee /tmp/poc-performance.log
       - name: Run Playwright application, offline, analytics and POC flows
         run: |
           set -o pipefail

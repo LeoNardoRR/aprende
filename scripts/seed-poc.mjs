@@ -46,10 +46,11 @@ for (const [key, role, displayName] of roleSpecs) {
 
 const network = await one('networks', { name: 'POC DEMO Monte Mor - dados sinteticos', municipality: 'Monte Mor', state_code: 'SP', created_by: ids.admin });
 const schools = [];
-for (let index = 1; index <= 3; index += 1) schools.push(await one('schools', { network_id: network.id, name: `Escola Municipal DEMO ${index}`, code: `POC-E${index}` }));
+for (let index = 1; index <= 33; index += 1) schools.push(await one('schools', { network_id: network.id, name: `Escola Municipal DEMO ${String(index).padStart(2, '0')}`, code: `POC-E${String(index).padStart(2, '0')}` }));
+const demonstrationSchools = schools.slice(0, 3);
 const academicYear = await one('academic_years', { network_id: network.id, label: 'Ano letivo POC 2026', starts_on: '2026-02-02', ends_on: '2026-12-18', status: 'open' });
 const schoolYears = [];
-for (const [schoolIndex, school] of schools.entries()) {
+for (const [schoolIndex, school] of demonstrationSchools.entries()) {
   for (const [gradeIndex, grade] of ['6º ano', '7º ano', '8º ano'].entries()) schoolYears.push(await one('school_years', { school_id: school.id, name: grade, code: `POC-${6 + gradeIndex}EF`, sort_order: 6 + gradeIndex }));
   for (const [key, role] of [[`manager${schoolIndex + 1}`, 'manager'], [`teacher${schoolIndex + 1}`, 'teacher']]) await one('institutional_memberships', { user_id: ids[key], network_id: network.id, school_id: school.id, role, status: 'active', created_by: ids.admin });
 }
@@ -58,12 +59,12 @@ for (const [key, role] of [['admin', 'network_admin'], ['reviewer', 'reviewer'],
 const classrooms = [];
 for (let index = 0; index < 6; index += 1) {
   const schoolIndex = Math.floor(index / 2); const gradeIndex = index % 3;
-  classrooms.push(await one('classrooms', { owner_id: ids[`teacher${schoolIndex + 1}`], name: `${6 + gradeIndex}º ${index % 2 ? 'B' : 'A'} DEMO`, subject: 'Matemática', join_code: `POC${index + 1}MM`, network_id: network.id, school_id: schools[schoolIndex].id, academic_year_id: academicYear.id, school_year_id: schoolYears[schoolIndex * 3 + gradeIndex].id, classroom_status: 'active' }));
+  classrooms.push(await one('classrooms', { owner_id: ids[`teacher${schoolIndex + 1}`], name: `${6 + gradeIndex}º ${index % 2 ? 'B' : 'A'} DEMO`, subject: 'Matemática', join_code: `POC${index + 1}MM`, network_id: network.id, school_id: demonstrationSchools[schoolIndex].id, academic_year_id: academicYear.id, school_year_id: schoolYears[schoolIndex * 3 + gradeIndex].id, classroom_status: 'active' }));
 }
 for (let index = 0; index < 12; index += 1) {
   const classroom = classrooms[Math.floor(index / 2)]; const schoolIndex = Math.floor(Math.floor(index / 2) / 2);
-  await one('institutional_memberships', { user_id: ids[`student${index + 1}`], network_id: network.id, school_id: schools[schoolIndex].id, role: 'student', status: 'active', created_by: ids.admin });
-  await one('student_enrollments', { student_id: ids[`student${index + 1}`], network_id: network.id, school_id: schools[schoolIndex].id, academic_year_id: academicYear.id, classroom_id: classroom.id, status: 'enrolled', source: 'manual', external_key: `POC-RA-${String(index + 1).padStart(4, '0')}`, created_by: ids.admin });
+  await one('institutional_memberships', { user_id: ids[`student${index + 1}`], network_id: network.id, school_id: demonstrationSchools[schoolIndex].id, role: 'student', status: 'active', created_by: ids.admin });
+  await one('student_enrollments', { student_id: ids[`student${index + 1}`], network_id: network.id, school_id: demonstrationSchools[schoolIndex].id, academic_year_id: academicYear.id, classroom_id: classroom.id, status: 'enrolled', source: 'manual', external_key: `POC-RA-${String(index + 1).padStart(4, '0')}`, created_by: ids.admin });
 }
 
 const curriculum = await one('curricula', { network_id: network.id, name: 'Curriculo municipal DEMO da PoC', curriculum_type: 'custom', version: 'POC-1', created_by: ids.admin });
@@ -97,11 +98,11 @@ const attempts = [];
 const patterns = [[1,1,1,1],[1,1,1,0],[1,1,0,0],[1,0,0,0],[0,0,0,0],[1,0,1,0]];
 for (const [classIndex, classroom] of classrooms.entries()) {
   const schoolIndex = Math.floor(classIndex / 2);
-  const schedule = await one('assessment_schedules', { assessment_id: assessment.id, network_id: network.id, school_id: schools[schoolIndex].id, starts_at: startsAt, ends_at: endsAt, status: 'active', assigned_by: ids[`teacher${schoolIndex + 1}`] });
+  const schedule = await one('assessment_schedules', { assessment_id: assessment.id, network_id: network.id, school_id: demonstrationSchools[schoolIndex].id, starts_at: startsAt, ends_at: endsAt, status: 'active', assigned_by: ids[`teacher${schoolIndex + 1}`] });
   await one('assessment_classrooms', { schedule_id: schedule.id, assessment_id: assessment.id, classroom_id: classroom.id });
   for (let studentOffset = 0; studentOffset < 2; studentOffset += 1) {
     const studentIndex = classIndex * 2 + studentOffset; const pattern = patterns[studentIndex % patterns.length];
-    const attempt = await one('assessment_attempts', { assessment_id: assessment.id, schedule_id: schedule.id, classroom_id: classroom.id, student_id: ids[`student${studentIndex + 1}`], booklet_id: booklet.id, network_id: network.id, school_id: schools[schoolIndex].id, status: 'graded', submission_kind: 'submitted', access_origin: 'staff', allowed_minutes: 45, started_at: startsAt, deadline_at: endsAt, submitted_at: new Date().toISOString(), score: pattern.reduce((sum, current) => sum + current * 10, 0), max_score: 40 });
+    const attempt = await one('assessment_attempts', { assessment_id: assessment.id, schedule_id: schedule.id, classroom_id: classroom.id, student_id: ids[`student${studentIndex + 1}`], booklet_id: booklet.id, network_id: network.id, school_id: demonstrationSchools[schoolIndex].id, status: 'graded', submission_kind: 'submitted', access_origin: 'staff', allowed_minutes: 45, started_at: startsAt, deadline_at: endsAt, submitted_at: new Date().toISOString(), score: pattern.reduce((sum, current) => sum + current * 10, 0), max_score: 40 });
     for (const [itemIndex, fixture] of items.entries()) {
       const correct = Boolean(pattern[itemIndex]);
       const attemptItem = await one('assessment_attempt_items', { attempt_id: attempt.id, source_booklet_item_id: bookletItems[itemIndex].id, assessment_item_version_id: fixture.version.id, position: itemIndex + 1, snapshot: fixture.snapshot, option_order: [fixture.optionA.id, fixture.optionB.id], max_points: 10, time_spent_seconds: 18 + itemIndex + studentOffset });
@@ -114,7 +115,7 @@ const scale = await one('proficiency_scales', { network_id: network.id, assessme
 for (const [index, level] of [['below_basic','Abaixo do Básico',0,25],['basic','Básico',25,50],['adequate','Adequado',50,75],['advanced','Avançado',75,100]].entries()) await one('proficiency_levels', { scale_id: scale.id, code: level[0], label: level[1], lower_bound: level[2], upper_bound: level[3], sort_order: index + 1 });
 await one('assessment_proficiency_scales', { assessment_id: assessment.id, scale_id: scale.id, assigned_by: ids.admin });
 
-const manifest = { synthetic: true, network_id: network.id, school_ids: schools.map((row) => row.id), classroom_ids: classrooms.map((row) => row.id), assessment_id: assessment.id, attempt_id: attempts[0].id, users: Object.fromEntries(roleSpecs.map(([key]) => [key, emailFor(key)])), counts: { networks: 1, schools: schools.length, grades: 3, classrooms: classrooms.length, students: 12, items: items.length, attempts: attempts.length } };
+const manifest = { synthetic: true, network_id: network.id, school_ids: demonstrationSchools.map((row) => row.id), scale_school_ids: schools.map((row) => row.id), classroom_ids: classrooms.map((row) => row.id), assessment_id: assessment.id, attempt_id: attempts[0].id, users: Object.fromEntries(roleSpecs.map(([key]) => [key, emailFor(key)])), counts: { networks: 1, schools: schools.length, grades: 3, classrooms: classrooms.length, students: 12, items: items.length, attempts: attempts.length } };
 await mkdir(path.join(root, 'artifacts/poc'), { recursive: true });
 await writeFile(path.join(root, 'artifacts/poc/seed-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(`Seed POC concluido: ${schools.length} escolas, ${classrooms.length} turmas, 12 alunos, ${attempts.length} tentativas. Senha nao exibida.`);

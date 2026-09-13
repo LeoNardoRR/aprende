@@ -20,6 +20,7 @@
     ,"test:poc": "node --test tests/poc/*.test.mjs"
     ,"seed:poc": "node scripts/seed-poc.mjs"
     ,"poc:smoke": "node scripts/poc-smoke.mjs"
+    ,"poc:performance": "node scripts/measure-poc-performance.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

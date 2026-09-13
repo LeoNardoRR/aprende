@@ -16,7 +16,7 @@ test('seed POC fecha rede, escola, turma, aluno, analytics e isolamento', async 
   let manifest;
   try { manifest = JSON.parse(await readFile(`${root}/artifacts/poc/seed-manifest.json`, 'utf8')); } catch { return t.skip('Execute npm run seed:poc antes da suite conectada.'); }
   assert.equal(manifest.synthetic, true);
-  assert.deepEqual(manifest.counts, { networks: 1, schools: 3, grades: 3, classrooms: 6, students: 12, items: 4, attempts: 12 });
+  assert.deepEqual(manifest.counts, { networks: 1, schools: 33, grades: 3, classrooms: 6, students: 12, items: 4, attempts: 12 });
   const login = async (email) => { const client = createClient(url, anon, options); value(await client.auth.signInWithPassword({ email, password })); return client; };
   const [admin, manager, teacher, student] = await Promise.all([login(manifest.users.admin), login(manifest.users.manager1), login(manifest.users.teacher1), login(manifest.users.student1)]);
 
