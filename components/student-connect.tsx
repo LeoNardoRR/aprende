@@ -20,6 +20,7 @@ import { studentSupabase as supabase } from '@/lib/supabase';
 import { AccountSettings } from '@/components/account-settings';
 import { BrandLogo } from '@/components/brand-logo';
 import { StudentAssessmentRuntime } from '@/components/student-assessment-runtime';
+import { AnalyticsDashboard } from '@/components/analytics-dashboard';
 import {
   calculateConnectedProgress,
   canEditSubmission,
@@ -698,6 +699,7 @@ export function StudentConnect({
               </div>
             </div>
             <StudentAssessmentRuntime />
+            <AnalyticsDashboard mode="student" />
             {memberships[0]?.classrooms && (
               <div className="student-classroom-banner">
                 <BookOpen />

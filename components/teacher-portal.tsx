@@ -1,6 +1,7 @@
 'use client';
 
 import { TeacherItemBank } from '@/components/teacher-item-bank';
+import { AnalyticsDashboard } from '@/components/analytics-dashboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Session } from '@supabase/supabase-js';
@@ -59,6 +60,8 @@ type Profile = {
 };
 type Classroom = {
   id: string;
+  network_id?: string | null;
+  school_id?: string | null;
   name: string;
   subject: string;
   join_code: string;
@@ -1470,11 +1473,20 @@ function TeacherDashboard({
               </section>
             )}
             {view === 'grades' && (
-              <Gradebook
-                students={classStudents}
-                assignments={classActivities}
-                submissions={submissions}
-              />
+              <>
+                <Gradebook
+                  students={classStudents}
+                  assignments={classActivities}
+                  submissions={submissions}
+                />
+                <AnalyticsDashboard
+                  mode="teacher"
+                  fixedNetworkId={currentClass.network_id}
+                  fixedSchoolId={currentClass.school_id}
+                  fixedClassroomId={currentClass.id}
+                  preview={preview}
+                />
+              </>
             )}
           </>
         )}

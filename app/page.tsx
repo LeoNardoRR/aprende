@@ -415,6 +415,7 @@ function Home() {
     let active = true;
     const params = new URLSearchParams(window.location.search);
     const authMode = params.get('auth');
+    const requestedMode = params.get('mode');
     if (params.get('access') === 'institutional') {
       setShowStudentConnect(false);
       setShowTeacher(true);
@@ -427,6 +428,16 @@ function Home() {
     ) {
       setShowStudentConnect(false);
       setShowTeacher(true);
+      setAuthModeReady(true);
+      return () => {
+        active = false;
+      };
+    }
+    if (requestedMode === 'teacher' || requestedMode === 'student') {
+      rememberAuthMode(requestedMode);
+      autoCloseStudentConnect.current = false;
+      setShowTeacher(requestedMode === 'teacher');
+      setShowStudentConnect(requestedMode === 'student');
       setAuthModeReady(true);
       return () => {
         active = false;

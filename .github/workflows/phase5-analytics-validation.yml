@@ -1,0 +1,83 @@
+name: Validate Phase 5 analytics and reports
+
+on:
+  push:
+    branches: [codex/fase5-analytics-relatorios]
+  pull_request:
+    branches: [master, codex/finaliza-fase4]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase5-analytics-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start disposable Supabase and verify every migration
+        run: |
+          set -o pipefail
+          npx supabase start
+          npx supabase db reset --local
+          npx supabase migration list --local
+          npx supabase db push --dry-run --local
+      - name: Serve local Edge Functions
+        run: npx supabase functions serve > /tmp/aprende-functions.log 2>&1 &
+      - name: Run unit, statistical, integration, security and 12,849-row tests without skips
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          test -n "$API_URL" && test -n "$ANON_KEY" && test -n "$SERVICE_ROLE_KEY"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          PHASE5_LOAD_TEST=1 \
+          npm test | tee /tmp/aprende-phase5-tests.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/aprende-phase5-tests.log | tail -1)" = "0"
+      - name: Run critical browser flows
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" \
+          NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" \
+          VITE_SUPABASE_URL="$API_URL" \
+          VITE_SUPABASE_ANON_KEY="$ANON_KEY" \
+          npm run test:e2e
+      - name: Preserve browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase5-playwright-diagnostics
+          path: test-results
+          retention-days: 3
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/institutional-invite/index.ts
+      - run: deno check supabase/functions/analytics-report-worker/index.ts
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run build:pages
+      - name: Run all local database advisors
+        run: npx supabase db advisors --local --type all --level info --fail-on error
+      - name: Report dependency audit without forced upgrades
+        run: npm audit --audit-level=critical
+      - name: Stop disposable Supabase
+        if: always()
+        run: npx supabase stop --no-backup

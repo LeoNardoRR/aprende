@@ -416,3 +416,6 @@ enabled = true
 
 [functions.institutional-invite]
 verify_jwt = false # Handler validates the user with Auth before every RPC.
+
+[functions.analytics-report-worker]
+verify_jwt = false # Handler validates the bearer token and report ownership before every action.

@@ -3,7 +3,8 @@
 **Projeto:** Aprendê (`LeoNardoRR/aprende`)
 **Versão-base auditada:** `4a96e2b` (`master`)
 **Estabilização das Fases 1–3:** branch `codex/estabiliza-pre-fase4`
-**Runtime de aplicação da Fase 4:** branch `codex/fase4-aplicacao-avaliacoes`
+**Runtime de aplicação da Fase 4:** branch `codex/finaliza-fase4`
+**Analytics e relatórios da Fase 5:** branch `codex/fase5-analytics-relatorios`
 **Data da auditoria:** 13/09/2026
 **Fonte usada nesta rodada:** requisitos funcionais fornecidos na solicitação e o edital retificado anexado em `93578c201e504a12a59cfb9149717ea8Edital+Retificado+PregAo+EletrOnico+n++402026.pdf`. A leitura confirmou que a PoC oficial está nas páginas 67–77 e cobre aproximadamente 70% do Termo de Referência.
 
@@ -21,10 +22,10 @@ Os estados abaixo descrevem o que foi confirmado no código e nos testes atuais.
 | 6 | Construtor de provas, cadernos e mapa por habilidade | Escopo 6 | ✅ ATENDE | Ciclos, provas, cadernos A–E e mapa curricular | Até cinco cadernos, itens aprovados congelados, pontos, reorder e deduplicação | Integração da Fase 3 cobre criação, remoção, ordem, duplicação e mapa | O runtime da Fase 4 consome os cadernos aprovados sem alterar o construtor |
 | 7 | Calendário e janela de aplicação de avaliações | Escopo 7 | ✅ ATENDE | Calendário, aplicações programadas e acompanhamento | Janelas, turmas, estudantes e tentativas com escopo de rede/escola | Integração cobre programação, acesso na janela e isolamento | O backend limita início e retomada à janela válida |
 | 8 | Execução de prova com token, autosave, retomada, tempo e randomização | Escopo 8 | ✅ ATENDE | Runtime focado do aluno e monitor institucional | Token com hash/expiração/revogação, tentativa idempotente, snapshots, relógio do servidor, IndexedDB, autosave e correção | Integração e Playwright cobrem concorrência, reload offline, RLS, autoenvio e correção discursiva | Ordem, caderno e fila offline permanecem persistidos |
-| 9 | Analytics por aluno, turma, escola e rede com estatística | Escopo 9 | 🟡 PARCIAL | Pontos e frequência do aluno | Cálculo de pontos e presença | Testes de progresso/presença | Estatística educacional e agregações institucionais pendentes |
-| 10 | Dashboard municipal com filtros e alunos em risco | Escopo 10 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Depende da Fase 5 |
-| 11 | Relatórios PDF/DOCX individuais, sintéticos e analíticos | Escopo 11 | ❌ NÃO ATENDE | Impressão local de materiais apenas | Não existe gerador institucional | Não existe | Geração em lote/ZIP pendente |
-| 12 | Escala de proficiência configurável | Escopo 12 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Pendente |
+| 9 | Analytics por aluno, turma, escola e rede com estatística | Escopo 9 | ✅ ATENDE | Dashboard reutilizado por aluno, professor, escola e rede | Views privadas e RPC agregada com estatística, currículo, psicometria e paginação | Valores matemáticos conhecidos, integração por escopo e E2E conectado | Resultado pendente de discursiva permanece provisório e sem percentual definitivo |
+| 10 | Dashboard municipal com filtros e alunos em risco | Escopo 10 | 🟡 PARCIAL | Dashboard de rede com filtros e drill-down | Filtros combináveis e isolamento por rede/escola/turma | Integração valida totais e acesso cruzado | Indicadores existem; modelo institucional de risco e supressão de grupos pequenos ainda depende de definição oficial |
+| 11 | Relatórios PDF/DOCX individuais, sintéticos e analíticos | Escopo 11 | ✅ ATENDE | Ações PDF, DOCX, CSV e lote ZIP no dashboard | Payload único, job idempotente, worker e bucket privado | Testes validam assinaturas dos arquivos e E2E baixa PDF | Lotes são processados fora do navegador, com progresso e retry |
+| 12 | Escala de proficiência configurável | Escopo 12 | ✅ ATENDE | Distribuição e evolução por nível | Escalas versionadas, cortes 0–100 e vínculo histórico imutável | Integração cobre classificação, distribuição e bloqueio de alteração histórica | Quatro níveis mínimos obrigatórios; versões futuras não mudam resultados consolidados |
 | 13 | Equidade/VAAR com dados protegidos | Escopo 13 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Requer definição institucional e revisão LGPD |
 | 14 | Fluência leitora | Escopo 14 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Avaliação assistida pode ser primeira entrega |
 | 15 | Recomposição, catálogo, fases e gamificação | Escopo 15 | 🟡 PARCIAL | Sala e trilha do aluno | Assignments, pontos e trilha existem | Testes de pontos/trilha | Catálogo e 180 conteúdos reais dependem de conteúdo pedagógico |
@@ -35,12 +36,12 @@ Os estados abaixo descrevem o que foi confirmado no código e nos testes atuais.
 | 20 | Help desk | Escopo 20 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Pendente |
 | 21 | Aplicativos iOS e Android | Escopo 21 | 🟡 PARCIAL | PWA responsivo | Wrapper nativo não existe | Build web/PWA | Capacitor ou equivalente depende de configuração e contas |
 | 22 | Versão visível do sistema | Escopo 22 | ❌ NÃO ATENDE | Não existe | `package.json` possui versão técnica | Não existe | Pendente |
-| 23 | Escala de 12.849 alunos/33 escolas | Escopo 23 | 🟡 PARCIAL | Banco de itens e monitor de aplicação usam paginação server-side | Índices e consultas escopadas existem | 1.500 itens DEMO percorrem primeira, intermediária, última página e conjunto total sem perdas; monitor testa páginas distintas | Ainda não há ensaio de carga com 12.849 alunos e 33 escolas |
+| 23 | Escala de 12.849 alunos/33 escolas | Escopo 23 | 🟡 PARCIAL | Dashboards e detalhes usam paginação server-side | Índices cobrem escopo, avaliação, estudante, habilidade e jobs | CI mede agregação de 12.849 tentativas e pagina resultados a 200 | O ensaio cobre volume analítico equivalente; ainda falta homologação multi-escola com infraestrutura de produção |
 | 24 | Migrations sem alterar histórico aplicado | Escopo 24 | ✅ ATENDE | Não aplicável | Histórico reconciliado e versionado | CI reinicia Supabase local | Push remoto/produção deve continuar via migration |
-| 25 | Cobertura de RBAC, RLS, importação, provas e analytics | Escopo 25 | 🟡 PARCIAL | Não aplicável | Suíte cobre RBAC, RLS, importação, construção e aplicação de provas | A Fase 4 acrescenta token, concorrência, snapshots, relógio, autoenvio, correção e monitor paginado | Analytics avançado permanece para a Fase 5 |
+| 25 | Cobertura de RBAC, RLS, importação, provas e analytics | Escopo 25 | ✅ ATENDE | Não aplicável | Suíte cobre RBAC, RLS, importação, construção, aplicação e analytics | Fase 5 acrescenta matemática determinística, isolamento por papel, relatórios, E2E e carga | Workflow rejeita skips e falhas em qualquer etapa |
 | 26 | Rota restrita `/poc` demonstrando a PoC | Escopo 26 | ❌ NÃO ATENDE | Não existe | Não existe | Não existe | Depende do conteúdo oficial da PoC |
 | 27 | Matriz de conformidade versionada | Escopo 27 | ✅ ATENDE | Este documento | Não aplicável | Revisão manual nesta rodada | Atualizar a cada fase |
-| 28 | Implementação em fases funcionais | Escopo 28 | 🟡 PARCIAL | Não aplicável | Fases 1, 2, 3 e runtime da Fase 4 implementados | Suítes separadas por fase e validação conjunta | Fases 5 e posteriores ainda não iniciadas |
+| 28 | Implementação em fases funcionais | Escopo 28 | 🟡 PARCIAL | Não aplicável | Fases 1–5 implementadas em branches separadas | Suítes por fase e validação conjunta | Fases 6–8 permanecem fora desta branch |
 | 29 | Preservar recursos, RLS e CI/CD | Escopo 29 | ✅ ATENDE | Portais preservados | Migration corretiva aditiva; RLS e grants revistos | Advisors locais e regressões verdes | Produção não foi alterada |
 | 30 | Validação obrigatória por fase | Escopo 30 | ✅ ATENDE | Não aplicável | CI inicia Supabase descartável, reseta e verifica migrations | Testes sem skip, lint, typecheck, build e build:pages verdes | Workflow também executa advisors e `npm audit` |
 | 31 | Relatório final com aderência, riscos e dependências | Escopo 31 | 🟡 PARCIAL | Não aplicável | Não aplicável | Não aplicável | Este é o relatório inicial; o final depende das fases restantes |
@@ -58,8 +59,8 @@ Esta tabela condensa os itens de demonstração do **Anexo VI, Item 1**, nas pá
 | 1.5 | Tabela/construtor de provas, até cinco cadernos, elegibilidade, quantidade de questões, itens aprovados e mapa por habilidade em tabela/gráficos | 70 | ✅ ATENDE | Construtor da Fase 3, cadernos A–E, elegibilidade por aprovação, pontos e mapa curricular deduplicado estão implementados e testados |
 | 1.6 | Ciclos, avaliações, calendário mês/semana/dia, janela protegida, agendamento em massa, relatórios por turma e tabela de alunos programados | 70–71 | 🟡 PARCIAL | Ciclos, avaliações, calendário, janelas, turmas, alunos programados e acompanhamento operacional existem; relatórios analíticos pertencem à Fase 5 |
 | 1.7 | Prova online sequencial por token, autosave/retomada, cronômetro, estados, randomização, tipos de questão e fechamento automático | 71 | ✅ ATENDE | A Fase 4 implementa token seguro, ordem persistida, múltipla escolha, verdadeiro/falso, discursiva, fila IndexedDB, restauração após reload, retomada, relógio do servidor e autoenvio |
-| 1.8 | Dashboards e PDF/DOCX por aluno/turma/escola/rede, habilidades, comparação, Alfa de Cronbach, análise de itens, ranking, lote/ZIP e identificação institucional | 72 | ❌ NÃO ATENDE | Pontos/frequência não são o painel estatístico exigido |
-| 1.9 | Níveis Abaixo do Básico, Básico, Adequado e Avançado, evolução e exportação | 73 | ❌ NÃO ATENDE | Não existe escala de proficiência |
+| 1.8 | Dashboards e PDF/DOCX por aluno/turma/escola/rede, habilidades, comparação, Alfa de Cronbach, análise de itens, ranking, lote/ZIP e identificação institucional | 72 | 🟡 PARCIAL | Dashboards, relatórios, psicometria, comparação e lote privado estão implementados e testados; ranking individual não foi exposto por adequação pedagógica e precisa de decisão formal do edital |
+| 1.9 | Níveis Abaixo do Básico, Básico, Adequado e Avançado, evolução e exportação | 73 | ✅ ATENDE | Escala versionada, quatro níveis, distribuição, evolução compatível e exportação compartilham a mesma fonte de dados |
 | 1.10 | VAAR/equidade: perfil socioeconômico, gap, presets, mapa de calor, risco e qualidade do cadastro | 73 | ❌ NÃO ATENDE | Não existe módulo; dados de menores exigem desenho LGPD antes de carga |
 | 1.11 | Fluência leitora por palavras, pseudopalavras e texto, precisão, perfis e consolidação | 73 | ❌ NÃO ATENDE | Não existe módulo |
 | 1.12 | Objetos interativos, feedback, pontuação, trilhas, progressão, catálogo, 180 títulos de Português/Matemática, portfólio e relatório | 73–74 | 🟡 PARCIAL | Trilha/pontos e tarefas existem; autoria, catálogo e conteúdo real dependem de implementação/conteúdo |
@@ -85,11 +86,11 @@ Os itens 2.1–2.2 (regime, carga horária e contratação dos monitores) e 3.1 
 - A suíte de estabilização cobre fluxos conectados, RLS, Storage, importações, snapshots, paginação de 1.500 itens DEMO e o construtor da Fase 3.
 - O workflow de estabilização executa Supabase local descartável, todas as migrations, testes sem skip, lint, typecheck, dois builds, advisors e auditoria de dependências.
 
-### Lacunas prioritárias após a Fase 4
+### Lacunas prioritárias após a Fase 5
 
-1. Analytics e relatórios institucionais da Fase 5.
-2. Conteúdo pedagógico oficial BNCC/SAEB e acervo real autorizado.
-3. Acessibilidade auditada, LGPD operacional, help desk e mobile nativo.
+1. Conteúdo pedagógico oficial BNCC/SAEB e acervo real autorizado.
+2. Definição formal de ranking, risco e supressão de grupos pequenos para atender edital e LGPD sem exposição inadequada.
+3. Auditoria WCAG assistiva completa, LGPD operacional, help desk e mobile nativo.
 
 ## Fases 1–3 estabilizadas
 
@@ -123,6 +124,12 @@ Antes de aplicar qualquer migration em produção, o fluxo obrigatório é: rese
 ### PENDENTE
 
 - Dashboards estatísticos, relatórios finais e demais entregas da Fase 5.
+
+## Fase 5 — Analytics e relatórios
+
+A migration `20260913180000_add_phase5_analytics_reporting.sql` cria as views privadas, RPCs analíticas, escalas versionadas e fila de relatórios. `components/analytics-dashboard.tsx` demonstra aluno, professor, escola e rede; `supabase/functions/analytics-report-worker/index.ts` processa lote ZIP privado. `tests/analytics-statistics.test.mjs`, `tests/phase5-integration.test.mjs` e `tests/e2e/phase4-runtime.spec.ts` cobrem fórmulas, isolamento, 12.849 tentativas, drill-down e relatório. A metodologia completa está em `docs/phase5-analytics-reporting.md`.
+
+VAAR, fluência, recomposição completa, IA pedagógica, aplicativos nativos e help desk continuam fora da Fase 5.
 
 ## Dependências externas
 
