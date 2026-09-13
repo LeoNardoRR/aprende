@@ -20,7 +20,7 @@ if (networks.length !== 1) throw new Error('Rede POC ausente.');
 const dashboard = ok(await admin.rpc('get_analytics_dashboard', { filters: { network_id: manifest.network_id, assessment_id: manifest.assessment_id } }), 'analytics');
 if (Number(dashboard.summary?.attempts) < 1) throw new Error('Analytics sem tentativas.');
 const report = ok(await admin.rpc('get_analytics_report_data', { report_type: 'network', filters: { network_id: manifest.network_id, assessment_id: manifest.assessment_id } }), 'relatorio');
-if (!report?.summary) throw new Error('Relatorio sem resumo.');
+if (!report?.data?.summary) throw new Error('Relatorio sem resumo analitico.');
 const student = await login(manifest.users.student1);
 const attempt = ok(await student.rpc('get_assessment_attempt', { target_attempt: manifest.attempt_id }), 'tentativa');
 if (!attempt?.attempt?.id && !attempt?.id) throw new Error('Tentativa DEMO indisponivel ao aluno.');
