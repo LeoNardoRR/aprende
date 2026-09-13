@@ -17,10 +17,8 @@ alter table public.assessment_attempt_items
   add column is_annulled boolean not null default false,
   add column annulment_reason text check (annulment_reason is null or char_length(annulment_reason) <= 2000),
   add column annulled_at timestamptz,
-  add column annulled_by uuid references public.profiles(id) on delete set null;
-
-alter table public.assessment_responses
-  add column time_spent_seconds integer check (time_spent_seconds is null or time_spent_seconds between 0 and 21600);
+  add column annulled_by uuid references public.profiles(id) on delete set null,
+  add column time_spent_seconds integer not null default 0 check (time_spent_seconds between 0 and 21600);
 
 create index assessment_attempts_analytics_scope_idx
   on public.assessment_attempts(network_id, school_id, assessment_id, classroom_id, status, submitted_at desc);
@@ -92,6 +90,10 @@ create table public.analytics_report_jobs (
   foreign key (school_id, network_id) references public.schools(id, network_id)
 );
 
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
+values('analytics-reports','analytics-reports',false,104857600,array['application/zip','application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document','text/csv'])
+on conflict(id) do update set public=false,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
+
 create index proficiency_scales_scope_idx on public.proficiency_scales(network_id, subject_id, curriculum_school_year_id, cycle_id, effective_from desc);
 create index proficiency_levels_scale_idx on public.proficiency_levels(scale_id, sort_order);
 create index analytics_report_jobs_queue_idx on public.analytics_report_jobs(status, created_at) where status in ('queued','processing');
@@ -145,7 +147,7 @@ $$;
 
 create or replace view private.analytics_attempt_facts as
 select
-  attempt.id as attempt_id,
+  attempt.id as attempt_id, attempt.schedule_id,
   attempt.network_id, attempt.school_id, attempt.classroom_id, attempt.student_id,
   attempt.assessment_id, assessment.cycle_id, assessment.subject_id, assessment.curriculum_school_year_id,
   profile.display_name as student_name, school.name as school_name, classroom.name as classroom_name,
@@ -191,7 +193,7 @@ select
   item.snapshot -> 'options' as options,
   item.is_annulled,
   response.id as response_id, response.answer, response.is_correct, response.points_awarded,
-  response.review_status, response.time_spent_seconds,
+  response.review_status, item.time_spent_seconds,
   fact.percentage as attempt_percentage,
   attempt.status as attempt_status
 from public.assessment_attempt_items item
@@ -222,7 +224,31 @@ begin
   if auth.uid() is null then raise exception 'Not authorized'; end if;
   if jsonb_typeof(filters) <> 'object' then raise exception 'Invalid analytics filters'; end if;
 
-  with scoped as (
+  with eligible as (
+    select distinct schedule.id as schedule_id, enrollment.student_id
+    from public.assessment_schedules schedule
+    join public.assessment_classrooms scheduled_classroom on scheduled_classroom.schedule_id=schedule.id
+    join public.classrooms classroom on classroom.id=scheduled_classroom.classroom_id
+    join public.student_enrollments enrollment on enrollment.classroom_id=classroom.id
+      and enrollment.network_id=schedule.network_id and enrollment.school_id=schedule.school_id
+      and enrollment.status='enrolled'
+    join public.diagnostic_assessments assessment on assessment.id=schedule.assessment_id
+    where schedule.status<>'cancelled'
+      and private.analytics_can_access_scope(schedule.network_id,schedule.school_id,classroom.id,enrollment.student_id)
+      and (filters->>'network_id' is null or schedule.network_id=(filters->>'network_id')::uuid)
+      and (filters->>'school_id' is null or schedule.school_id=(filters->>'school_id')::uuid)
+      and (filters->>'classroom_id' is null or classroom.id=(filters->>'classroom_id')::uuid)
+      and (filters->>'student_id' is null or enrollment.student_id=(filters->>'student_id')::uuid)
+      and (filters->>'assessment_id' is null or assessment.id=(filters->>'assessment_id')::uuid)
+      and (filters->>'cycle_id' is null or assessment.cycle_id=(filters->>'cycle_id')::uuid)
+      and (filters->>'subject_id' is null or assessment.subject_id=(filters->>'subject_id')::uuid)
+      and (filters->>'curriculum_school_year_id' is null or assessment.curriculum_school_year_id=(filters->>'curriculum_school_year_id')::uuid)
+      and (filters->>'skill_id' is null or exists (
+        select 1 from public.assessment_booklet_items booklet_item
+        join public.assessment_item_versions version on version.id=booklet_item.assessment_item_version_id
+        where booklet_item.assessment_id=assessment.id and version.snapshot->>'skill_id'=filters->>'skill_id'
+      ))
+  ), scoped as (
     select fact.* from private.analytics_attempt_facts fact
     where private.analytics_can_access_attempt(fact.attempt_id)
       and private.analytics_filters_match(fact, filters)
@@ -254,6 +280,7 @@ begin
   ), ranked_items as (
     select item.*, percent_rank() over(partition by item.assessment_id order by item.attempt_percentage) as performance_rank
     from private.analytics_item_facts item join scoped s on s.attempt_id=item.attempt_id
+    where item.attempt_percentage is not null and item.is_correct is not null
   ), item_rows as (
     select item.item_id, item.statement, item.item_type,
       count(item.response_id) filter (where item.answer <> '{}'::jsonb)::integer as responses,
@@ -292,13 +319,14 @@ begin
     'methodology', jsonb_build_object('finalStatuses', jsonb_build_array('graded','submitted','auto_submitted'), 'pendingReviewIsProvisional', true, 'cancelledAndInvalidatedExcluded', true),
     'summary', (select jsonb_build_object(
       'attempts', count(*), 'students', count(distinct student_id),
+      'eligible_students', (select count(*) from eligible),
       'completed', count(*) filter (where status in ('graded','submitted','auto_submitted','pending_review')),
       'pending_review', count(*) filter (where status = 'pending_review'),
       'questions', coalesce(sum(total_questions),0), 'answered', coalesce(sum(answered_questions),0),
       'unanswered', coalesce(sum(unanswered_questions),0), 'correct', coalesce(sum(correct_answers),0),
       'incorrect', coalesce(sum(incorrect_answers),0), 'score', coalesce(sum(score),0),
       'max_score', coalesce(sum(max_score),0),
-      'participation_percentage', case when count(*) > 0 then round(100.0 * count(*) filter (where status in ('graded','submitted','auto_submitted','pending_review')) / count(*),2) else null end,
+      'participation_percentage', case when (select count(*) from eligible) > 0 then round(100.0 * count(distinct (schedule_id,student_id)) filter (where status in ('graded','submitted','auto_submitted','pending_review')) / (select count(*) from eligible),2) else null end,
       'average_time_seconds', round(avg(nullif(total_time_seconds,0)),2)
     ) from scoped),
     'statistics', (select to_jsonb(stats) from stats),
@@ -380,7 +408,7 @@ create or replace function public.create_proficiency_scale(
   levels jsonb, target_assessment uuid default null, target_subject uuid default null,
   target_school_year uuid default null, target_cycle uuid default null
 ) returns uuid language plpgsql security definer set search_path = '' as $$
-declare new_scale_id uuid; level_count integer; overlap_count integer;
+declare new_scale_id uuid; level_count integer; overlap_count integer; minimum_bound numeric; maximum_bound numeric; gap_count integer;
 begin
   if not private.has_permission('analytics.manage', target_network) then raise exception 'Not authorized'; end if;
   if jsonb_typeof(levels) <> 'array' or jsonb_array_length(levels) < 4 then raise exception 'At least four proficiency levels are required'; end if;
@@ -393,7 +421,14 @@ begin
   select count(*) into overlap_count from public.proficiency_levels a join public.proficiency_levels b
     on a.scale_id=b.scale_id and a.id<b.id and numrange(a.lower_bound,a.upper_bound,'[)') && numrange(b.lower_bound,b.upper_bound,'[)')
     where a.scale_id=new_scale_id;
-  if level_count < 4 or overlap_count > 0 then raise exception 'Invalid or overlapping proficiency levels'; end if;
+  select min(lower_bound),max(upper_bound) into minimum_bound,maximum_bound from public.proficiency_levels where scale_id=new_scale_id;
+  select count(*) into gap_count from (
+    select upper_bound,lead(lower_bound) over(order by sort_order) next_lower
+    from public.proficiency_levels where scale_id=new_scale_id
+  ) ordered where next_lower is not null and upper_bound<>next_lower;
+  if level_count < 4 or overlap_count > 0 or minimum_bound<>0 or maximum_bound<>100 or gap_count>0
+    or not (select array_agg(code order by code) @> array['advanced','adequate','basic','below_basic']::text[] from public.proficiency_levels where scale_id=new_scale_id)
+  then raise exception 'Proficiency levels must include four required levels and cover 0 through 100 without gaps'; end if;
   return new_scale_id;
 end;
 $$;
@@ -433,10 +468,12 @@ create or replace function public.record_assessment_item_time(target_attempt uui
 returns integer language plpgsql security definer set search_path = '' as $$
 declare total integer;
 begin
-  if elapsed_seconds not between 0 and 3600 or not private.student_owns_active_attempt(target_attempt) then raise exception 'Not authorized'; end if;
+  if elapsed_seconds not between 0 and 3600 or not private.student_owns_active_attempt(target_attempt)
+    or not exists(select 1 from public.assessment_attempts where id=target_attempt and status='in_progress' and deadline_at>now())
+  then raise exception 'Not authorized'; end if;
   if not exists(select 1 from public.assessment_attempt_items where id=target_attempt_item and attempt_id=target_attempt) then raise exception 'Item unavailable'; end if;
-  update public.assessment_responses set time_spent_seconds=least(coalesce(time_spent_seconds,0)+elapsed_seconds,21600)
-    where attempt_id=target_attempt and attempt_item_id=target_attempt_item returning time_spent_seconds into total;
+  update public.assessment_attempt_items set time_spent_seconds=least(time_spent_seconds+elapsed_seconds,21600)
+    where attempt_id=target_attempt and id=target_attempt_item returning time_spent_seconds into total;
   return total;
 end;
 $$;
@@ -514,3 +551,4 @@ comment on view private.analytics_attempt_facts is 'Derived attempt-level Phase 
 comment on function public.get_assessment_reliability(uuid,jsonb) is 'Cronbach alpha uses population variances, at least two objective items and three participants; zero total variance returns null.';
 comment on table public.assessment_proficiency_scales is 'Pins an assessment to a versioned scale so historical classifications never drift.';
 comment on table public.analytics_report_jobs is 'Idempotent asynchronous report queue. A server-side worker produces private artifacts and updates progress.';
+comment on column public.assessment_attempt_items.time_spent_seconds is 'Accumulated server-validated active time for the item; unavailable offline intervals are not guessed.';

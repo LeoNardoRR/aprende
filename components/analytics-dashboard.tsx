@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { BarChart3, Download, FileArchive, FileText, LoaderCircle, RefreshCw, ShieldCheck, TrendingUp, Users } from 'lucide-react';
 import { supabase, studentSupabase } from '@/lib/supabase';
@@ -18,7 +18,7 @@ type AnalyticsDashboardProps = {
   preview?: boolean;
 };
 type AnalyticsData = AnalyticsReportPayload['data'] & { items: Array<Record<string, string | number | null>> };
-type Assessment = { id: string; title: string; network_id: string; cycle_id: string; subject_id: string };
+type Assessment = { id: string; title: string; network_id: string; cycle_id: string; subject_id: string; curriculum_school_year_id: string };
 type ReportJob = { id: string; report_type: string; format: string; status: string; progress: number; output_path: string | null; created_at: string };
 type RpcResult<T> = PromiseLike<{ data: T | null; error: { message: string } | null }>;
 
@@ -43,14 +43,22 @@ export function AnalyticsDashboard({ mode, networks = [], schools = [], classroo
   const [schoolId, setSchoolId] = useState(fixedSchoolId ?? '');
   const [classroomId, setClassroomId] = useState(fixedClassroomId ?? '');
   const [assessmentId, setAssessmentId] = useState('');
+  const [cycleId, setCycleId] = useState('');
+  const [subjectId, setSubjectId] = useState('');
+  const [schoolYearId, setSchoolYearId] = useState('');
   const [skillId, setSkillId] = useState('');
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [cycles, setCycles] = useState<OptionRow[]>([]);
+  const [subjects, setSubjects] = useState<OptionRow[]>([]);
+  const [schoolYears, setSchoolYears] = useState<OptionRow[]>([]);
   const [data, setData] = useState<AnalyticsData | null>(preview ? previewData : null);
   const [jobs, setJobs] = useState<ReportJob[]>([]);
   const [state, setState] = useState<'loading'|'empty'|'error'|'insufficient_data'|'success'>(preview ? 'success' : 'loading');
   const [message, setMessage] = useState(preview ? 'Visualização DEMO identificada. Dados reais aparecem após avaliações concluídas.' : '');
+  const [batchBusy, setBatchBusy] = useState(false);
+  const batchKeyRef = useRef<string | null>(null);
 
-  const filters = useMemo(() => Object.fromEntries(Object.entries({ network_id: networkId || undefined, school_id: schoolId || undefined, classroom_id: classroomId || undefined, assessment_id: assessmentId || undefined, skill_id: skillId || undefined }).filter(([, value]) => value)), [networkId, schoolId, classroomId, assessmentId, skillId]);
+  const filters = useMemo(() => Object.fromEntries(Object.entries({ network_id: networkId || undefined, school_id: schoolId || undefined, classroom_id: classroomId || undefined, assessment_id: assessmentId || undefined, cycle_id: cycleId || undefined, subject_id: subjectId || undefined, curriculum_school_year_id: schoolYearId || undefined, skill_id: skillId || undefined }).filter(([, value]) => value)), [networkId, schoolId, classroomId, assessmentId, cycleId, subjectId, schoolYearId, skillId]);
 
   const load = useCallback(async () => {
     if (preview) return;
@@ -63,12 +71,27 @@ export function AnalyticsDashboard({ mode, networks = [], schools = [], classroo
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     if (preview) return;
-    void client.from('diagnostic_assessments').select('id,title,network_id,cycle_id,subject_id').order('created_at', { ascending: false }).then(({ data: rows }) => setAssessments((rows ?? []) as Assessment[]));
+    void Promise.all([
+      client.from('diagnostic_assessments').select('id,title,network_id,cycle_id,subject_id,curriculum_school_year_id').order('created_at', { ascending: false }),
+      client.from('assessment_cycles').select('id,name,network_id').order('starts_at', { ascending: false }),
+      client.from('curriculum_subjects').select('id,name').order('name'),
+      client.from('curriculum_school_years').select('id,name').order('sort_order'),
+    ]).then(([assessmentRows, cycleRows, subjectRows, yearRows]) => {
+      setAssessments((assessmentRows.data ?? []) as Assessment[]);
+      setCycles((cycleRows.data ?? []) as OptionRow[]);
+      setSubjects((subjectRows.data ?? []) as OptionRow[]);
+      setSchoolYears((yearRows.data ?? []) as OptionRow[]);
+    });
   }, [client, preview]);
   useEffect(() => {
     if (preview || mode === 'student') return;
     void api.rpc<ReportJob[]>('list_analytics_report_jobs').then((result) => setJobs(result.data ?? []));
   }, [api, mode, preview]);
+  useEffect(() => {
+    if (preview || mode === 'student' || !jobs.some((job) => ['queued','processing'].includes(job.status))) return;
+    const timer = window.setInterval(() => void api.rpc<ReportJob[]>('list_analytics_report_jobs').then((result) => setJobs(result.data ?? [])), 4_000);
+    return () => window.clearInterval(timer);
+  }, [api, jobs, mode, preview]);
 
   async function exportReport(format: 'pdf'|'docx'|'csv') {
     setMessage('Preparando relatório com a mesma fonte do dashboard…');
@@ -81,9 +104,30 @@ export function AnalyticsDashboard({ mode, networks = [], schools = [], classroo
 
   async function queueBatch() {
     if (!networkId || !classroomId) { setMessage('Selecione uma rede e uma turma para gerar o lote.'); return; }
-    const result = await api.rpc<string>('request_analytics_report', { report_type: 'student_batch', report_format: 'zip', filters, idempotency_key: crypto.randomUUID() });
-    if (result.error) setMessage(result.error.message);
-    else { setMessage('Lote enfileirado. O processamento ocorre fora do navegador.'); const listed = await api.rpc<ReportJob[]>('list_analytics_report_jobs'); setJobs(listed.data ?? []); }
+    setBatchBusy(true);
+    batchKeyRef.current ??= crypto.randomUUID();
+    const result = await api.rpc<string>('request_analytics_report', { report_type: 'student_batch', report_format: 'zip', filters, idempotency_key: batchKeyRef.current });
+    if (result.error || !result.data) setMessage(result.error?.message ?? 'Não foi possível enfileirar o lote.');
+    else {
+      const invoked = await client.functions.invoke('analytics-report-worker', { body: { job_id: result.data } });
+      setMessage(invoked.error ? 'Lote enfileirado; o worker será retomado com segurança.' : 'Lote em processamento no servidor.');
+      const listed = await api.rpc<ReportJob[]>('list_analytics_report_jobs'); setJobs(listed.data ?? []);
+      batchKeyRef.current = null;
+    }
+    setBatchBusy(false);
+  }
+
+  async function downloadBatch(job: ReportJob) {
+    const result = await client.functions.invoke<{ signed_url: string }>('analytics-report-worker', { body: { job_id: job.id, action: 'download' } });
+    if (result.error || !result.data?.signed_url) { setMessage('O arquivo privado não pôde ser liberado para download.'); return; }
+    window.location.assign(result.data.signed_url);
+  }
+
+  async function retryBatch(job: ReportJob) {
+    const retried = await api.rpc<null>('retry_analytics_report_job', { target_job: job.id });
+    if (retried.error) { setMessage(retried.error.message); return; }
+    const invoked = await client.functions.invoke('analytics-report-worker', { body: { job_id: job.id } });
+    setMessage(invoked.error ? 'Retry enfileirado; o worker poderá ser chamado novamente.' : 'Nova tentativa iniciada.');
   }
 
   const summary = data?.summary ?? {};
@@ -98,6 +142,10 @@ export function AnalyticsDashboard({ mode, networks = [], schools = [], classroo
       <label>Escola<select value={schoolId} onChange={(event) => { setSchoolId(event.target.value); setClassroomId(''); }}><option value="">Todas</option>{filteredSchools.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       <label>Turma<select value={classroomId} onChange={(event) => setClassroomId(event.target.value)}><option value="">Todas</option>{filteredClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       <label>Avaliação<select value={assessmentId} onChange={(event) => setAssessmentId(event.target.value)}><option value="">Todas</option>{availableAssessments.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
+      <label>Ciclo<select value={cycleId} onChange={(event) => setCycleId(event.target.value)}><option value="">Todos</option>{cycles.filter((item) => !networkId || item.network_id === networkId).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <label>Série/ano<select value={schoolYearId} onChange={(event) => setSchoolYearId(event.target.value)}><option value="">Todas</option>{schoolYears.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <label>Componente<select value={subjectId} onChange={(event) => setSubjectId(event.target.value)}><option value="">Todos</option>{subjects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      {skillId && <button type="button" onClick={() => setSkillId('')}>Limpar habilidade</button>}
     </div>}
     {preview && <output className="analytics-demo-note">DEMO visual · números ilustrativos, claramente separados do modo conectado.</output>}
     {message && <output className="analytics-message" aria-live="polite">{message}</output>}
@@ -119,8 +167,8 @@ export function AnalyticsDashboard({ mode, networks = [], schools = [], classroo
       <div className="analytics-table-card"><div><span>DESEMPENHO CURRICULAR</span><h3>Habilidades</h3></div>{data.skills?.length ? <table><thead><tr><th>Habilidade</th><th>Alunos</th><th>Itens</th><th>Acertos</th><th>Resultado</th><th></th></tr></thead><tbody>{data.skills.map((row) => <tr key={String(row.skill_id)}><td><strong>{row.code}</strong><small>{row.description}</small></td><td>{row.students_evaluated}</td><td>{row.item_count}</td><td>{row.correct}</td><td>{number(row.percentage, '%')}</td><td><button onClick={() => setSkillId(String(row.skill_id))}>Detalhar</button></td></tr>)}</tbody></table> : <p>Sem dados suficientes para habilidades.</p>}</div>
       {mode !== 'student' && <div className="analytics-table-card"><div><span>DRILL-DOWN</span><h3>Resultados por estudante</h3></div>{data.students?.length ? <table><thead><tr><th>Estudante</th><th>Turma</th><th>Status</th><th>Respondidas</th><th>Resultado</th></tr></thead><tbody>{data.students.map((row) => <tr key={String(row.attempt_id)}><td>{row.student_name}</td><td>{row.classroom_name}</td><td>{row.has_pending_review ? 'Provisório' : row.status}</td><td>{row.answered_questions}/{row.total_questions}</td><td>{number(row.percentage, '%')}</td></tr>)}</tbody></table> : <p>Sem estudantes neste filtro.</p>}</div>}
       <div className="analytics-table-card"><div><span>PSICOMETRIA</span><h3>Questões</h3></div>{data.items?.length ? <table><thead><tr><th>Questão</th><th>Respostas</th><th>Dificuldade</th><th>Discriminação</th><th>Ponto-bisserial</th><th>Tempo médio</th></tr></thead><tbody>{data.items.map((row) => <tr key={String(row.item_id)}><td>{row.statement}</td><td>{row.responses}</td><td>{number(row.difficulty_index)}</td><td>{number(row.discrimination_index)}</td><td>{number(row.point_biserial)}</td><td>{number(row.average_time_seconds, ' s')}</td></tr>)}</tbody></table> : <p>Sem dados suficientes para psicometria.</p>}</div>
-      <div className="analytics-report-actions"><div><span>RELATÓRIOS</span><h3>Exportar esta mesma visão</h3><p>PDF, DOCX e CSV usam o mesmo payload versionado do dashboard.</p></div><button onClick={() => void exportReport('pdf')}><Download /> PDF</button><button onClick={() => void exportReport('docx')}><FileText /> DOCX</button><button onClick={() => void exportReport('csv')}><Download /> CSV</button>{mode !== 'student' && <button onClick={() => void queueBatch()}><FileArchive /> Lote ZIP</button>}</div>
-      {jobs.length > 0 && <div className="analytics-jobs" aria-label="Geração de relatórios em lote">{jobs.map((job) => <article key={job.id}><FileArchive /><span><strong>{job.report_type} · {job.format.toUpperCase()}</strong><small>{statusLabel[job.status] ?? job.status}</small></span><progress value={job.progress} max="100">{job.progress}%</progress></article>)}</div>}
+      <div className="analytics-report-actions"><div><span>RELATÓRIOS</span><h3>Exportar esta mesma visão</h3><p>PDF, DOCX e CSV usam o mesmo payload versionado do dashboard.</p></div><button onClick={() => void exportReport('pdf')}><Download /> PDF</button><button onClick={() => void exportReport('docx')}><FileText /> DOCX</button><button onClick={() => void exportReport('csv')}><Download /> CSV</button>{mode !== 'student' && <button disabled={batchBusy} onClick={() => void queueBatch()}>{batchBusy ? <LoaderCircle className="spin" /> : <FileArchive />} Lote ZIP</button>}</div>
+      {jobs.length > 0 && <div className="analytics-jobs" aria-label="Geração de relatórios em lote">{jobs.map((job) => <article key={job.id}><FileArchive /><span><strong>{job.report_type} · {job.format.toUpperCase()}</strong><small>{statusLabel[job.status] ?? job.status}</small></span><progress value={job.progress} max="100">{job.progress}%</progress>{job.status === 'completed' && <button onClick={() => void downloadBatch(job)}><Download /> Baixar</button>}{job.status === 'failed' && <button onClick={() => void retryBatch(job)}><RefreshCw /> Tentar novamente</button>}</article>)}</div>}
     </>}
   </section>;
 }

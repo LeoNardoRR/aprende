@@ -15,7 +15,7 @@ export type AnalyticsReportPayload = {
   };
 };
 
-type ExportFormat = 'pdf' | 'docx' | 'csv';
+export type ExportFormat = 'pdf' | 'docx' | 'csv';
 const labels: Record<string, string> = {
   attempts: 'Tentativas', students: 'Estudantes', completed: 'Concluídas', pending_review: 'Aguardando correção',
   questions: 'Questões', answered: 'Respondidas', unanswered: 'Não respondidas', correct: 'Acertos', incorrect: 'Erros',
@@ -102,7 +102,11 @@ function csvBlob(payload: AnalyticsReportPayload) {
   return new Blob([`\ufeff${rows.map((row) => row.map(escape).join(';')).join('\n')}`], { type: 'text/csv;charset=utf-8' });
 }
 
+export async function createAnalyticsReportBlob(payload: AnalyticsReportPayload, format: ExportFormat) {
+  return format === 'pdf' ? pdfBlob(payload) : format === 'docx' ? docxBlob(payload) : csvBlob(payload);
+}
+
 export async function exportAnalyticsReport(payload: AnalyticsReportPayload, format: ExportFormat) {
-  const blob = format === 'pdf' ? await pdfBlob(payload) : format === 'docx' ? await docxBlob(payload) : csvBlob(payload);
+  const blob = await createAnalyticsReportBlob(payload, format);
   download(blob, safeName(payload.report_type, format));
 }

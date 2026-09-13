@@ -98,6 +98,7 @@ export function StudentAssessmentRuntime() {
   const persistenceRef = useRef<Promise<unknown>>(Promise.resolve());
   const retryDelayRef = useRef(2_000);
   const questionHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const questionTimingRef = useRef<{ attemptId: string; attemptItemId: string; enteredAt: number } | null>(null);
 
   const setQueueSnapshot = useCallback((next: PendingAssessmentSave[]) => {
     queueRef.current = next;
@@ -239,6 +240,28 @@ export function StudentAssessmentRuntime() {
 
   useEffect(() => { questionHeadingRef.current?.focus(); }, [position]);
 
+  const recordCurrentItemTime = useCallback(async () => {
+    const timing = questionTimingRef.current;
+    if (!timing) return;
+    const elapsedSeconds = Math.min(3600, Math.max(0, Math.round((Date.now() - timing.enteredAt) / 1000)));
+    questionTimingRef.current = { ...timing, enteredAt: Date.now() };
+    if (elapsedSeconds < 1 || !navigator.onLine) return;
+    await runtimeApi.rpc<number>('record_assessment_item_time', {
+      target_attempt: timing.attemptId,
+      target_attempt_item: timing.attemptItemId,
+      elapsed_seconds: elapsedSeconds,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!runtime || finalStatuses.has(runtime.attempt.status)) {
+      questionTimingRef.current = null;
+      return;
+    }
+    const activeItem = runtime.items.find((candidate) => candidate.position === position);
+    if (activeItem) questionTimingRef.current = { attemptId: runtime.attempt.id, attemptItemId: activeItem.id, enteredAt: Date.now() };
+  }, [position, runtime]);
+
   const finish = useCallback(async (automatic = false) => {
     if (!runtime || autoSubmitRef.current) return;
     let timeoutNotice = '';
@@ -252,6 +275,7 @@ export function StudentAssessmentRuntime() {
       setNotice(pendingSubmitMessage);
       return;
     }
+    await recordCurrentItemTime();
     if (automatic && pendingCount > 0) {
       timeoutNotice = `O prazo do servidor terminou. ${pendingCount} resposta(s) local(is) não foram confirmadas e permanecem neste dispositivo. O backend encerrará a tentativa sem ampliar o tempo.`;
       setNotice(timeoutNotice);
@@ -268,7 +292,7 @@ export function StudentAssessmentRuntime() {
     if (timeoutNotice) {
       setNotice(`${timeoutNotice} A tentativa foi encerrada pelo prazo do servidor.`);
     }
-  }, [flushQueue, loadAttempt, loadAvailable, responses, runtime]);
+  }, [flushQueue, loadAttempt, loadAvailable, recordCurrentItemTime, responses, runtime]);
 
   useEffect(() => {
     if (runtime && seconds === 0 && clock && !finalStatuses.has(runtime.attempt.status)) void finish(true);
@@ -303,6 +327,7 @@ export function StudentAssessmentRuntime() {
 
   async function navigate(nextPosition: number) {
     if (!runtime || nextPosition < 1 || nextPosition > runtime.items.length) return;
+    await recordCurrentItemTime();
     const result = await runtimeApi.rpc<number>('set_assessment_attempt_position', { target_attempt: runtime.attempt.id, target_position: nextPosition });
     if (result.error) { setNotice(result.error.message); return; }
     setPosition(nextPosition);

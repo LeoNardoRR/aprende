@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { classifyProficiency, cronbachAlpha, descriptiveStatistics, difficultyIndex, discriminationIndex, evolution, pointBiserialCorrelation, validateProficiencyLevels } from '../lib/analytics-statistics.ts';
+import { createAnalyticsReportBlob } from '../lib/analytics-report-export.ts';
 
 const close = (actual, expected, tolerance = 1e-10) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} differs from ${expected}`);
 
@@ -60,4 +61,12 @@ test('evolution returns absolute and relative change only when mathematically va
   assert.deepEqual(evolution(50, 65), { absolute: 15, percentage: 30 });
   assert.deepEqual(evolution(0, 20), { absolute: 20, percentage: null });
   assert.deepEqual(evolution(null, 20), { absolute: null, percentage: null });
+});
+
+test('PDF, DOCX and CSV exports are real files built from one analytical payload', async () => {
+  const payload = { report_type: 'classroom', generated_at: '2026-09-13T12:00:00Z', filters: { classroom_id: 'demo' }, methodology_version: 'phase5-v1', provisional: false, data: { state: 'success', summary: { completed: 4, participation_percentage: 80 }, statistics: { mean: 62.5 }, proficiency: [{ label: 'Adequado', count: 2, percentage: 50 }], skills: [{ code: 'DEMO-H01', description: 'Habilidade determinística', percentage: 62.5, students_evaluated: 4 }], students: [], evolution: [] } };
+  const [pdf,docx,csv] = await Promise.all(['pdf','docx','csv'].map((format) => createAnalyticsReportBlob(payload,format)));
+  assert.equal(pdf.type,'application/pdf'); assert.equal(Buffer.from(await pdf.arrayBuffer()).subarray(0,4).toString(),'%PDF');
+  assert.equal(docx.type,'application/vnd.openxmlformats-officedocument.wordprocessingml.document'); assert.equal(Buffer.from(await docx.arrayBuffer()).subarray(0,2).toString(),'PK');
+  assert.equal(csv.type,'text/csv;charset=utf-8'); assert.match(await csv.text(),/Participação \(%\).*80/);
 });
