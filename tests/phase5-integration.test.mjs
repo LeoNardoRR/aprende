@@ -133,4 +133,23 @@ test('Phase 5 closes attempt, curriculum, proficiency and tenant analytics end t
     assert.equal(first,replay); assert.equal(value(await clients.managerA.rpc('list_analytics_report_jobs')).filter((job) => job.id===first).length,1);
     assert.equal(value(await clients.teacherA.rpc('list_analytics_report_jobs')).some((job) => job.id===first),false);
   });
+
+  await t.test('server aggregation stays bounded with 12,849 attempts and paginates detail rows', { skip: process.env.PHASE5_LOAD_TEST !== '1' }, async () => {
+    const target = 12_849; const additional = target-patterns.length;
+    const chunkSize = 400;
+    for (let offset=0; offset<additional; offset+=chunkSize) {
+      const size = Math.min(chunkSize,additional-offset);
+      const scheduleRows = Array.from({ length:size }, () => ({ assessment_id: assessment.id, network_id: networkA.id, school_id: schoolA.id, starts_at: startsAt, ends_at: endsAt, status: 'closed', assigned_by: ids.adminA }));
+      const createdSchedules = value(await service.from('assessment_schedules').insert(scheduleRows).select('id'));
+      value(await service.from('assessment_classrooms').insert(createdSchedules.map((row) => ({ schedule_id:row.id, assessment_id:assessment.id, classroom_id:classA.id }))));
+      value(await service.from('assessment_attempts').insert(createdSchedules.map((row) => ({ assessment_id:assessment.id, schedule_id:row.id, classroom_id:classA.id, student_id:ids.student1, booklet_id:booklet.id, network_id:networkA.id, school_id:schoolA.id, status:'graded', submission_kind:'submitted', access_origin:'staff', allowed_minutes:60, started_at:startsAt, deadline_at:endsAt, submitted_at:new Date().toISOString(), score:0, max_score:0 }))));
+    }
+    const started = performance.now();
+    const result = value(await clients.adminA.rpc('get_analytics_dashboard',{ filters:{ assessment_id:assessment.id, page:65, page_size:200 } }));
+    const elapsed = performance.now()-started;
+    assert.equal(Number(result.summary.attempts),target);
+    assert.ok(result.students.length<=200);
+    assert.ok(elapsed<12_000,`12,849-attempt aggregation took ${elapsed.toFixed(0)} ms`);
+    t.diagnostic(`Phase 5 12,849-attempt aggregation: ${elapsed.toFixed(0)} ms`);
+  });
 });

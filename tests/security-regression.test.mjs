@@ -51,6 +51,7 @@ const phase4Runtime = readMigration('20260913111359_add_assessment_application_r
 const phase4Monitor = readMigration('20260913153000_complete_phase4_application_monitor.sql');
 const phase4PolicyHelpers = readMigration('20260913160000_fix_phase4_policy_helper_execution.sql');
 const phase4Concurrency = readMigration('20260913170100_harden_phase4_response_concurrency.sql');
+const phase5Analytics = readMigration('20260913180000_add_phase5_analytics_reporting.sql');
 const phase4Workflow = readFileSync(
   new URL('../.github/workflows/phase4-application-validation.yml', import.meta.url),
   'utf8',
@@ -79,6 +80,8 @@ const phase4E2e = readFileSync(
   new URL('./e2e/phase4-runtime.spec.ts', import.meta.url),
   'utf8',
 );
+const analyticsDashboard = readFileSync(new URL('../components/analytics-dashboard.tsx', import.meta.url), 'utf8');
+const analyticsWorker = readFileSync(new URL('../supabase/functions/analytics-report-worker/index.ts', import.meta.url), 'utf8');
 const teacherPortal = readFileSync(
   new URL('../components/teacher-portal.tsx', import.meta.url),
   'utf8',
@@ -399,6 +402,22 @@ test('Phase 4 UI exposes real autosave, resume, timing, monitoring and guarded s
   assert.match(assessmentApplicationMonitor, /target_action: action/);
   assert.match(assessmentApplicationMonitor, /list_assessment_attempt_events/);
   assert.doesNotMatch(`${studentAssessmentRuntime}\n${assessmentApplicationMonitor}`, /service[_ -]?role|SUPABASE_SERVICE/i);
+});
+
+test('Phase 5 keeps calculations and tenant checks on the server', () => {
+  assert.match(phase5Analytics, /create or replace view private\.analytics_attempt_facts/);
+  assert.match(phase5Analytics, /private\.analytics_can_access_scope/);
+  assert.match(phase5Analytics, /stddev_pop\(percentage\)/);
+  assert.match(phase5Analytics, /percentile_cont\(0\.5\)/);
+  assert.match(phase5Analytics, /corr\(\(item\.is_correct\)::integer, item\.attempt_percentage\)/);
+  assert.match(phase5Analytics, /cronbach_alpha/);
+  assert.match(phase5Analytics, /attempt\.status not in \('cancelled','invalidated'\)/);
+  assert.match(phase5Analytics, /assessment_proficiency_scales/);
+  assert.match(phase5Analytics, /storage\.buckets/);
+  assert.match(analyticsDashboard, /get_analytics_dashboard/);
+  assert.match(analyticsDashboard, /Sem dados suficientes/);
+  assert.match(analyticsWorker, /requested_by.*identity\.data\.user\.id/);
+  assert.doesNotMatch(analyticsDashboard, /service[_ -]?role|SUPABASE_SERVICE/i);
 });
 
 test('official PoC traceability matrix records source pages and honest statuses', () => {

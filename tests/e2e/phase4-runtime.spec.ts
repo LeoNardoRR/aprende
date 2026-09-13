@@ -46,6 +46,7 @@ type Fixture = {
   studentId: string;
   attemptId: string;
   email: string;
+  teacherEmail: string;
   password: string;
   token: string;
   title: string;
@@ -133,7 +134,7 @@ async function createFixture(): Promise<Fixture> {
     window_starts_at: startsAt, window_ends_at: endsAt,
   }));
   const issued = data(await teacher.rpc('issue_assessment_access_token', { target_schedule: scheduleId, target_student: student.id, valid_minutes: 120 }))[0];
-  return { service, teacher, networkId: network.id, studentId: student.id, attemptId: issued.attempt_id, email: studentEmail, password, token: issued.access_token, title };
+  return { service, teacher, networkId: network.id, studentId: student.id, attemptId: issued.attempt_id, email: studentEmail, teacherEmail, password, token: issued.access_token, title };
 }
 
 async function cleanupFixture(fixture: Fixture) {
@@ -202,6 +203,22 @@ test('restores an offline answer, blocks pending submit, reconnects and locks th
     await page.locator('.assessment-entry-list article').filter({ hasText: fixture.title }).getByRole('button', { name: 'Ver envio' }).click();
     await expect(page.getByText('AVALIAÇÃO ENVIADA')).toBeVisible();
     await expect(page.locator('.assessment-options input[type="radio"]')).toHaveCount(0);
+
+    await page.goto('/?auth=teacher');
+    await page.getByLabel('E-mail').fill(fixture.teacherEmail);
+    await page.getByLabel('Senha').fill(fixture.password);
+    await page.locator('form').getByRole('button', { name: 'Entrar', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /Olá,/ })).toBeVisible();
+    await page.getByRole('button', { name: 'Notas' }).click();
+    await expect(page.getByRole('heading', { name: 'Desempenho da turma' })).toBeVisible();
+    await expect(page.getByText('Participação', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Habilidades' })).toBeVisible();
+    await page.getByRole('button', { name: 'Detalhar' }).first().click();
+    await expect(page.getByText('Aluno E2E Fase 4')).toBeVisible();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'PDF', exact: true }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/^aprende-classroom-.*\.pdf$/);
   } finally {
     await cleanupFixture(fixture);
   }
