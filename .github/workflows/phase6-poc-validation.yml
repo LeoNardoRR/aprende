@@ -72,6 +72,7 @@ jobs:
           set -o pipefail
           eval "$(npx supabase status -o env)"
           SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run poc:performance -- /tmp/poc-regression.log | tee /tmp/poc-performance.log
+          npx supabase db query --local --file scripts/poc-explain.sql --output-format json | tee artifacts/poc/explain-analytics.json
       - name: Run Playwright application, offline, analytics and POC flows
         run: |
           set -o pipefail

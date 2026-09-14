@@ -44,7 +44,8 @@ const tests = {
 
 let advisorFindings = [];
 try {
-  const parsed = JSON.parse(await readFile(path.join(root, 'artifacts/poc/supabase-advisors.json'), 'utf8'));
+  const raw = await readFile(path.join(root, 'artifacts/poc/supabase-advisors.json'), 'utf8');
+  const parsed = JSON.parse(raw.slice(raw.indexOf('[')));
   advisorFindings = Array.isArray(parsed) ? parsed : [];
 } catch {
   throw new Error('O resultado JSON dos database advisors nao foi encontrado ou e invalido.');

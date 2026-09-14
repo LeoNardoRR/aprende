@@ -20,6 +20,13 @@ Esse teste prova volume de agregação analítica. Ele não prova 12.849 logins 
 - não incluir tempo de criação do dataset na latência da consulta;
 - registrar p50, p95 e máximo de múltiplas amostras.
 
+O workflow grava o plano real de `private.analytics_attempt_facts` em
+`artifacts/poc/explain-analytics.json`. O plano é produzido por
+`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` no Supabase local depois do seed;
+portanto, ele mede o cenário demonstrável de 12 tentativas. O teste separado
+de 12.849 tentativas mede a latência de ponta a ponta e não é apresentado como
+um plano de concorrência ou como garantia de produção.
+
 ## Resultado da Fase 6
 
 Preenchido automaticamente em `artifacts/poc/poc-validation-report.md` após a suíte conectada. Até a nova medição ser executada, o único número confirmado é o baseline acima.
