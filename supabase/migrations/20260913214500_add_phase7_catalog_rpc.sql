@@ -59,6 +59,11 @@ $$;
 revoke all on function public.list_pedagogical_catalog(uuid, uuid) from public, anon;
 grant execute on function public.list_pedagogical_catalog(uuid, uuid) to authenticated;
 
+-- Equidade é uma leitura consolidada da rede; gestores escolares não recebem
+-- esse grant até existir uma RPC explicitamente limitada à escola.
+delete from private.role_permissions
+where role = 'manager' and permission_key = 'equity.read';
+
 create or replace function public.get_equity_summary(target_network uuid,target_assessment uuid default null)
 returns jsonb language plpgsql stable security definer set search_path='' as $$
 declare result jsonb;
@@ -86,5 +91,19 @@ begin
   ) stats on true
   where g.network_id=target_network and g.active;
   return coalesce(result,jsonb_build_object('state','empty','groups','[]'::jsonb));
+end; $$;
+
+create or replace function public.request_ai_pedagogical_suggestion(target_network uuid,suggestion_type text,structured_prompt jsonb,generated_content jsonb,provider text default null,model text default null)
+returns uuid language plpgsql security definer set search_path='' as $$
+declare suggestion_id uuid;
+begin
+  if not private.has_permission('pedagogy.manage',target_network)
+    or jsonb_typeof(structured_prompt)<>'object'
+    or jsonb_typeof(generated_content)<>'object'
+    or structured_prompt::text ~* '"(student_name|student_email|cpf|rg|ra)"[[:space:]]*:'
+  then raise exception 'Not authorized or sensitive prompt'; end if;
+  insert into public.ai_pedagogical_suggestions(network_id,suggestion_type,structured_prompt,generated_content,provider,model,requested_by)
+  values(target_network,suggestion_type,structured_prompt,generated_content,provider,model,auth.uid()) returning id into suggestion_id;
+  return suggestion_id;
 end; $$;
 
