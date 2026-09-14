@@ -83,7 +83,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" \
           VITE_SUPABASE_URL="$API_URL" \
           VITE_SUPABASE_ANON_KEY="$ANON_KEY" \
-          npm run test:e2e
+          npm run test:e2e | tee /tmp/poc-e2e.log
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
@@ -97,7 +97,11 @@ jobs:
       - run: npm run build
       - run: npm run build:pages
       - name: Run local database advisors
-        run: npx supabase db advisors --local --type all --level info --fail-on error | tee /tmp/poc-advisors.log
+        run: |
+          set -o pipefail
+          npx supabase db advisors --local --type all --level info --fail-on error | tee /tmp/poc-advisors.log artifacts/poc/supabase-advisors.json
+      - name: Summarize test and security evidence
+        run: npm run poc:summarize
       - name: Review dependencies without forced upgrades
         run: npm audit --audit-level=critical --json > artifacts/poc/npm-audit.json
       - name: Generate validation report
