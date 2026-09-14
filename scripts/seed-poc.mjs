@@ -33,7 +33,14 @@ if (priorNetworks.length) {
   value(await db.from('proficiency_scales').delete().in('network_id', networkIds), 'delete POC proficiency scales');
   value(await db.from('analytics_report_jobs').delete().in('network_id', networkIds), 'delete POC report jobs');
   value(await db.from('assessment_attempts').delete().in('network_id', networkIds), 'delete POC attempts');
+  if (assessmentIds.length) {
+    value(await db.from('assessment_classrooms').delete().in('assessment_id', assessmentIds), 'delete POC assessment classrooms');
+    value(await db.from('assessment_schedules').delete().in('assessment_id', assessmentIds), 'delete POC assessment schedules');
+    value(await db.from('assessment_booklet_items').delete().in('assessment_id', assessmentIds), 'delete POC booklet items');
+    value(await db.from('assessment_booklets').delete().in('assessment_id', assessmentIds), 'delete POC booklets');
+  }
   value(await db.from('diagnostic_assessments').delete().in('network_id', networkIds), 'delete POC assessments');
+  value(await db.from('assessment_cycles').delete().in('network_id', networkIds), 'delete POC assessment cycles');
   if (itemIds.length) value(await db.from('assessment_item_versions').delete().in('item_id', itemIds), 'delete POC item versions');
   value(await db.from('assessment_items').delete().in('network_id', networkIds), 'delete POC items');
   value(await db.from('audit_logs').delete().in('network_id', networkIds), 'delete POC audit logs');
