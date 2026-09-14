@@ -53,16 +53,21 @@ try {
 
 // Supabase emite ERROR, WARN e INFO. A matriz da PoC mapeia ERROR para HIGH,
 // WARN para MEDIUM e preserva INFO; CRITICAL exige uma revisao humana adicional.
+const findingsFor = (category) => advisorFindings.filter((finding) => finding.categories?.includes(category));
+const securityFindings = findingsFor('SECURITY');
+const performanceFindings = findingsFor('PERFORMANCE');
 const security = {
   critical: 0,
-  high: advisorFindings.filter((finding) => finding.level === 'ERROR').length,
-  medium: advisorFindings.filter((finding) => finding.level === 'WARN').length,
+  high: securityFindings.filter((finding) => finding.level === 'ERROR').length,
+  medium: securityFindings.filter((finding) => finding.level === 'WARN').length,
   low: 0,
-  info: advisorFindings.filter((finding) => finding.level === 'INFO').length,
+  info: securityFindings.filter((finding) => finding.level === 'INFO').length,
   state: 'reviewed',
   source: 'supabase_db_advisors_local',
   severity_mapping: { ERROR: 'HIGH', WARN: 'MEDIUM', INFO: 'INFO' },
-  findings: advisorFindings.map(({ name, title, level, detail, categories }) => ({ name, title, level, detail, categories })),
+  advisor_totals: Object.fromEntries(['ERROR', 'WARN', 'INFO'].map((level) => [level, advisorFindings.filter((finding) => finding.level === level).length])),
+  performance_advisors: Object.fromEntries(['ERROR', 'WARN', 'INFO'].map((level) => [level, performanceFindings.filter((finding) => finding.level === level).length])),
+  findings: securityFindings.map(({ name, title, level, detail, categories }) => ({ name, title, level, detail, categories })),
 };
 
 const output = path.join(root, 'artifacts/poc');

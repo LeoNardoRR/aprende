@@ -29,4 +29,13 @@ um plano de concorrência ou como garantia de produção.
 
 ## Resultado da Fase 6
 
-Preenchido automaticamente em `artifacts/poc/poc-validation-report.md` após a suíte conectada. Até a nova medição ser executada, o único número confirmado é o baseline acima.
+Na execução de referência `34791691601`:
+
+- dashboard PoC, 12 observações: p50 38,2 ms; p95 68 ms; máximo 68 ms;
+- agregação sintética de 12.849 tentativas: 7.395 ms em uma observação;
+- plano PostgreSQL do cenário PoC: planejamento 7,905 ms e execução 0,727 ms.
+
+O `Seq Scan` observado na tabela `networks` percorreu uma única linha e não é
+problemático nesse conjunto. O teste de 12.849 tentativas permaneceu abaixo do
+limite de 12 segundos. Ele não mede 12.849 usuários concorrentes, geração em
+lote ou SLA de produção; essas evidências continuam pendentes.

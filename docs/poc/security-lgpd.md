@@ -23,12 +23,18 @@
 
 | Nível | Finding | Situação |
 |---|---|---|
-| CRITICAL | Nenhum confirmado na auditoria estática ou no `npm audit`. | CI ainda deve executar advisors locais. |
+| CRITICAL | Nenhum confirmado na auditoria estática, advisors ou `npm audit`. | Execução descartável verde. |
 | HIGH | 8 vulnerabilidades npm, envolvendo `react-server-dom-webpack`, `vite`, `vinext/image-size` e transitivos de Cloudflare. | Atualizações existem, mas exigem rodada dedicada de regressão; não foi usado `--force`. |
 | MEDIUM | 2 vulnerabilidades npm em cadeia Cloudflare/Undici. | Mesma decisão acima. |
 | LOW | 1 vulnerabilidade npm transitiva em `esbuild`. | Afeta cenário de desenvolvimento Windows; atualização coordenada necessária. |
 | INFO | Tabelas de escala de proficiência têm RLS sem policies diretas. | Intencional: acesso somente por RPC autorizada; manter como deny-by-default. |
-| INFO | Índices GIN duplicados no banco de itens foram indicados pelo advisor da Fase 5. | Não removidos sem plano comparativo; acompanhar como otimização. |
+| INFO | Índices GIN duplicados no banco de itens foram indicados pelo advisor local. | Não removidos sem plano comparativo; acompanhar como otimização. |
+
+Na execução `34791691601`, os advisors terminaram sem `ERROR`. Foram 108
+findings: 17 `WARN` de performance e 91 `INFO`. Os cinco findings da categoria
+`SECURITY` são `INFO` de RLS habilitada sem policy direta em tabelas acessadas
+por função autorizada ou deliberadamente fechadas. O relatório automático
+separa esses cinco itens dos findings de performance.
 
 ## LGPD
 
@@ -36,6 +42,6 @@ O produto implementa segregação por tenant, controle de acesso, auditoria de o
 
 Essas decisões não podem ser inventadas pelo código. A matriz mantém o requisito como `PARCIAL` e P0 até a governança jurídica e administrativa ser definida e os fluxos operacionais correspondentes serem testados.
 
-## Próxima execução
+## Execução automatizada
 
-O workflow da Fase 6 executa migrations do zero, testes negativos, Playwright, Deno, database advisors e `npm audit --audit-level=critical`. Logs e traces são preservados por sete dias como artifacts quando a execução ocorrer.
+O workflow da Fase 6 executa migrations do zero, testes negativos, Playwright, Deno, database advisors e `npm audit --audit-level=critical`. Logs e traces são preservados por sete dias como artifacts em toda execução.

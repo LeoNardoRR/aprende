@@ -12,7 +12,11 @@ artifacts/poc/
   poc-validation-report.md
 ```
 
-Playwright grava screenshot, trace e vídeo apenas quando configurados pelo cenário/CI. Logs de Supabase e relatórios são enviados como artifact do GitHub Actions em falhas. Nenhum segredo, JWT, resposta pessoal ou dado real deve constar nesses arquivos.
+Playwright grava screenshot, trace e vídeo apenas quando configurados pelo cenário/CI. Logs de Supabase, screenshot do Control Center, plano `EXPLAIN ANALYZE`, totais de testes, advisors, audit e relatórios são enviados como artifact do GitHub Actions em toda execução, inclusive quando há falha. Nenhum segredo, JWT, resposta pessoal ou dado real deve constar nesses arquivos.
+
+A execução de referência `34791691601` produziu o artifact
+`phase6-poc-evidence` com 101/101 testes verdes e nenhum skip: 95 regressões,
+4 cenários PoC e 2 E2E.
 
 ## Cadeias demonstráveis
 

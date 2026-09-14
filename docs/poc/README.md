@@ -42,3 +42,12 @@ A conformidade ponderada atribui 1 ponto a `ATENDIDO`, 0,5 a `PARCIAL` e 0 a `N�
 - [Segurança e LGPD](security-lgpd.md)
 
 Produção não foi alterada.
+
+## Validação de referência
+
+A execução descartável do GitHub Actions `34791691601`, no commit
+`e3553463ddee73c019fdddb278fc851d097d9377`, concluiu migrations do zero,
+seed repetido, 101 testes sem falhas ou skips, os dois E2E, Deno, lint,
+typecheck, builds, advisors, audit e geração dos artifacts. Essa execução é a
+linha de base verificada da Fase 6; cada commit posterior permanece sujeito ao
+mesmo workflow.
