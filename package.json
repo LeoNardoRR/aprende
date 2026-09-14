@@ -14,7 +14,14 @@
     "format": "oxfmt",
     "build:pages": "vite build --config vite.pages.config.ts",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "poc:matrix": "node scripts/validate-poc-matrix.mjs",
+    "poc:report": "node scripts/generate-poc-report.mjs",
+    "poc:summarize": "node scripts/summarize-poc-evidence.mjs",
+    "test:poc": "node --test tests/poc/*.test.mjs",
+    "seed:poc": "node scripts/seed-poc.mjs",
+    "poc:smoke": "node scripts/poc-smoke.mjs",
+    "poc:performance": "node scripts/measure-poc-performance.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
