@@ -21,7 +21,8 @@
     "test:poc": "node --test tests/poc/*.test.mjs",
     "seed:poc": "node scripts/seed-poc.mjs",
     "poc:smoke": "node scripts/poc-smoke.mjs",
-    "poc:performance": "node scripts/measure-poc-performance.mjs"
+    "poc:performance": "node scripts/measure-poc-performance.mjs",
+    "test:phase7": "node --experimental-strip-types --test tests/phase7/*.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
