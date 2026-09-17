@@ -41,3 +41,9 @@ A tabela de sugestões registra prompt estruturado, conteúdo gerado, provedor, 
 - `.github/workflows/phase7-pedagogical-validation.yml`: Supabase descartável, migrations do zero, seeds repetidos, regressão, PoC, E2E, Deno, lint, tipos, builds, advisors e audit.
 
 O ambiente local atual não possui Docker. A validação conectada e as migrations devem ser comprovadas pelo GitHub Actions descartável antes de qualquer declaração de conclusão.
+
+## Riscos medidos e limites
+
+`npm audit` encontrou 11 vulnerabilidades nas dependências atuais: 1 low, 2 moderate e 8 high, sem critical. Entre as dependências diretas afetadas estão `vinext`, `vite`, `react-server-dom-webpack`, `@cloudflare/vite-plugin` e `wrangler`; `image-size`, `miniflare`, `sharp`, `undici`, `ws` e `esbuild` são transitivas. Atualizações exigem nova regressão das Fases 1–7; não foi aplicado `npm audit fix --force`.
+
+O seed da Fase 7 valida o fluxo funcional com dados sintéticos, mas ainda não mede catálogo, atribuições e relatórios com 12.849 estudantes. Portanto, a capacidade nessa escala permanece sem comprovação específica da Fase 7. O banco usa busca paginada e índices de escopo, mas a RPC de relatório devolve o conjunto autorizado em uma resposta; relatórios institucionais extensos precisarão de paginação ou processamento assíncrono.
