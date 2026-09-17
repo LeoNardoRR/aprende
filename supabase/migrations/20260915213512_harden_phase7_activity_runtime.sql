@@ -129,7 +129,7 @@ begin
   if assignment.id is null or recipient.student_id is null or recipient.status in ('cancelled','completed')
     or assignment.status not in ('scheduled','active') or assignment.starts_at>now() or (assignment.due_at is not null and assignment.due_at<now())
   then raise exception 'Not authorized or assignment unavailable'; end if;
-  if exists(select 1 from private.journey_progress_operations o where o.assignment_id=target_assignment and o.student_id=student and o.request_key=request_key)
+  if exists(select 1 from private.journey_progress_operations o where o.assignment_id=target_assignment and o.student_id=student and o.request_key=$5)
   then return jsonb_build_object('assignment_id',target_assignment,'idempotent',true); end if;
   select item into step_snapshot from public.learning_journey_versions version,
     lateral jsonb_array_elements(version.snapshot->'steps') item
@@ -173,7 +173,7 @@ begin
     started_at=coalesce(public.learning_journey_step_progress.started_at,now()),
     completed_at=case when excluded.status='completed' then coalesce(public.learning_journey_step_progress.completed_at,now()) else public.learning_journey_step_progress.completed_at end,
     updated_at=now();
-  insert into private.journey_progress_operations values(target_assignment,student,request_key,now());
+  insert into private.journey_progress_operations values(target_assignment,student,$5,now());
   select count(*) filter(where coalesce((item->>'required')::boolean,true)),
     count(*) filter(where coalesce((item->>'required')::boolean,true) and progress.status='completed'),
     coalesce(sum((item->>'gamification_points')::integer) filter(where progress.status='completed'),0),
