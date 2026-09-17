@@ -40,10 +40,15 @@ test('aluno vê somente sua jornada e progresso é idempotente', async (t) => {
   const [student, outsider] = await Promise.all([f.login(f.base.users.student1), f.login(f.base.users.student3)]);
   const own = value(await student.rpc('get_my_learning_journeys'));
   assert.equal(own.length, 1); assert.equal(own[0].assignment_id, f.phase7.assignment_id);
+  assert.equal(own[0].journey_version, 1);
+  assert.equal(own[0].steps[1].response_type, 'single_choice');
+  const outOfOrder = await student.rpc('save_journey_step_progress', { target_assignment: f.phase7.assignment_id, target_step: f.phase7.step_ids[2], target_status: 'completed', response_payload: { acknowledged: true }, request_key: crypto.randomUUID() });
+  assert.ok(outOfOrder.error);
   const key = '77000000-0000-4000-8000-000000000010';
-  const saved = value(await student.rpc('save_journey_step_progress', { target_assignment: f.phase7.assignment_id, target_step: f.phase7.step_ids[1], target_status: 'completed', response_payload: { answer: 'DEMO' }, request_key: key }));
+  const saved = value(await student.rpc('save_journey_step_progress', { target_assignment: f.phase7.assignment_id, target_step: f.phase7.step_ids[1], target_status: 'completed', response_payload: { choice: '20 + 10 + 7 + 5' }, request_key: key }));
   assert.equal(saved.idempotent, false); assert.equal(Number(saved.progress_percentage), 66.67);
-  const repeated = value(await student.rpc('save_journey_step_progress', { target_assignment: f.phase7.assignment_id, target_step: f.phase7.step_ids[1], target_status: 'completed', response_payload: { answer: 'DEMO' }, request_key: key }));
+  assert.equal(Number(saved.pedagogical_score), 10);
+  const repeated = value(await student.rpc('save_journey_step_progress', { target_assignment: f.phase7.assignment_id, target_step: f.phase7.step_ids[1], target_status: 'completed', response_payload: { choice: '20 + 10 + 7 + 5' }, request_key: key }));
   assert.equal(repeated.idempotent, true);
   assert.equal(value(await outsider.rpc('get_my_learning_journeys')).length, 0);
   const attack = await outsider.rpc('save_journey_step_progress', { target_assignment: f.phase7.assignment_id, target_step: f.phase7.step_ids[1], target_status: 'completed', response_payload: {}, request_key: crypto.randomUUID() });
@@ -74,4 +79,3 @@ test('fluência calcula PCMin e equidade suprime ou bloqueia o escopo inadequado
   assert.equal(summary.groups[0].suppressed, false);
   assert.equal(Number(summary.groups[0].students), 4);
 });
-
