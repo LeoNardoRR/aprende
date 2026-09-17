@@ -2,6 +2,7 @@
 
 import { TeacherItemBank } from '@/components/teacher-item-bank';
 import { AnalyticsDashboard } from '@/components/analytics-dashboard';
+import { PedagogicalJourneys } from '@/components/pedagogical-journeys';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Session } from '@supabase/supabase-js';
@@ -28,6 +29,7 @@ import {
   Palette,
   Pencil,
   Plus,
+  Route,
   School,
   UserMinus,
   UserRoundCheck,
@@ -734,8 +736,9 @@ function TeacherDashboard({
   );
   const [selected, setSelected] = useState<string>(preview ? '6a' : '');
   const [view, setView] = useState<
-    'overview' | 'activities' | 'exams' | 'students' | 'grades'
+    'overview' | 'activities' | 'exams' | 'students' | 'grades' | 'remediation'
   >('overview');
+  const [remediationSkillId, setRemediationSkillId] = useState<string | null>(null);
   const [busy, setBusy] = useState(!preview);
   const [notice, setNotice] = useState('');
   const [displayName, setDisplayName] = useState(profile.display_name);
@@ -1097,6 +1100,14 @@ function TeacherDashboard({
           >
             <BarChart3 />
             <span>Notas</span>
+          </button>
+          <button
+            aria-label="Recomposição"
+            className={view === 'remediation' ? 'active' : ''}
+            onClick={() => { setRemediationSkillId(null); setView('remediation'); }}
+          >
+            <Route />
+            <span>Jornadas</span>
           </button>
         </nav>
         <AccountSettings
@@ -1485,8 +1496,19 @@ function TeacherDashboard({
                   fixedSchoolId={currentClass.school_id}
                   fixedClassroomId={currentClass.id}
                   preview={preview}
+                  onAssignSkill={(skillId) => { setRemediationSkillId(skillId); setView('remediation'); }}
                 />
               </>
+            )}
+            {view === 'remediation' && (
+              <PedagogicalJourneys
+                mode="teacher"
+                networkId={currentClass.network_id}
+                schoolId={currentClass.school_id}
+                classroomId={currentClass.id}
+                skillId={remediationSkillId}
+                preview={preview}
+              />
             )}
           </>
         )}

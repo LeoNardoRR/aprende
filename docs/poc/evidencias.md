@@ -27,6 +27,8 @@ A execução de referência `34791691601` produziu o artifact
 | Item → avaliação → caderno → agendamento | `tests/phase3-finalization.integration.test.mjs` |
 | Token → tentativa → offline → sincronização → finalização | `tests/phase4-integration.test.mjs`, `tests/e2e/phase4-runtime.spec.ts` |
 | Resultado → analytics → proficiência → relatório | `tests/phase5-integration.test.mjs` |
+| Analytics → jornada → progresso → acompanhamento | `tests/phase7/phase7-connected.test.mjs`, `tests/e2e/phase7-pedagogy.spec.ts` |
+| Fluência assistida e equidade com supressão | `tests/phase7/pedagogy-rules.test.mjs`, `tests/phase7/phase7-connected.test.mjs` |
 | Matriz sem inflação de status | `tests/poc/matrix.test.mjs` |
 
 ## Segurança

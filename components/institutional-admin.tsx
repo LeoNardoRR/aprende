@@ -15,6 +15,7 @@ import {
   BookOpenCheck,
   Network,
   Plus,
+  Route,
   School,
   ShieldCheck,
   Users,
@@ -28,6 +29,7 @@ import { InstitutionalBulk } from '@/components/institutional-bulk';
 import { InstitutionalUsers } from '@/components/institutional-users';
 import { AnalyticsDashboard } from '@/components/analytics-dashboard';
 import { PocControlCenter } from '@/components/poc-control-center';
+import { PedagogicalJourneys } from '@/components/pedagogical-journeys';
 import { supabase } from '@/lib/supabase';
 import type { Database, Tables } from '@/lib/database.types';
 
@@ -220,9 +222,10 @@ export function InstitutionalAdmin({ profile, preview = false, onExit }: { profi
           <a href="#item-bank"><BookOpenCheck /> Banco de Itens</a>
           <a href="#assessments"><ClipboardList /> Avaliações</a>
           <a href="#analytics"><ChartNoAxesCombined /> Analytics</a>
+          <a href="#remediation"><Route /> Recomposição</a>
           {canAuditPoc && <a href="#poc"><ClipboardCheck /> Control Center PoC</a>}
         </nav>
-        <small className="institutional-version">Aprendê v0.1.0 · Fase 6</small>
+        <small className="institutional-version">Aprendê v0.1.0 · Fase 7</small>
         <button type="button" disabled={signingOut} onClick={() => void signOut()}><LogOut /> {signingOut ? 'Saindo…' : 'Sair'}</button>
       </aside>
       <main className="institutional-main">
@@ -265,6 +268,7 @@ export function InstitutionalAdmin({ profile, preview = false, onExit }: { profi
             <InstitutionalPedagogy profile={profile} networks={networks} preview={preview} />
             <InstitutionalAssessments profile={profile} networks={networks} schools={schools} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} />
             <div id="analytics"><AnalyticsDashboard mode="institutional" networks={networks} schools={schools} classrooms={preview ? previewInstitutionalClassrooms : classrooms} preview={preview} /></div>
+            <PedagogicalJourneys mode="institutional" networkId={networks[0]?.id} schoolId={schools[0]?.id} classroomId={(preview ? previewInstitutionalClassrooms : classrooms)[0]?.id} preview={preview} />
             {canAuditPoc && <PocControlCenter />}
           </>
         )}

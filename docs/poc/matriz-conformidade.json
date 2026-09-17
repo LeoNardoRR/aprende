@@ -1,96 +1,628 @@
 {
   "metadata": {
-    "title": "Matriz de conformidade da PoC - Pregao Eletronico 40/2026",
-    "base_branch": "codex/fase5-analytics-relatorios",
-    "base_commit": "89b336ab3dc89af02323ff5f8635beae3b869550",
+    "title": "Matriz de conformidade da PoC - Edital Retificado do Pregao Eletronico 40/2026",
+    "base_branch": "codex/fase6-poc-licitacao",
+    "base_commit": "c8f3f7b4b29534cd68d7404513cce1ca07823580",
     "phase6_branch": "codex/fase6-poc-licitacao",
     "assessed_at": "2026-09-13",
-    "scoring": "ATENDIDO=1, PARCIAL=0.5, NAO_ATENDIDO=0; NAO_APLICAVEL e DEPENDENCIA_EXTERNA ficam fora do denominador"
+    "scoring": "ATENDIDO=1, PARCIAL=0.5, NAO_ATENDIDO=0; NAO_APLICAVEL e DEPENDENCIA_EXTERNA ficam fora do denominador",
+    "source_document": "93578c201e504a12a59cfb9149717ea8Edital+Retificado+PregAo+EletrOnico+n++402026.pdf",
+    "source_pages": "67-76",
+    "implementation_branch": "codex/fase7-recursos-pedagogicos"
   },
   "requirements": [
     {
-      "id": "POC-1.1", "category": "Acesso e administracao", "description": "Acesso individual, identificacao, versao visivel, credenciais e hierarquia institucional.", "edital_reference": "PoC 1.1, paginas 67-68", "phase": "1/6", "status": "PARCIAL",
-      "implementation": ["components/institutional-admin.tsx", "components/institutional-users.tsx", "supabase/migrations/20260912153902_add_institutional_rbac_foundation.sql"], "route": "/?access=institutional", "required_profile": ["network_admin", "manager"], "required_data": ["rede", "escola", "membership"], "test": ["tests/phase1-integration.test.mjs", "tests/security-regression.test.mjs"], "evidence": ["docs/pre-phase4-stabilization.md"], "gap": "CAPTCHA e cartas de senha nao existem; identificadores civis dependem de definicao de minimizacao LGPD.", "severity": "P0", "observations": "Login, papeis, hierarquia e movimentacoes existem; a conformidade integral nao foi demonstrada."
+      "id": "POC-1.1",
+      "category": "Acesso e administracao",
+      "description": "Acesso individual, identificacao, versao visivel, credenciais e hierarquia institucional.",
+      "edital_reference": "PoC 1.1, paginas 67-68",
+      "phase": "1/6",
+      "status": "PARCIAL",
+      "implementation": [
+        "components/institutional-admin.tsx",
+        "components/institutional-users.tsx",
+        "supabase/migrations/20260912153902_add_institutional_rbac_foundation.sql"
+      ],
+      "route": "/?access=institutional",
+      "required_profile": [
+        "network_admin",
+        "manager"
+      ],
+      "required_data": [
+        "rede",
+        "escola",
+        "membership"
+      ],
+      "test": [
+        "tests/phase1-integration.test.mjs",
+        "tests/security-regression.test.mjs"
+      ],
+      "evidence": [
+        "docs/pre-phase4-stabilization.md"
+      ],
+      "gap": "CAPTCHA e cartas de senha nao existem; identificadores civis dependem de definicao de minimizacao LGPD.",
+      "severity": "P0",
+      "observations": "Login, papeis, hierarquia e movimentacoes existem; a conformidade integral nao foi demonstrada."
     },
     {
-      "id": "POC-1.2", "category": "Curriculo", "description": "BNCC, SAEB e curriculo municipal relacionados a componentes, unidades, objetos e habilidades.", "edital_reference": "PoC 1.2, pagina 68", "phase": "2", "status": "PARCIAL",
-      "implementation": ["components/institutional-pedagogy.tsx", "supabase/migrations/20260912173208_add_curriculum_and_item_bank_foundation.sql"], "route": "/?access=institutional#curricula", "required_profile": ["network_admin", "manager"], "required_data": ["curriculo oficial licenciado"], "test": ["tests/phase2-integration.test.mjs"], "evidence": ["docs/pre-phase4-stabilization.md"], "gap": "O software importa e relaciona curriculos, mas o conteudo oficial integral nao integra o repositorio.", "severity": "P0", "observations": "Conteudo oficial e uma dependencia externa e nao deve ser fabricado."
+      "id": "POC-1.2",
+      "category": "Curriculo",
+      "description": "BNCC, SAEB e curriculo municipal relacionados a componentes, unidades, objetos e habilidades.",
+      "edital_reference": "PoC 1.2, pagina 68",
+      "phase": "2",
+      "status": "PARCIAL",
+      "implementation": [
+        "components/institutional-pedagogy.tsx",
+        "supabase/migrations/20260912173208_add_curriculum_and_item_bank_foundation.sql"
+      ],
+      "route": "/?access=institutional#curricula",
+      "required_profile": [
+        "network_admin",
+        "manager"
+      ],
+      "required_data": [
+        "curriculo oficial licenciado"
+      ],
+      "test": [
+        "tests/phase2-integration.test.mjs"
+      ],
+      "evidence": [
+        "docs/pre-phase4-stabilization.md"
+      ],
+      "gap": "O software importa e relaciona curriculos, mas o conteudo oficial integral nao integra o repositorio.",
+      "severity": "P0",
+      "observations": "Conteudo oficial e uma dependencia externa e nao deve ser fabricado."
     },
     {
-      "id": "POC-1.3", "category": "Usuarios e matriculas", "description": "Cadastro, importacao, movimentacao, credenciais individuais e em lote.", "edital_reference": "PoC 1.3, paginas 68-69", "phase": "1", "status": "PARCIAL",
-      "implementation": ["components/institutional-bulk.tsx", "components/institutional-enrollments.tsx", "components/institutional-users.tsx"], "route": "/?access=institutional#enrollments", "required_profile": ["network_admin", "manager"], "required_data": ["alunos sinteticos"], "test": ["tests/phase1-integration.test.mjs", "tests/phase12-finalization.integration.test.mjs"], "evidence": ["docs/pre-phase4-stabilization.md"], "gap": "Geracao e impressao de cartas de senha nao foram implementadas.", "severity": "P1", "observations": "Importacao, preview, idempotencia e historico de matricula possuem cobertura."
+      "id": "POC-1.3",
+      "category": "Usuarios e matriculas",
+      "description": "Cadastro, importacao, movimentacao, credenciais individuais e em lote.",
+      "edital_reference": "PoC 1.3, paginas 68-69",
+      "phase": "1",
+      "status": "PARCIAL",
+      "implementation": [
+        "components/institutional-bulk.tsx",
+        "components/institutional-enrollments.tsx",
+        "components/institutional-users.tsx"
+      ],
+      "route": "/?access=institutional#enrollments",
+      "required_profile": [
+        "network_admin",
+        "manager"
+      ],
+      "required_data": [
+        "alunos sinteticos"
+      ],
+      "test": [
+        "tests/phase1-integration.test.mjs",
+        "tests/phase12-finalization.integration.test.mjs"
+      ],
+      "evidence": [
+        "docs/pre-phase4-stabilization.md"
+      ],
+      "gap": "Geracao e impressao de cartas de senha nao foram implementadas.",
+      "severity": "P1",
+      "observations": "Importacao, preview, idempotencia e historico de matricula possuem cobertura."
     },
     {
-      "id": "POC-1.4", "category": "Banco de itens", "description": "Banco com fluxo editorial, filtros, imagens, formulas, versoes e capacidade de 1.500 itens.", "edital_reference": "PoC 1.4, paginas 69-70", "phase": "2", "status": "PARCIAL",
-      "implementation": ["components/item-workspace.tsx", "supabase/migrations/20260912173208_add_curriculum_and_item_bank_foundation.sql", "supabase/migrations/20260913080728_stabilize_item_storage_and_snapshots.sql"], "route": "/?access=institutional#item-bank", "required_profile": ["teacher", "reviewer", "approver"], "required_data": ["itens DEMO", "conteudo pedagogico validado"], "test": ["tests/phase2-integration.test.mjs", "tests/phase12-finalization.integration.test.mjs"], "evidence": ["docs/pre-phase4-stabilization.md"], "gap": "Capacidade tecnica foi testada, mas 1.500 itens pedagogicos reais e validados nao foram fornecidos.", "severity": "P0", "observations": "Dados DEMO provam escala do software, nao acervo pedagogico."
+      "id": "POC-1.4",
+      "category": "Banco de itens",
+      "description": "Banco com fluxo editorial, filtros, imagens, formulas, versoes e capacidade de 1.500 itens.",
+      "edital_reference": "PoC 1.4, paginas 69-70",
+      "phase": "2",
+      "status": "PARCIAL",
+      "implementation": [
+        "components/item-workspace.tsx",
+        "supabase/migrations/20260912173208_add_curriculum_and_item_bank_foundation.sql",
+        "supabase/migrations/20260913080728_stabilize_item_storage_and_snapshots.sql"
+      ],
+      "route": "/?access=institutional#item-bank",
+      "required_profile": [
+        "teacher",
+        "reviewer",
+        "approver"
+      ],
+      "required_data": [
+        "itens DEMO",
+        "conteudo pedagogico validado"
+      ],
+      "test": [
+        "tests/phase2-integration.test.mjs",
+        "tests/phase12-finalization.integration.test.mjs"
+      ],
+      "evidence": [
+        "docs/pre-phase4-stabilization.md"
+      ],
+      "gap": "Capacidade tecnica foi testada, mas 1.500 itens pedagogicos reais e validados nao foram fornecidos.",
+      "severity": "P0",
+      "observations": "Dados DEMO provam escala do software, nao acervo pedagogico."
     },
     {
-      "id": "POC-1.5", "category": "Avaliacao", "description": "Construcao de avaliacao com itens aprovados, cadernos A-E, mapa, pontos e ordem.", "edital_reference": "PoC 1.5, pagina 70", "phase": "3", "status": "ATENDIDO",
-      "implementation": ["components/institutional-assessments.tsx", "supabase/migrations/20260912181500_add_assessment_booklets_and_scheduling.sql"], "route": "/?access=institutional#assessments", "required_profile": ["network_admin", "manager", "teacher"], "required_data": ["itens aprovados", "avaliacao DEMO"], "test": ["tests/phase3-integration.test.mjs", "tests/phase3-finalization.integration.test.mjs"], "evidence": ["docs/phase3-finalization.md"], "gap": "", "severity": "P2", "observations": "Limite de cinco cadernos, snapshots, deduplicacao do mapa e reorder sao testados."
+      "id": "POC-1.5",
+      "category": "Avaliacao",
+      "description": "Construcao de avaliacao com itens aprovados, cadernos A-E, mapa, pontos e ordem.",
+      "edital_reference": "PoC 1.5, pagina 70",
+      "phase": "3",
+      "status": "ATENDIDO",
+      "implementation": [
+        "components/institutional-assessments.tsx",
+        "supabase/migrations/20260912181500_add_assessment_booklets_and_scheduling.sql"
+      ],
+      "route": "/?access=institutional#assessments",
+      "required_profile": [
+        "network_admin",
+        "manager",
+        "teacher"
+      ],
+      "required_data": [
+        "itens aprovados",
+        "avaliacao DEMO"
+      ],
+      "test": [
+        "tests/phase3-integration.test.mjs",
+        "tests/phase3-finalization.integration.test.mjs"
+      ],
+      "evidence": [
+        "docs/phase3-finalization.md"
+      ],
+      "gap": "",
+      "severity": "P2",
+      "observations": "Limite de cinco cadernos, snapshots, deduplicacao do mapa e reorder sao testados."
     },
     {
-      "id": "POC-1.6", "category": "Agendamento", "description": "Ciclos, calendario, distribuicao por turma e aluno, reagendamento e monitoramento.", "edital_reference": "PoC 1.6, paginas 70-71", "phase": "3/4", "status": "ATENDIDO",
-      "implementation": ["components/institutional-assessments.tsx", "components/assessment-application-monitor.tsx"], "route": "/?access=institutional#assessments", "required_profile": ["network_admin", "manager", "teacher"], "required_data": ["ciclo", "turmas", "avaliacao"], "test": ["tests/phase3-finalization.integration.test.mjs", "tests/phase4-integration.test.mjs"], "evidence": ["docs/phase4-assessment-runtime.md"], "gap": "", "severity": "P2", "observations": "Elegibilidade e isolamento institucional sao validados no backend."
+      "id": "POC-1.6",
+      "category": "Agendamento",
+      "description": "Ciclos, calendario, distribuicao por turma e aluno, reagendamento e monitoramento.",
+      "edital_reference": "PoC 1.6, paginas 70-71",
+      "phase": "3/4",
+      "status": "ATENDIDO",
+      "implementation": [
+        "components/institutional-assessments.tsx",
+        "components/assessment-application-monitor.tsx"
+      ],
+      "route": "/?access=institutional#assessments",
+      "required_profile": [
+        "network_admin",
+        "manager",
+        "teacher"
+      ],
+      "required_data": [
+        "ciclo",
+        "turmas",
+        "avaliacao"
+      ],
+      "test": [
+        "tests/phase3-finalization.integration.test.mjs",
+        "tests/phase4-integration.test.mjs"
+      ],
+      "evidence": [
+        "docs/phase4-assessment-runtime.md"
+      ],
+      "gap": "",
+      "severity": "P2",
+      "observations": "Elegibilidade e isolamento institucional sao validados no backend."
     },
     {
-      "id": "POC-1.7", "category": "Aplicacao", "description": "Aplicacao autenticada com token, autosave, offline, reconexao, timer e finalizacao imutavel.", "edital_reference": "PoC 1.7, paginas 71-72", "phase": "4", "status": "ATENDIDO",
-      "implementation": ["components/student-assessment-runtime.tsx", "lib/assessment-offline-queue.ts", "supabase/migrations/20260913111359_add_assessment_application_runtime.sql"], "route": "/?mode=student", "required_profile": ["student"], "required_data": ["agendamento ativo", "token local"], "test": ["tests/phase4-integration.test.mjs", "tests/e2e/phase4-runtime.spec.ts"], "evidence": ["docs/phase4-assessment-runtime.md"], "gap": "", "severity": "P2", "observations": "A fila IndexedDB e a idempotencia sao exercitadas em teste."
+      "id": "POC-1.7",
+      "category": "Aplicacao",
+      "description": "Aplicacao autenticada com token, autosave, offline, reconexao, timer e finalizacao imutavel.",
+      "edital_reference": "PoC 1.7, paginas 71-72",
+      "phase": "4",
+      "status": "ATENDIDO",
+      "implementation": [
+        "components/student-assessment-runtime.tsx",
+        "lib/assessment-offline-queue.ts",
+        "supabase/migrations/20260913111359_add_assessment_application_runtime.sql"
+      ],
+      "route": "/?mode=student",
+      "required_profile": [
+        "student"
+      ],
+      "required_data": [
+        "agendamento ativo",
+        "token local"
+      ],
+      "test": [
+        "tests/phase4-integration.test.mjs",
+        "tests/e2e/phase4-runtime.spec.ts"
+      ],
+      "evidence": [
+        "docs/phase4-assessment-runtime.md"
+      ],
+      "gap": "",
+      "severity": "P2",
+      "observations": "A fila IndexedDB e a idempotencia sao exercitadas em teste."
     },
     {
-      "id": "POC-1.8", "category": "Analytics e relatorios", "description": "Resultados por aluno, turma, escola e rede com dashboards e relatorios.", "edital_reference": "PoC 1.8, paginas 72-73", "phase": "5", "status": "PARCIAL",
-      "implementation": ["components/analytics-dashboard.tsx", "supabase/migrations/20260913180000_add_phase5_analytics_reporting.sql", "lib/analytics-report-export.ts"], "route": "/?access=institutional#analytics", "required_profile": ["student", "teacher", "manager", "network_admin"], "required_data": ["tentativas finalizadas"], "test": ["tests/phase5-integration.test.mjs", "tests/analytics-statistics.test.mjs"], "evidence": ["docs/phase5-analytics-reporting.md"], "gap": "Ranking individual exigiria decisao formal de privacidade e metodologia; nao e exibido.", "severity": "P1", "observations": "Dashboard, PDF, DOCX, CSV e lotes usam a mesma fonte de dados."
+      "id": "POC-1.8",
+      "category": "Analytics e relatorios",
+      "description": "Resultados por aluno, turma, escola e rede com dashboards e relatorios.",
+      "edital_reference": "PoC 1.8, paginas 72-73",
+      "phase": "5",
+      "status": "PARCIAL",
+      "implementation": [
+        "components/analytics-dashboard.tsx",
+        "supabase/migrations/20260913180000_add_phase5_analytics_reporting.sql",
+        "lib/analytics-report-export.ts"
+      ],
+      "route": "/?access=institutional#analytics",
+      "required_profile": [
+        "student",
+        "teacher",
+        "manager",
+        "network_admin"
+      ],
+      "required_data": [
+        "tentativas finalizadas"
+      ],
+      "test": [
+        "tests/phase5-integration.test.mjs",
+        "tests/analytics-statistics.test.mjs"
+      ],
+      "evidence": [
+        "docs/phase5-analytics-reporting.md"
+      ],
+      "gap": "Ranking individual exigiria decisao formal de privacidade e metodologia; nao e exibido.",
+      "severity": "P1",
+      "observations": "Dashboard, PDF, DOCX, CSV e lotes usam a mesma fonte de dados."
     },
     {
-      "id": "POC-1.9", "category": "Proficiencia", "description": "Escalas versionadas, distribuicao e evolucao de proficiencia.", "edital_reference": "PoC 1.9, pagina 73", "phase": "5", "status": "ATENDIDO",
-      "implementation": ["supabase/migrations/20260913180000_add_phase5_analytics_reporting.sql", "components/analytics-dashboard.tsx"], "route": "/?access=institutional#analytics", "required_profile": ["manager", "network_admin", "teacher", "student"], "required_data": ["escala atribuida", "resultados"], "test": ["tests/phase5-integration.test.mjs", "tests/analytics-statistics.test.mjs"], "evidence": ["docs/phase5-analytics-reporting.md"], "gap": "", "severity": "P2", "observations": "Historico preserva a escala atribuida a avaliacao."
+      "id": "POC-1.9",
+      "category": "Proficiencia",
+      "description": "Escalas versionadas, distribuicao e evolucao de proficiencia.",
+      "edital_reference": "PoC 1.9, pagina 73",
+      "phase": "5",
+      "status": "ATENDIDO",
+      "implementation": [
+        "supabase/migrations/20260913180000_add_phase5_analytics_reporting.sql",
+        "components/analytics-dashboard.tsx"
+      ],
+      "route": "/?access=institutional#analytics",
+      "required_profile": [
+        "manager",
+        "network_admin",
+        "teacher",
+        "student"
+      ],
+      "required_data": [
+        "escala atribuida",
+        "resultados"
+      ],
+      "test": [
+        "tests/phase5-integration.test.mjs",
+        "tests/analytics-statistics.test.mjs"
+      ],
+      "evidence": [
+        "docs/phase5-analytics-reporting.md"
+      ],
+      "gap": "",
+      "severity": "P2",
+      "observations": "Historico preserva a escala atribuida a avaliacao."
     },
     {
-      "id": "POC-1.10", "category": "VAAR e equidade", "description": "Indicadores e evidencias de reducao de desigualdades para VAAR.", "edital_reference": "PoC 1.10, pagina 73", "phase": "7", "status": "NAO_ATENDIDO",
-      "implementation": [], "route": "", "required_profile": ["network_admin"], "required_data": ["criterios oficiais VAAR"], "test": [], "evidence": ["docs/poc/gaps.md"], "gap": "Dominio VAAR/equidade nao foi implementado.", "severity": "P0", "observations": "Pertence a Fase 7; arquitetura preparada nao prova atendimento."
+      "id": "POC-1.10",
+      "category": "VAAR e equidade",
+      "description": "Equidade com perfil socioeconomico, proficiencia ponderada, gaps, risco, qualidade cadastral e relatorios.",
+      "edital_reference": "PoC 1.10, pagina 73",
+      "phase": "7",
+      "status": "PARCIAL",
+      "implementation": [
+        "supabase/migrations/20260913213000_add_phase7_pedagogical_resources.sql",
+        "supabase/migrations/20260913214500_add_phase7_catalog_rpc.sql"
+      ],
+      "route": "/?access=institutional#remediation",
+      "required_profile": [
+        "network_admin"
+      ],
+      "required_data": [
+        "grupos sinteticos",
+        "criterios oficiais VAAR",
+        "base legal e governanca LGPD"
+      ],
+      "test": [
+        "tests/phase7/pedagogy-rules.test.mjs",
+        "tests/phase7/phase7-connected.test.mjs"
+      ],
+      "evidence": [
+        "docs/phase7-pedagogical-resources.md",
+        "docs/phase7-pedagogical-resources.md"
+      ],
+      "gap": "Há agregação por grupos configuráveis e supressão de amostras pequenas, mas faltam perfil socioeconômico governado, índice ponderado oficial, decomposição do gap, mapa de calor, risco, qualidade cadastral e relatórios PDF/DOCX de equidade.",
+      "severity": "P0",
+      "observations": "A tela e a RPC declaram explicitamente que a métrica observada não é a fórmula oficial do VAAR."
     },
     {
-      "id": "POC-1.11", "category": "Fluencia leitora", "description": "Aplicacao, captura e analise de fluencia leitora.", "edital_reference": "PoC 1.11, paginas 73-74", "phase": "7", "status": "NAO_ATENDIDO",
-      "implementation": [], "route": "", "required_profile": ["teacher", "student"], "required_data": ["instrumentos de fluencia"], "test": [], "evidence": ["docs/poc/gaps.md"], "gap": "Modulo de fluencia leitora nao existe.", "severity": "P0", "observations": "Requer novo dominio funcional e metodologia."
+      "id": "POC-1.11",
+      "category": "Fluencia leitora",
+      "description": "Leitura oral por palavras, pseudopalavras e texto, com fluencia, precisao, perfis e consolidacao.",
+      "edital_reference": "PoC 1.11, paginas 73-74",
+      "phase": "7",
+      "status": "PARCIAL",
+      "implementation": [
+        "supabase/migrations/20260913213000_add_phase7_pedagogical_resources.sql",
+        "lib/pedagogy-rules.ts"
+      ],
+      "route": "/?access=institutional#remediation",
+      "required_profile": [
+        "teacher",
+        "student"
+      ],
+      "required_data": [
+        "instrumentos de fluencia validados",
+        "perfis de leitor homologados"
+      ],
+      "test": [
+        "tests/phase7/pedagogy-rules.test.mjs",
+        "tests/phase7/phase7-connected.test.mjs"
+      ],
+      "evidence": [
+        "docs/phase7-pedagogical-resources.md",
+        "docs/phase7-pedagogical-resources.md"
+      ],
+      "gap": "Existe aplicação assistida, registro de áudio privado e cálculo determinístico de palavras corretas por minuto, mas faltam experiência completa por etapa, modo autônomo do aluno, perfis homologados e consolidação visual por turma, escola e rede.",
+      "severity": "P0",
+      "observations": "A medição é manual e revisável; não há reconhecimento de voz apresentado como concluído."
     },
     {
-      "id": "POC-1.12", "category": "Recomposicao", "description": "Jornadas, objetos interativos e recomposicao orientada por diagnostico.", "edital_reference": "PoC 1.12, pagina 74", "phase": "7", "status": "PARCIAL",
-      "implementation": ["components/student-connect.tsx", "components/teacher-portal.tsx"], "route": "/?mode=student", "required_profile": ["student", "teacher"], "required_data": ["catalogo pedagogico validado"], "test": ["tests/connected-flow.test.mjs"], "evidence": ["docs/poc/gaps.md"], "gap": "Nao ha catalogo de objetos interativos nem 180 titulos pedagogicos reais.", "severity": "P0", "observations": "Tarefas e pontos existentes nao equivalem ao requisito completo."
+      "id": "POC-1.12",
+      "category": "Recomposicao",
+      "description": "Jornadas, objetos interativos e recomposicao orientada por diagnostico.",
+      "edital_reference": "PoC 1.12, pagina 74",
+      "phase": "7",
+      "status": "PARCIAL",
+      "implementation": [
+        "components/pedagogical-journeys.tsx",
+        "lib/pedagogy-rules.ts",
+        "lib/pedagogy-report-export.ts",
+        "supabase/migrations/20260913213000_add_phase7_pedagogical_resources.sql",
+        "supabase/migrations/20260913220000_add_phase7_reports_and_portfolio.sql"
+      ],
+      "route": "/?access=institutional#remediation",
+      "required_profile": [
+        "student",
+        "teacher"
+      ],
+      "required_data": [
+        "catalogo pedagogico validado",
+        "acervo externo de 180 titulos"
+      ],
+      "test": [
+        "tests/phase7/pedagogy-rules.test.mjs",
+        "tests/phase7/phase7-connected.test.mjs",
+        "tests/e2e/phase7-pedagogy.spec.ts"
+      ],
+      "evidence": [
+        "docs/phase7-pedagogical-resources.md",
+        "docs/phase7-pedagogical-resources.md"
+      ],
+      "gap": "Jornadas, progressão, atribuição, pontuação separada, portfólio e relatório existem; faltam os tipos interativos completos exigidos e o acervo real mínimo de 180 títulos de Português e Matemática.",
+      "severity": "P0",
+      "observations": "O seed sintético prova o fluxo técnico, não a existência do acervo pedagógico exigido."
     },
     {
-      "id": "POC-1.13", "category": "IA pedagogica", "description": "IA pedagogica com privacidade e validacao humana.", "edital_reference": "PoC 1.13, pagina 74", "phase": "7", "status": "NAO_ATENDIDO",
-      "implementation": [], "route": "", "required_profile": ["teacher", "reviewer", "approver"], "required_data": ["provedor aprovado", "politica de privacidade"], "test": [], "evidence": ["docs/poc/gaps.md"], "gap": "Nenhum fluxo de IA pedagogica foi implementado.", "severity": "P0", "observations": "Aprovacao automatica por IA seria proibida pela regra do produto."
+      "id": "POC-1.13",
+      "category": "IA pedagogica",
+      "description": "IA pedagogica com privacidade e validacao humana.",
+      "edital_reference": "PoC 1.13, pagina 74",
+      "phase": "7",
+      "status": "PARCIAL",
+      "implementation": [
+        "supabase/migrations/20260913213000_add_phase7_pedagogical_resources.sql",
+        "supabase/migrations/20260913214500_add_phase7_catalog_rpc.sql"
+      ],
+      "route": "/?access=institutional#remediation",
+      "required_profile": [
+        "teacher",
+        "reviewer",
+        "approver"
+      ],
+      "required_data": [
+        "provedor aprovado",
+        "politica de privacidade",
+        "prompts e rubricas homologados"
+      ],
+      "test": [
+        "tests/phase7/phase7-connected.test.mjs"
+      ],
+      "evidence": [
+        "docs/phase7-pedagogical-resources.md",
+        "docs/phase7-pedagogical-resources.md"
+      ],
+      "gap": "Há fila auditável, bloqueio básico de PII e revisão humana obrigatória, mas ainda não existe integração real com provedor aprovado nem geração ponta a ponta de insights, itens, conteúdos ou correção discursiva.",
+      "severity": "P0",
+      "observations": "Nenhuma sugestão produz efeito sobre o aluno antes de revisão humana; o fluxo atual é infraestrutura, não um assistente completo."
     },
     {
-      "id": "POC-1.14", "category": "Mobile", "description": "Aplicativos e acesso em dispositivos moveis.", "edital_reference": "PoC 1.14, pagina 75", "phase": "8", "status": "PARCIAL",
-      "implementation": ["public/manifest.webmanifest", "app/globals.css"], "route": "/", "required_profile": ["student", "teacher"], "required_data": [], "test": ["tests/e2e/phase4-runtime.spec.ts"], "evidence": ["docs/poc/gaps.md"], "gap": "Nao existem wrappers nativos, publicacao iOS ou Android.", "severity": "P0", "observations": "Responsividade/PWA web nao comprovam distribuicao em lojas."
+      "id": "POC-1.14",
+      "category": "Mobile",
+      "description": "Aplicativos e acesso em dispositivos moveis.",
+      "edital_reference": "PoC 1.14, pagina 75",
+      "phase": "8",
+      "status": "PARCIAL",
+      "implementation": [
+        "public/manifest.webmanifest",
+        "app/globals.css"
+      ],
+      "route": "/",
+      "required_profile": [
+        "student",
+        "teacher"
+      ],
+      "required_data": [],
+      "test": [
+        "tests/e2e/phase4-runtime.spec.ts"
+      ],
+      "evidence": [
+        "docs/poc/gaps.md"
+      ],
+      "gap": "Nao existem wrappers nativos, publicacao iOS ou Android.",
+      "severity": "P0",
+      "observations": "Responsividade/PWA web nao comprovam distribuicao em lojas."
     },
     {
-      "id": "POC-1.15", "category": "Acessibilidade", "description": "Acessibilidade, teclado, leitor de tela, contraste, zoom e alternativas textuais.", "edital_reference": "PoC 1.15, pagina 75", "phase": "5/8", "status": "PARCIAL",
-      "implementation": ["components/analytics-dashboard.tsx", "app/phase4-runtime.css"], "route": "/", "required_profile": ["todos"], "required_data": [], "test": ["tests/e2e/phase4-runtime.spec.ts"], "evidence": ["docs/phase5-analytics-reporting.md"], "gap": "Falta auditoria completa WCAG e evidencia com tecnologias assistivas.", "severity": "P1", "observations": "Ha foco visivel, rotulos e tabelas alternativas nos analytics."
+      "id": "POC-1.15",
+      "category": "Acessibilidade",
+      "description": "Acessibilidade, teclado, leitor de tela, contraste, zoom e alternativas textuais.",
+      "edital_reference": "PoC 1.15, pagina 75",
+      "phase": "5/8",
+      "status": "PARCIAL",
+      "implementation": [
+        "components/analytics-dashboard.tsx",
+        "app/phase4-runtime.css"
+      ],
+      "route": "/",
+      "required_profile": [
+        "todos"
+      ],
+      "required_data": [],
+      "test": [
+        "tests/e2e/phase4-runtime.spec.ts"
+      ],
+      "evidence": [
+        "docs/phase5-analytics-reporting.md"
+      ],
+      "gap": "Falta auditoria completa WCAG e evidencia com tecnologias assistivas.",
+      "severity": "P1",
+      "observations": "Ha foco visivel, rotulos e tabelas alternativas nos analytics."
     },
     {
-      "id": "POC-1.16", "category": "LGPD e seguranca", "description": "Segregacao, minimizacao, auditoria, retencao e direitos do titular.", "edital_reference": "PoC 1.16, paginas 75-76", "phase": "1-6/8", "status": "PARCIAL",
-      "implementation": ["supabase/migrations/20260912153902_add_institutional_rbac_foundation.sql", "tests/security-regression.test.mjs"], "route": "/?access=institutional#access", "required_profile": ["network_admin", "manager"], "required_data": [], "test": ["tests/security-regression.test.mjs", "tests/phase5-integration.test.mjs"], "evidence": ["docs/poc/evidencias.md"], "gap": "Retencao, atendimento integral ao titular e politica juridica dependem de governanca formal.", "severity": "P0", "observations": "RLS e isolamento existem; decisoes juridicas sao dependencia externa."
+      "id": "POC-1.16",
+      "category": "LGPD e seguranca",
+      "description": "Segregacao, minimizacao, auditoria, retencao e direitos do titular.",
+      "edital_reference": "PoC 1.16, paginas 75-76",
+      "phase": "1-6/8",
+      "status": "PARCIAL",
+      "implementation": [
+        "supabase/migrations/20260912153902_add_institutional_rbac_foundation.sql",
+        "tests/security-regression.test.mjs"
+      ],
+      "route": "/?access=institutional#access",
+      "required_profile": [
+        "network_admin",
+        "manager"
+      ],
+      "required_data": [],
+      "test": [
+        "tests/security-regression.test.mjs",
+        "tests/phase5-integration.test.mjs"
+      ],
+      "evidence": [
+        "docs/poc/evidencias.md"
+      ],
+      "gap": "Retencao, atendimento integral ao titular e politica juridica dependem de governanca formal.",
+      "severity": "P0",
+      "observations": "RLS e isolamento existem; decisoes juridicas sao dependencia externa."
     },
     {
-      "id": "POC-1.17", "category": "Aplicacao impressa", "description": "Prova impressa, folha de respostas e importacao/correcao posterior.", "edital_reference": "PoC 1.17, pagina 76", "phase": "8", "status": "NAO_ATENDIDO",
-      "implementation": [], "route": "", "required_profile": ["manager", "teacher"], "required_data": ["layout homologado"], "test": [], "evidence": ["docs/poc/gaps.md"], "gap": "Fluxo impresso e leitura de folhas nao existem.", "severity": "P0", "observations": "Exportar relatorio nao equivale a aplicar prova impressa."
+      "id": "POC-1.17",
+      "category": "Aplicacao impressa",
+      "description": "Prova impressa, folha de respostas e importacao/correcao posterior.",
+      "edital_reference": "PoC 1.17, pagina 76",
+      "phase": "8",
+      "status": "NAO_ATENDIDO",
+      "implementation": [],
+      "route": "",
+      "required_profile": [
+        "manager",
+        "teacher"
+      ],
+      "required_data": [
+        "layout homologado"
+      ],
+      "test": [],
+      "evidence": [
+        "docs/poc/gaps.md"
+      ],
+      "gap": "Fluxo impresso e leitura de folhas nao existem.",
+      "severity": "P0",
+      "observations": "Exportar relatorio nao equivale a aplicar prova impressa."
     },
     {
-      "id": "POC-2.1", "category": "Operacao", "description": "Disponibilizacao de equipe de acompanhamento durante a execucao.", "edital_reference": "PoC 2.1, pagina 76", "phase": "Externa", "status": "DEPENDENCIA_EXTERNA",
-      "implementation": [], "route": "", "required_profile": [], "required_data": ["plano operacional contratado"], "test": [], "evidence": ["docs/poc/gaps.md"], "gap": "Requer decisao e alocacao administrativa.", "severity": "P1", "observations": "Nao e comprovavel apenas pelo repositorio."
+      "id": "POC-2.1",
+      "category": "Operacao",
+      "description": "Disponibilizacao de equipe de acompanhamento durante a execucao.",
+      "edital_reference": "PoC 2.1, pagina 76",
+      "phase": "Externa",
+      "status": "DEPENDENCIA_EXTERNA",
+      "implementation": [],
+      "route": "",
+      "required_profile": [],
+      "required_data": [
+        "plano operacional contratado"
+      ],
+      "test": [],
+      "evidence": [
+        "docs/poc/gaps.md"
+      ],
+      "gap": "Requer decisao e alocacao administrativa.",
+      "severity": "P1",
+      "observations": "Nao e comprovavel apenas pelo repositorio."
     },
     {
-      "id": "POC-2.2", "category": "Capacitacao", "description": "Capacitacao, materiais e acompanhamento dos usuarios.", "edital_reference": "PoC 2.2, paginas 76-77", "phase": "Externa", "status": "DEPENDENCIA_EXTERNA",
-      "implementation": [], "route": "", "required_profile": [], "required_data": ["plano de treinamento"], "test": [], "evidence": ["docs/poc/gaps.md"], "gap": "Treinamento e cronograma precisam ser contratualmente definidos.", "severity": "P1", "observations": "Documentacao tecnica nao substitui capacitacao executada."
+      "id": "POC-2.2",
+      "category": "Capacitacao",
+      "description": "Capacitacao, materiais e acompanhamento dos usuarios.",
+      "edital_reference": "PoC 2.2, paginas 76-77",
+      "phase": "Externa",
+      "status": "DEPENDENCIA_EXTERNA",
+      "implementation": [],
+      "route": "",
+      "required_profile": [],
+      "required_data": [
+        "plano de treinamento"
+      ],
+      "test": [],
+      "evidence": [
+        "docs/poc/gaps.md"
+      ],
+      "gap": "Treinamento e cronograma precisam ser contratualmente definidos.",
+      "severity": "P1",
+      "observations": "Documentacao tecnica nao substitui capacitacao executada."
     },
     {
-      "id": "POC-2.3", "category": "Suporte", "description": "Help Desk com abertura, acompanhamento e SLA.", "edital_reference": "PoC 2.3, pagina 77", "phase": "8", "status": "NAO_ATENDIDO",
-      "implementation": [], "route": "", "required_profile": ["todos"], "required_data": ["SLA homologado"], "test": [], "evidence": ["docs/poc/gaps.md"], "gap": "Help Desk completo nao foi implementado.", "severity": "P0", "observations": "Canal informal nao comprova SLA ou rastreabilidade."
+      "id": "POC-2.3",
+      "category": "Suporte",
+      "description": "Help Desk com abertura, acompanhamento e SLA.",
+      "edital_reference": "PoC 2.3, pagina 77",
+      "phase": "8",
+      "status": "NAO_ATENDIDO",
+      "implementation": [],
+      "route": "",
+      "required_profile": [
+        "todos"
+      ],
+      "required_data": [
+        "SLA homologado"
+      ],
+      "test": [],
+      "evidence": [
+        "docs/poc/gaps.md"
+      ],
+      "gap": "Help Desk completo nao foi implementado.",
+      "severity": "P0",
+      "observations": "Canal informal nao comprova SLA ou rastreabilidade."
     },
     {
-      "id": "POC-3.1", "category": "Implantacao", "description": "Hospedagem, dominios, operacao e disponibilidade conforme edital.", "edital_reference": "PoC 3.1, pagina 77", "phase": "Externa", "status": "DEPENDENCIA_EXTERNA",
-      "implementation": [], "route": "", "required_profile": [], "required_data": ["ambiente homologado", "SLA"], "test": [], "evidence": ["docs/poc/gaps.md"], "gap": "A Fase 6 nao realiza deploy; infraestrutura de producao exige homologacao separada.", "severity": "P0", "observations": "Produção nao sera alterada nesta branch."
+      "id": "POC-3.1",
+      "category": "Implantacao",
+      "description": "Hospedagem, dominios, operacao e disponibilidade conforme edital.",
+      "edital_reference": "PoC 3.1, pagina 77",
+      "phase": "Externa",
+      "status": "DEPENDENCIA_EXTERNA",
+      "implementation": [],
+      "route": "",
+      "required_profile": [],
+      "required_data": [
+        "ambiente homologado",
+        "SLA"
+      ],
+      "test": [],
+      "evidence": [
+        "docs/poc/gaps.md"
+      ],
+      "gap": "A Fase 6 nao realiza deploy; infraestrutura de producao exige homologacao separada.",
+      "severity": "P0",
+      "observations": "Produção nao sera alterada nesta branch."
     }
   ]
 }

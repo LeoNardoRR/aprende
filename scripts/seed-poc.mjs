@@ -25,6 +25,11 @@ console.log('Reconstruindo exclusivamente o conjunto POC local...');
 const priorNetworks = value(await db.from('networks').select('id').eq('name', 'POC DEMO Monte Mor - dados sinteticos'), 'find POC network');
 if (priorNetworks.length) {
   const networkIds = priorNetworks.map((row) => row.id);
+  // Fase 7 referencia currículo e avaliações com FKs restritivas. A limpeza
+  // começa pelo domínio de intervenção para manter o seed completo idempotente.
+  for (const table of ['pedagogical_recommendations', 'learning_journey_assignments', 'reading_fluency_activities', 'equity_group_definitions', 'ai_pedagogical_suggestions', 'learning_journeys', 'pedagogical_resources', 'remediation_programs']) {
+    value(await db.from(table).delete().in('network_id', networkIds), `delete POC ${table}`);
+  }
   const assessments = value(await db.from('diagnostic_assessments').select('id').in('network_id', networkIds), 'find POC assessments');
   const assessmentIds = assessments.map((row) => row.id);
   const items = value(await db.from('assessment_items').select('id').in('network_id', networkIds), 'find POC items');
@@ -137,7 +142,7 @@ const scale = await one('proficiency_scales', { network_id: network.id, assessme
 for (const [index, level] of [['below_basic','Abaixo do Básico',0,25],['basic','Básico',25,50],['adequate','Adequado',50,75],['advanced','Avançado',75,100]].entries()) await one('proficiency_levels', { scale_id: scale.id, code: level[0], label: level[1], lower_bound: level[2], upper_bound: level[3], sort_order: index + 1 });
 await one('assessment_proficiency_scales', { assessment_id: assessment.id, scale_id: scale.id, assigned_by: ids.admin });
 
-const manifest = { synthetic: true, network_id: network.id, school_ids: demonstrationSchools.map((row) => row.id), scale_school_ids: schools.map((row) => row.id), classroom_ids: classrooms.map((row) => row.id), assessment_id: assessment.id, attempt_id: attempts[0].id, users: Object.fromEntries(roleSpecs.map(([key]) => [key, emailFor(key)])), counts: { networks: 1, schools: schools.length, grades: 3, classrooms: classrooms.length, students: 12, items: items.length, attempts: attempts.length } };
+const manifest = { synthetic: true, network_id: network.id, school_ids: demonstrationSchools.map((row) => row.id), scale_school_ids: schools.map((row) => row.id), classroom_ids: classrooms.map((row) => row.id), assessment_id: assessment.id, attempt_id: attempts[0].id, users: Object.fromEntries(roleSpecs.map(([key]) => [key, emailFor(key)])), user_ids: ids, counts: { networks: 1, schools: schools.length, grades: 3, classrooms: classrooms.length, students: 12, items: items.length, attempts: attempts.length } };
 await mkdir(path.join(root, 'artifacts/poc'), { recursive: true });
 await writeFile(path.join(root, 'artifacts/poc/seed-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(`Seed POC concluido: ${schools.length} escolas, ${classrooms.length} turmas, 12 alunos, ${attempts.length} tentativas. Senha nao exibida.`);
