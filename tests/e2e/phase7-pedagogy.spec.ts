@@ -20,7 +20,7 @@ test('analytics leva à jornada, aluno progride e professor acompanha', async ({
   await page.locator('form').getByRole('button', { name: 'Entrar', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Olá,/ })).toBeVisible();
   await page.getByRole('button', { name: 'Notas' }).click();
-  const skillRow = page.locator('.analytics-table-card tr').filter({ hasText: phase7.skill_code });
+  const skillRow = page.locator('.analytics-table-card tr').filter({ hasText: phase7.skill_code }).filter({ has: page.getByRole('button', { name: 'Atribuir jornada' }) });
   await expect(skillRow).toBeVisible();
   await skillRow.getByRole('button', { name: 'Atribuir jornada' }).click();
   await expect(page.getByRole('heading', { name: 'Recomposição da turma' })).toBeVisible();
@@ -56,5 +56,9 @@ test('prévia mantém leitura e ações acessíveis em viewport móvel', async (
   await page.getByRole('link', { name: 'Recomposição' }).click();
   await expect(page.getByRole('heading', { name: 'Jornadas e intervenções' })).toBeVisible();
   await expect(page.getByText('DEMO visual · dados sintéticos identificados.')).toBeVisible();
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await expect.poll(() => page.evaluate(() => {
+    const hub = document.getElementById('remediation');
+    const bounds = hub?.getBoundingClientRect();
+    return Boolean(hub && bounds && hub.scrollWidth <= hub.clientWidth && bounds.left >= 0 && bounds.right <= window.innerWidth);
+  })).toBe(true);
 });
