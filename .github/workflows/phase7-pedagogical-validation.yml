@@ -1,0 +1,100 @@
+name: Validate Phase 7 pedagogy
+
+on:
+  push:
+    branches: [codex/fase7-recursos-pedagogicos]
+  pull_request:
+    branches: [codex/fase6-poc-licitacao]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase7-pedagogy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start disposable Supabase and apply every migration
+        run: |
+          set -o pipefail
+          npx supabase start
+          npx supabase db reset --local
+          npx supabase migration list --local | tee /tmp/phase7-migrations.log
+          npx supabase db push --dry-run --local
+      - name: Serve local Edge Functions
+        run: npx supabase functions serve > /tmp/phase7-functions.log 2>&1 &
+      - name: Seed deterministic synthetic data twice
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          for run in 1 2; do
+            SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:poc
+            SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:phase7
+          done | tee /tmp/phase7-seed.log
+      - name: Run regressions and Phase 7 connected tests without skips
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" PHASE5_LOAD_TEST=1 npm test | tee /tmp/phase7-regression.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/phase7-regression.log | tail -1)" = "0"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run test:poc | tee /tmp/phase7-poc.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/phase7-poc.log | tail -1)" = "0"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run test:phase7 | tee /tmp/phase7-tests.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/phase7-tests.log | tail -1)" = "0"
+      - name: Validate matrix and smoke test
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          npm run poc:matrix
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run poc:smoke | tee /tmp/phase7-smoke.log
+      - name: Run Playwright flows
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" NEXT_PUBLIC_SUPABASE_URL="$API_URL" NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" VITE_SUPABASE_URL="$API_URL" VITE_SUPABASE_ANON_KEY="$ANON_KEY" npm run test:e2e | tee /tmp/phase7-e2e.log
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Validate application and Edge Functions
+        run: |
+          deno check supabase/functions/institutional-invite/index.ts
+          deno check supabase/functions/analytics-report-worker/index.ts
+          npm run lint
+          npm run typecheck
+          npm run build
+          npm run build:pages
+      - name: Run local database advisors
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/poc
+          npx supabase db advisors --local --type all --level info --fail-on error | tee artifacts/poc/phase7-advisors.log
+      - name: Review dependencies without forced upgrades
+        run: npm audit --audit-level=critical --json > artifacts/poc/npm-audit.json
+      - name: Preserve diagnostics
+        if: always()
+        run: |
+          mkdir -p artifacts/poc/logs
+          find /tmp -maxdepth 1 -name 'phase7-*.log' -exec cp {} artifacts/poc/logs/ \;
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase7-validation-evidence
+          path: |
+            artifacts/poc
+            test-results
+          retention-days: 7
+      - name: Stop disposable Supabase
+        if: always()
+        run: npx supabase stop --no-backup
