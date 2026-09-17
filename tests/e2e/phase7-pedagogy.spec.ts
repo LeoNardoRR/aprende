@@ -34,6 +34,8 @@ test('analytics leva à jornada, aluno progride e professor acompanha', async ({
   await page.locator('form').getByRole('button', { name: 'Entrar', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Minha jornada de aprendizagem' })).toBeVisible();
   const journey = page.locator('.pedagogy-student');
+  await journey.locator('.pedagogy-steps li').first().getByRole('button', { name: 'Concluir etapa' }).click();
+  await expect(journey.locator('.pedagogy-steps li').first().getByRole('button', { name: 'Concluída' })).toBeVisible();
   await journey.getByRole('radio', { name: '20 + 10 + 7 + 5' }).check();
   await journey.getByRole('button', { name: 'Concluir etapa' }).click();
   await expect(page.getByText('Progresso salvo com segurança.')).toBeVisible();
