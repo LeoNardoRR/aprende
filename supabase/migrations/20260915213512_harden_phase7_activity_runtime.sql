@@ -120,6 +120,7 @@ declare
   student uuid:=auth.uid(); assignment public.learning_journey_assignments; recipient public.learning_journey_students;
   validation private.journey_step_validation; step_snapshot jsonb; previous_pending boolean; score numeric(10,2):=null;
   required_steps integer; completed_steps integer; total_points integer; total_score numeric(10,2); result jsonb;
+  reassessment_percentage numeric;
 begin
   if student is null or target_status not in ('in_progress','completed') or jsonb_typeof(response_payload)<>'object'
     or pg_column_size(response_payload)>32768 then raise exception 'Invalid progress'; end if;
@@ -149,7 +150,17 @@ begin
     elsif validation.response_type='short_text' then
       if char_length(trim(coalesce(response_payload->>'text',''))) not between 1 and 5000 then raise exception 'Answer required'; end if;
       score:=null;
-    elsif validation.response_type in ('teacher_review','assessment') then raise exception 'This step requires teacher or assessment validation';
+    elsif validation.response_type='assessment' then
+      select fact.percentage into reassessment_percentage
+      from private.analytics_attempt_facts fact
+      where fact.student_id=student and fact.classroom_id=assignment.classroom_id
+        and fact.assessment_id=(step_snapshot->>'assessment_id')::uuid
+        and fact.submitted_at>=assignment.created_at
+        and fact.status in ('submitted','auto_submitted','graded') and fact.percentage is not null
+      order by fact.submitted_at desc limit 1;
+      if reassessment_percentage is null then raise exception 'Complete the linked reassessment before validating this step'; end if;
+      score:=round(validation.max_score*reassessment_percentage/100,2);
+    elsif validation.response_type='teacher_review' then raise exception 'This step requires teacher validation';
     elsif validation.response_type is null and step_snapshot->>'step_type' not in ('content','review') then raise exception 'Step validation is not configured';
     end if;
   end if;

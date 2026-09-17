@@ -48,6 +48,8 @@ test('aluno vê somente sua jornada e progresso é idempotente', async (t) => {
   const saved = value(await student.rpc('save_journey_step_progress', { target_assignment: f.phase7.assignment_id, target_step: f.phase7.step_ids[1], target_status: 'completed', response_payload: { choice: '20 + 10 + 7 + 5' }, request_key: key }));
   assert.equal(saved.idempotent, false); assert.equal(Number(saved.progress_percentage), 66.67);
   assert.equal(Number(saved.pedagogical_score), 10);
+  const prematureReassessment = await student.rpc('save_journey_step_progress', { target_assignment: f.phase7.assignment_id, target_step: f.phase7.step_ids[2], target_status: 'completed', response_payload: {}, request_key: crypto.randomUUID() });
+  assert.ok(prematureReassessment.error, 'reavaliação anterior à atribuição ou ainda não corrigida não conclui a jornada');
   const repeated = value(await student.rpc('save_journey_step_progress', { target_assignment: f.phase7.assignment_id, target_step: f.phase7.step_ids[1], target_status: 'completed', response_payload: { choice: '20 + 10 + 7 + 5' }, request_key: key }));
   assert.equal(repeated.idempotent, true);
   assert.equal(value(await outsider.rpc('get_my_learning_journeys')).length, 0);
