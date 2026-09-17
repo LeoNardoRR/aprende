@@ -4,7 +4,10 @@ import { expect, test } from '@playwright/test';
 import { loadMatrix, summarize } from '../../scripts/poc-matrix.mjs';
 
 test('administrador consulta a matriz real e filtra bloqueadores da PoC', async ({ page }) => {
-  const matrix = await loadMatrix();
+  const matrix = await loadMatrix() as {
+    metadata: { base_commit: string };
+    requirements: Array<{ id: string; severity: string; status: string; gap: string }>;
+  };
   const summary = summarize(matrix);
   await page.goto('/?qa=institution-admin#poc');
   await expect(page.getByRole('heading', { name: 'Control Center da PoC' })).toBeVisible();
