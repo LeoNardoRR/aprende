@@ -81,3 +81,28 @@ test('fluência calcula PCMin e equidade suprime ou bloqueia o escopo inadequado
   assert.equal(summary.groups[0].suppressed, false);
   assert.equal(Number(summary.groups[0].students), 4);
 });
+
+test('relatório, portfólio e busca paginada usam dados persistidos e isolamento institucional', async (t) => {
+  const f = await fixtures(t); if (!f) return;
+  const [teacher, outsider, student, otherStudent] = await Promise.all([
+    f.login(f.base.users.teacher1), f.login(f.base.users.teacher2),
+    f.login(f.base.users.student1), f.login(f.base.users.student3),
+  ]);
+  const catalog = value(await teacher.rpc('search_pedagogical_catalog', { target_network: f.base.network_id, filters: { skill_id: f.phase7.skill_id }, page: 1, page_size: 1 }));
+  assert.equal(Number(catalog.total), 1);
+  assert.equal(catalog.journeys[0].id, f.phase7.journey_id);
+  const beyond = value(await teacher.rpc('search_pedagogical_catalog', { target_network: f.base.network_id, filters: { skill_id: f.phase7.skill_id }, page: 2, page_size: 1 }));
+  assert.equal(beyond.journeys.length, 0);
+  const filters = { network_id: f.base.network_id, classroom_id: f.base.classroom_ids[0] };
+  const report = value(await teacher.rpc('get_pedagogical_report_data', { filters }));
+  assert.equal(Number(report.summary.students), 2);
+  assert.equal(report.assignments.length, 2);
+  assert.equal(report.skills[0].skill_code, f.phase7.skill_code);
+  const hidden = value(await outsider.rpc('get_pedagogical_report_data', { filters }));
+  assert.equal(Number(hidden.summary.students), 0);
+  assert.equal(hidden.assignments.length, 0);
+  const portfolio = value(await student.rpc('get_student_pedagogical_portfolio', { target_student: null }));
+  assert.equal(portfolio.journeys.some((row) => row.assignment_id === f.phase7.assignment_id), true);
+  const denied = await otherStudent.rpc('get_student_pedagogical_portfolio', { target_student: f.base.user_ids.student1 });
+  assert.ok(denied.error);
+});
