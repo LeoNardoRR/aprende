@@ -143,7 +143,7 @@ export function PedagogicalJourneys({ mode, networkId, schoolId, classroomId, sk
     requestKey.current ??= crypto.randomUUID();
     const result = await api.rpc<string>('assign_learning_journey', { target_journey: selectedJourney, target_classroom: classroomId, target_students: null, assignment_reason: skillId ? 'Intervenção a partir do desempenho da habilidade selecionada.' : 'Intervenção pedagógica definida pelo professor.', source_assessment: null, request_key: requestKey.current });
     if (result.error) { setMessage(result.error.message); return; }
-    requestKey.current = null; setMessage('Jornada atribuída. Os estudantes já podem iniciar.'); await load();
+    requestKey.current = null; await load(); setMessage('Jornada atribuída. Os estudantes já podem iniciar.');
   }
 
   async function completeStep(journey: StudentJourney, step: StudentStep) {
@@ -164,7 +164,7 @@ export function PedagogicalJourneys({ mode, networkId, schoolId, classroomId, sk
       } else setMessage(result.error.message);
       return;
     }
-    setMessage('Progresso salvo com segurança.'); await load();
+    await load(); setMessage('Progresso salvo com segurança.');
   }
 
   async function exportReport(format: PedagogyReportFormat) {
