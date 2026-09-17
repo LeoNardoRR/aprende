@@ -1,8 +1,6 @@
 name: Validate Phase 7 pedagogy
 
 on:
-  push:
-    branches: [codex/fase7-recursos-pedagogicos]
   pull_request:
     branches: [codex/fase6-poc-licitacao]
   workflow_dispatch:
