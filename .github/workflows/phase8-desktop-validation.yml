@@ -1,0 +1,105 @@
+name: Validate Phase 8 desktop
+
+on:
+  pull_request:
+    branches: [codex/fase7-recursos-pedagogicos]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase8-desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start disposable Supabase and apply every migration
+        run: |
+          set -o pipefail
+          npx supabase start
+          npx supabase db reset --local
+          npx supabase migration list --local | tee /tmp/phase8-migrations.log
+          npx supabase db push --dry-run --local
+      - name: Serve Edge Functions
+        run: npx supabase functions serve > /tmp/phase8-functions.log 2>&1 &
+      - name: Seed synthetic data twice
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          for run in 1 2; do
+            SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:poc
+            SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:phase7
+          done | tee /tmp/phase8-seed.log
+      - name: Run all connected regressions
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" PHASE5_LOAD_TEST=1 npm test | tee /tmp/phase8-regression.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/phase8-regression.log | tail -1)" = "0"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run test:poc
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run test:phase7
+          npm run test:phase8
+      - name: Validate PoC and smoke
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          npm run poc:matrix
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run poc:smoke
+      - name: Run desktop Playwright journeys
+        run: |
+          set -o pipefail
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" NEXT_PUBLIC_SUPABASE_URL="$API_URL" NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" VITE_SUPABASE_URL="$API_URL" VITE_SUPABASE_ANON_KEY="$ANON_KEY" npm run test:e2e
+      - name: Measure 12,849 synthetic students across 33 schools
+        run: |
+          set -o pipefail
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          eval "$(npx supabase status -o env)"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" DB_URL="$DB_URL" npm run phase7:performance
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Validate application and Edge Functions
+        run: |
+          deno check supabase/functions/institutional-invite/index.ts
+          deno check supabase/functions/analytics-report-worker/index.ts
+          npm run lint
+          npm run typecheck
+          npm run build
+          npm run build:pages
+      - name: Run database advisors
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/phase8
+          npx supabase db advisors --local --type all --level info --fail-on error | tee artifacts/phase8/advisors.log
+      - name: Audit dependencies
+        run: npm audit --audit-level=high --json > artifacts/phase8/npm-audit.json
+      - name: Preserve diagnostics
+        if: always()
+        run: |
+          mkdir -p artifacts/phase8/logs
+          find /tmp -maxdepth 1 -name 'phase8-*.log' -exec cp {} artifacts/phase8/logs/ \;
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase8-desktop-validation-evidence
+          path: |
+            artifacts/phase8
+            test-results
+            playwright-report
+          retention-days: 7
+      - name: Stop disposable Supabase
+        if: always()
+        run: npx supabase stop --no-backup

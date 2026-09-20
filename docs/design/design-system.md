@@ -11,7 +11,7 @@ O sistema usa os tokens de `app/design-tokens.css` como contrato visual. As expe
 - **Radius:** 8 px para controles, 12–16 px para cartões, 20 px apenas em destaques.
 - **Foco:** anel âmbar de 3 px, visível em todos os controles.
 - **Motion:** 160–240 ms; `prefers-reduced-motion` reduz animações globalmente.
-- **Desktop:** conteúdo máximo de 1600 px e sidebar de 244 px. O breakpoint mínimo operacional é 1024 px.
+- **Desktop:** conteúdo máximo de 1600 px e sidebar de 244 px. O breakpoint mínimo operacional é 1024 px. A matriz visual cobre 1024, 1280, 1366, 1440, 1600 e 1920 px, com zoom de 100%, 125%, 150% e 200% quando tecnicamente aplicável.
 
 ## Componentes
 
