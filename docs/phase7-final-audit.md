@@ -31,3 +31,13 @@ O artifact do run 35218838854 registra 163 achados de advisors: 146 INFO, 17 WAR
 ## Condições de saída
 
 Somente evidência de CI conectado, isolamento negativo e benchmark sintético executado pode sustentar fechamento técnico. CI verde não demonstra acervo oficial, metodologia VAAR, provedor de IA nem prontidão integral para a licitação. Produção não foi alterada.
+
+## Correções posteriores ao inventário
+
+- `20260920120000_freeze_phase7_step_validation.sql` congela prompt, opções e gabarito por versão. `20260920123000_align_phase7_snapshot_cleanup.sql` mantém a limpeza de jornadas sintéticas sem permitir apagar versão ainda atribuída. O run 35524116324 descobriu a falha de FK no segundo seed; o run 35524328480 confirmou a correção e a repetição do seed.
+- A tela existente de professor/gestor passou a usar a busca paginada em vez da RPC que agregava todo o catálogo. O benchmark percorreu as 63 páginas de 1.500 jornadas sem perdas ou duplicações.
+- `20260920130000_enforce_phase7_editorial_transitions.sql` separa autor, revisor e aprovador e exige a ordem draft → review → approved → published; esta correção e seus testes negativos precisam constar de CI verde no HEAD final.
+- A medição conectada do run 35524328480 demonstrou 12.849 identidades sintéticas em 33 escolas, com detalhes em `docs/phase7-performance.md`. A exportação institucional ainda é síncrona no navegador e permanece risco operacional.
+- A atualização explícita de dependências reduziu o `npm audit` local de 11 para 0 no lockfile. O resultado não comprova compatibilidade até a validação final com `npm ci`, builds e E2E.
+
+Mesmo após o hardening, a tela do estudante resume o portfólio em contagens e não exibe todos os detalhes históricos, nem há runtime completo para todos os tipos de objeto pedagógico. Esses são limites internos da Fase 7. Não declarar 100% técnico enquanto estiverem abertos.

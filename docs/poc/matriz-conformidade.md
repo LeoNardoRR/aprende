@@ -28,4 +28,4 @@ Fonte canônica: [`matriz-conformidade.json`](matriz-conformidade.json). Execute
 
 Cada linha completa no JSON registra descrição, referência do edital, implementação, rota, perfil, dados, testes, evidências, gap e observações. O validador rejeita IDs duplicados, enums desconhecidos, caminhos inexistentes e qualquer item `ATENDIDO` sem implementação, teste ou evidência.
 
-A classificação foi confrontada novamente com o PDF retificado, páginas 67–76. A [documentação da Fase 7](../phase7-pedagogical-resources.md) registra as capacidades demonstráveis e os limites que ainda impedem declarar a solução pronta para a PoC.
+A classificação foi confrontada novamente com o PDF retificado, páginas 67–76. A [auditoria final da Fase 7](../phase7-final-audit.md), a [medição de escala](../phase7-performance.md) e a [revisão de segurança](../phase7-security-review.md) registram capacidades e limites. A implementação técnica reforçada não fornece os 180 títulos homologados, a fórmula VAAR oficial, um provedor de IA ou a aplicação impressa; por isso a conformidade permanece em **55,6%** e os P0 não foram rebaixados.

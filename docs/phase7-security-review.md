@@ -46,4 +46,4 @@ As 128 advertências INFO de FKs sem índice não autorizam criar índices em ma
 | `ws` | Transitiva do plugin | High | Exaustão de memória/uso de memória não inicializada; corrigir pela árvore do plugin. |
 | `esbuild` | Transitiva de `wrangler` | Low | Leitura arbitrária no servidor de desenvolvimento Windows; corrigir pela árvore do plugin. |
 
-O `npm audit` indica upgrades sem mudança de versão major para os pacotes diretos acima. Qualquer upgrade nesta branch só será considerado corrigido após a suíte conectada, E2E e os dois builds ficarem verdes. Não executar `npm audit fix --force`.
+Foram preparados upgrades explícitos de `react`, `react-dom`, `react-server-dom-webpack`, `vinext`, `vite`, `@cloudflare/vite-plugin`, `@vitejs/plugin-rsc`, `wrangler` e `@cloudflare/workers-types`; os pares exigidos por peer dependency foram atualizados juntos, sem `--force` ou `--legacy-peer-deps`. O `npm audit` no lockfile novo registrou **0 vulnerabilidades** em 20/09/2026. Essa é evidência de dependências resolvidas; a compatibilidade funcional só será considerada aprovada quando a suíte conectada, E2E e os dois builds ficarem verdes no mesmo HEAD.

@@ -28,6 +28,8 @@ A execução de referência `34791691601` produziu o artifact
 | Token → tentativa → offline → sincronização → finalização | `tests/phase4-integration.test.mjs`, `tests/e2e/phase4-runtime.spec.ts` |
 | Resultado → analytics → proficiência → relatório | `tests/phase5-integration.test.mjs` |
 | Analytics → jornada → progresso → acompanhamento | `tests/phase7/phase7-connected.test.mjs`, `tests/e2e/phase7-pedagogy.spec.ts` |
+| Versão atribuída → validação congelada → workflow editorial | `tests/phase7/phase7-connected.test.mjs`, migrations `20260920120000` e `20260920130000` |
+| Catálogo paginado → 12.849 estudantes em 33 escolas | `scripts/measure-phase7-performance.mjs`, `docs/phase7-performance.md`, artifact do [Actions 35524328480](https://github.com/LeoNardoRR/aprende/actions/runs/35524328480) |
 | Fluência assistida e equidade com supressão | `tests/phase7/pedagogy-rules.test.mjs`, `tests/phase7/phase7-connected.test.mjs` |
 | Matriz sem inflação de status | `tests/poc/matrix.test.mjs` |
 

@@ -325,7 +325,8 @@
       ],
       "evidence": [
         "docs/phase7-pedagogical-resources.md",
-        "docs/phase7-pedagogical-resources.md"
+        "docs/phase7-final-audit.md",
+        "docs/phase7-security-review.md"
       ],
       "gap": "Há agregação por grupos configuráveis e supressão de amostras pequenas, mas faltam perfil socioeconômico governado, índice ponderado oficial, decomposição do gap, mapa de calor, risco, qualidade cadastral e relatórios PDF/DOCX de equidade.",
       "severity": "P0",
@@ -357,7 +358,8 @@
       ],
       "evidence": [
         "docs/phase7-pedagogical-resources.md",
-        "docs/phase7-pedagogical-resources.md"
+        "docs/phase7-final-audit.md",
+        "docs/phase7-security-review.md"
       ],
       "gap": "Existe aplicação assistida, registro de áudio privado e cálculo determinístico de palavras corretas por minuto, mas faltam experiência completa por etapa, modo autônomo do aluno, perfis homologados e consolidação visual por turma, escola e rede.",
       "severity": "P0",
@@ -375,7 +377,9 @@
         "lib/pedagogy-rules.ts",
         "lib/pedagogy-report-export.ts",
         "supabase/migrations/20260913213000_add_phase7_pedagogical_resources.sql",
-        "supabase/migrations/20260913220000_add_phase7_reports_and_portfolio.sql"
+        "supabase/migrations/20260913220000_add_phase7_reports_and_portfolio.sql",
+        "supabase/migrations/20260920120000_freeze_phase7_step_validation.sql",
+        "supabase/migrations/20260920130000_enforce_phase7_editorial_transitions.sql"
       ],
       "route": "/?access=institutional#remediation",
       "required_profile": [
@@ -393,11 +397,13 @@
       ],
       "evidence": [
         "docs/phase7-pedagogical-resources.md",
-        "docs/phase7-pedagogical-resources.md"
+        "docs/phase7-final-audit.md",
+        "docs/phase7-security-review.md",
+        "docs/phase7-performance.md"
       ],
       "gap": "Jornadas, progressão, atribuição, pontuação separada, portfólio e relatório existem; faltam os tipos interativos completos exigidos e o acervo real mínimo de 180 títulos de Português e Matemática.",
       "severity": "P0",
-      "observations": "O seed sintético prova o fluxo técnico, não a existência do acervo pedagógico exigido."
+      "observations": "Seed sintético, fluxo conectado e benchmark de 12.849 estudantes/33 escolas demonstram a base técnica; acervo real e runtimes interativos completos continuam ausentes."
     },
     {
       "id": "POC-1.13",
@@ -426,7 +432,8 @@
       ],
       "evidence": [
         "docs/phase7-pedagogical-resources.md",
-        "docs/phase7-pedagogical-resources.md"
+        "docs/phase7-final-audit.md",
+        "docs/phase7-security-review.md"
       ],
       "gap": "Há fila auditável, bloqueio básico de PII e revisão humana obrigatória, mas ainda não existe integração real com provedor aprovado nem geração ponta a ponta de insights, itens, conteúdos ou correção discursiva.",
       "severity": "P0",

@@ -14,7 +14,7 @@ Os buckets `pedagogical-resources` e `reading-fluency-audio` são privados. O ca
 
 ## Recomposição e portfólio
 
-Uma jornada publicada possui etapas ordenadas, recursos opcionais, avaliação opcional, limiar de domínio, pontos pedagógicos e pontos de participação. A atribuição gera registros individuais e o progresso é idempotente por chave de requisição. O portfólio consolida jornadas, evidências, avaliações e fluência no escopo autorizado.
+Uma jornada publicada possui etapas ordenadas, recursos opcionais, avaliação opcional, limiar de domínio, pontos pedagógicos e pontos de participação. A atribuição gera registros individuais e o progresso é idempotente por chave de requisição. A validação e o gabarito das etapas são congelados por versão atribuída. O portfólio consolida jornadas, evidências, avaliações e fluência no escopo autorizado. Recursos e jornadas seguem envio pelo autor, revisão independente e aprovação/publicação por papel autorizado.
 
 O relatório pedagógico PDF, DOCX ou CSV usa o mesmo payload da RPC do painel. A evolução é descrita como observada e não como causalidade da intervenção.
 
@@ -44,6 +44,6 @@ O ambiente local atual não possui Docker. A validação conectada e as migratio
 
 ## Riscos medidos e limites
 
-`npm audit` encontrou 11 vulnerabilidades nas dependências atuais: 1 low, 2 moderate e 8 high, sem critical. Entre as dependências diretas afetadas estão `vinext`, `vite`, `react-server-dom-webpack`, `@cloudflare/vite-plugin` e `wrangler`; `image-size`, `miniflare`, `sharp`, `undici`, `ws` e `esbuild` são transitivas. Atualizações exigem nova regressão das Fases 1–7; não foi aplicado `npm audit fix --force`.
+O baseline de `npm audit` encontrou 11 vulnerabilidades (1 low, 2 moderate e 8 high). Os upgrades explícitos no lockfile novo reduziram a contagem local a zero, sem `npm audit fix --force`; a regressão final no CI é necessária para confirmar compatibilidade. A [revisão de segurança](phase7-security-review.md) relaciona cada pacote e cada WARN dos advisors.
 
-O seed da Fase 7 valida o fluxo funcional com dados sintéticos, mas ainda não mede catálogo, atribuições e relatórios com 12.849 estudantes. Portanto, a capacidade nessa escala permanece sem comprovação específica da Fase 7. O banco usa busca paginada e índices de escopo, mas a RPC de relatório devolve o conjunto autorizado em uma resposta; relatórios institucionais extensos precisarão de paginação ou processamento assíncrono.
+O [benchmark sintético](phase7-performance.md) mediu catálogo de 1.500 jornadas, 12.849 estudantes e 33 escolas em Supabase descartável; não mediu logins simultâneos nem geração massiva de PDFs. A interface de jornadas agora usa busca paginada. A RPC de relatório ainda devolve o conjunto autorizado em uma resposta; relatórios institucionais extensos precisarão de paginação ou processamento assíncrono.
