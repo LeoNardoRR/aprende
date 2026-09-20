@@ -21,6 +21,7 @@
     "test:poc": "node --test tests/poc/*.test.mjs",
     "seed:poc": "node scripts/seed-poc.mjs",
     "seed:phase7": "node scripts/seed-phase7.mjs",
+    "phase7:performance": "node scripts/measure-phase7-performance.mjs",
     "poc:smoke": "node scripts/poc-smoke.mjs",
     "poc:performance": "node scripts/measure-poc-performance.mjs",
     "test:phase7": "node --experimental-strip-types --test tests/phase7/*.test.mjs"
