@@ -13,10 +13,10 @@ Fonte canônica: [`matriz-conformidade.json`](matriz-conformidade.json). Execute
 | POC-1.7 | Aplicação | 4 | ATENDIDO | P2 | `/?mode=student` |
 | POC-1.8 | Analytics e relatórios | 5 | PARCIAL | P1 | `#analytics` |
 | POC-1.9 | Proficiência | 5 | ATENDIDO | P2 | `#analytics` |
-| POC-1.10 | VAAR e equidade | 7 | NÃO ATENDIDO | P0 | — |
-| POC-1.11 | Fluência leitora | 7 | NÃO ATENDIDO | P0 | — |
-| POC-1.12 | Recomposição | 7 | PARCIAL | P0 | `/?mode=student` |
-| POC-1.13 | IA pedagógica | 7 | NÃO ATENDIDO | P0 | — |
+| POC-1.10 | VAAR e equidade | 7 | PARCIAL | P0 | `#remediation` |
+| POC-1.11 | Fluência leitora | 7 | PARCIAL | P0 | `#remediation` |
+| POC-1.12 | Recomposição | 7 | PARCIAL | P0 | `#remediation` |
+| POC-1.13 | IA pedagógica | 7 | PARCIAL | P0 | `#remediation` |
 | POC-1.14 | Mobile | 8 | PARCIAL | P0 | `/` (PWA web) |
 | POC-1.15 | Acessibilidade | 5/8 | PARCIAL | P1 | `/` |
 | POC-1.16 | LGPD e segurança | 1–6/8 | PARCIAL | P0 | `#access` |
@@ -27,3 +27,5 @@ Fonte canônica: [`matriz-conformidade.json`](matriz-conformidade.json). Execute
 | POC-3.1 | Implantação | Externa | DEPENDÊNCIA EXTERNA | P0 | — |
 
 Cada linha completa no JSON registra descrição, referência do edital, implementação, rota, perfil, dados, testes, evidências, gap e observações. O validador rejeita IDs duplicados, enums desconhecidos, caminhos inexistentes e qualquer item `ATENDIDO` sem implementação, teste ou evidência.
+
+A classificação foi confrontada novamente com o PDF retificado, páginas 67–76. A [auditoria final da Fase 7](../phase7-final-audit.md), a [medição de escala](../phase7-performance.md) e a [revisão de segurança](../phase7-security-review.md) registram capacidades e limites. A implementação técnica reforçada não fornece os 180 títulos homologados, a fórmula VAAR oficial, um provedor de IA ou a aplicação impressa; por isso a conformidade permanece em **55,6%** e os P0 não foram rebaixados.

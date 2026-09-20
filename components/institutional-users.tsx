@@ -280,7 +280,7 @@ export function InstitutionalUsers({
           </div>
         </form>
       </div>
-      <div className="phase12-box phase12-grid">
+      <div className="phase12-box phase12-grid institutional-user-filters">
         {(['role', 'status', 'school'] as const).map((key) => (
           <label key={key}>
             {key === 'role' ? 'Papel' : key === 'status' ? 'Status' : 'Escola'}
@@ -386,22 +386,27 @@ export function InstitutionalUsers({
                   </span>
                 </td>
                 <td>
-                  <button onClick={() => void showHistory(row)}>
-                    Histórico
-                  </button>
-                  {canManage && (
+                  <div className="institutional-row-actions">
                     <button
                       className="institutional-row-action"
-                      disabled={busy}
-                      onClick={() => void changeStatus(row)}
-                      aria-label={`${row.membership_status === 'active' ? 'Revogar' : 'Reativar'} vínculo de ${row.display_name}`}
+                      onClick={() => void showHistory(row)}
                     >
-                      <UserCog />
-                      {row.membership_status === 'active'
-                        ? 'Revogar'
-                        : 'Reativar'}
+                      Histórico
                     </button>
-                  )}
+                    {canManage && (
+                      <button
+                        className="institutional-row-action"
+                        disabled={busy}
+                        onClick={() => void changeStatus(row)}
+                        aria-label={`${row.membership_status === 'active' ? 'Revogar' : 'Reativar'} vínculo de ${row.display_name}`}
+                      >
+                        <UserCog />
+                        {row.membership_status === 'active'
+                          ? 'Revogar'
+                          : 'Reativar'}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -414,7 +419,10 @@ export function InstitutionalUsers({
           </div>
         )}
       </div>
-      <div className="phase12-pager">
+      <nav
+        className="phase12-pager institutional-pagination"
+        aria-label="Paginação de vínculos"
+      >
         <button
           disabled={busy || page === 0}
           onClick={() => setPage((p) => p - 1)}
@@ -430,24 +438,47 @@ export function InstitutionalUsers({
         >
           Próxima
         </button>
-      </div>
+      </nav>
       {history && (
-        <section className="phase12-box">
-          <h3>Histórico do vínculo</h3>
-          <button onClick={() => setHistory(null)}>Fechar histórico</button>
-          {history.length ? (
-            history.map((h, i) => (
-              <p key={i}>
-                {new Date(h.created_at).toLocaleString('pt-BR')} ·{' '}
-                {h.actor ?? 'Sistema'} · {h.action} · {h.metadata.role} ·{' '}
-                {h.metadata.status}
+        <section
+          className="phase12-box institutional-history"
+          aria-live="polite"
+        >
+          <header>
+            <div>
+              <span>Auditoria de acesso</span>
+              <h3>Histórico do vínculo</h3>
+              <p>
+                Alterações de papel e situação registradas para este usuário.
               </p>
-            ))
-          ) : (
-            <p>
-              Sem alterações registradas após a implantação desta auditoria.
-            </p>
-          )}
+            </div>
+            <button onClick={() => setHistory(null)}>Fechar</button>
+          </header>
+          <div className="institutional-history-list">
+            {history.length ? (
+              history.map((h, i) => (
+                <article key={i}>
+                  <time dateTime={h.created_at}>
+                    {new Date(h.created_at).toLocaleString('pt-BR')}
+                  </time>
+                  <strong>{h.action}</strong>
+                  <p>{h.actor ?? 'Sistema'}</p>
+                  <small>
+                    {roleLabels[h.metadata.role] ?? h.metadata.role} ·{' '}
+                    {h.metadata.status}
+                  </small>
+                </article>
+              ))
+            ) : (
+              <div className="institutional-expanded-empty">
+                <ShieldCheck />
+                <div>
+                  <strong>Nenhuma alteração registrada</strong>
+                  <p>Este vínculo ainda não possui eventos de auditoria.</p>
+                </div>
+              </div>
+            )}
+          </div>
         </section>
       )}
       {canManage && (

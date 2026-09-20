@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { BarChart3 } from 'lucide-react';
 import { institutionalRpc, operationError } from '@/lib/institutional-tools';
 import { InstitutionalImport, type ImportReport } from './institutional-import';
 type Reference = { id: string; name: string };
@@ -152,7 +153,10 @@ export function CurriculumExplorer({
           ser fornecido por fonte validada.
         </p>
       )}
-      <div className="phase12-pager">
+      <nav
+        className="phase12-pager institutional-pagination"
+        aria-label="Paginação de habilidades"
+      >
         <button
           disabled={busy || page === 0}
           onClick={() => setPage((p) => p - 1)}
@@ -168,7 +172,7 @@ export function CurriculumExplorer({
         >
           Próxima
         </button>
-      </div>
+      </nav>
       {!official ? (
         <InstitutionalImport
           title="Importar matriz curricular"
@@ -267,31 +271,41 @@ export function ItemCoverage({
     void load();
   }, [load]);
   return (
-    <section className="phase12-box">
-      <h3>Cobertura do Banco de Itens</h3>
-      <p>
-        Contagens calculadas no servidor para o currículo selecionado. Cobertura
-        baixa considera itens aprovados.
-      </p>
-      <label>
-        Meta mínima de itens por habilidade
-        <input
-          type="number"
-          min={1}
-          max={1000}
-          value={minimum}
-          onChange={(e) => {
-            setMinimum(Math.max(1, Number(e.target.value)));
-            setPage(0);
-          }}
-        />
-      </label>
-      <button disabled={busy || preview} onClick={() => void load()}>
-        Atualizar cobertura
-      </button>
+    <section className="phase12-box item-coverage-card">
+      <header className="institutional-section-card-head">
+        <span>
+          <BarChart3 />
+        </span>
+        <div>
+          <small>Qualidade do acervo</small>
+          <h3>Cobertura do Banco de Itens</h3>
+          <p>
+            Contagens do servidor para o currículo selecionado, considerando
+            itens aprovados.
+          </p>
+        </div>
+      </header>
+      <div className="item-coverage-controls">
+        <label>
+          Meta mínima por habilidade
+          <input
+            type="number"
+            min={1}
+            max={1000}
+            value={minimum}
+            onChange={(e) => {
+              setMinimum(Math.max(1, Number(e.target.value)));
+              setPage(0);
+            }}
+          />
+        </label>
+        <button disabled={busy || preview} onClick={() => void load()}>
+          Atualizar cobertura
+        </button>
+      </div>
       {coverage ? (
         <>
-          <div className="phase12-grid">
+          <div className="phase12-grid item-coverage-metrics">
             {Object.entries(coverage.totals).map(([key, value]) => (
               <p key={key}>
                 {{
@@ -346,7 +360,10 @@ export function ItemCoverage({
               />
             </p>
           ))}
-          <div className="phase12-pager">
+          <nav
+            className="phase12-pager institutional-pagination"
+            aria-label="Paginação da cobertura por habilidade"
+          >
             <button
               disabled={busy || page === 0}
               onClick={() => setPage((p) => p - 1)}
@@ -363,7 +380,7 @@ export function ItemCoverage({
             >
               Próxima
             </button>
-          </div>
+          </nav>
         </>
       ) : (
         <p>

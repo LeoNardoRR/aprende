@@ -111,8 +111,33 @@
 .phase12-pager {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
+  margin: 12px 0 4px;
+  padding: 9px 11px;
+  border: 1px solid #dfe8ef;
+  border-radius: 11px;
+  background: #f8fbfd;
+  color: #60788a;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+.phase12-pager button {
+  min-width: 82px;
+  min-height: 34px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid #d5e2ea;
+  border-radius: 8px;
+  background: #fff;
+  color: #37647f;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+.phase12-pager button:disabled {
+  background: #f2f5f7;
+  color: #8a9aa6;
 }
 .phase12-box progress {
   width: 100%;
@@ -126,5 +151,18 @@
   }
   .phase12-box button {
     min-height: 44px;
+  }
+  .phase12-pager {
+    flex-wrap: nowrap;
+    padding: 7px;
+  }
+  .phase12-pager button {
+    min-width: 74px;
+    min-height: 38px;
+    padding: 0 8px;
+  }
+  .phase12-pager span {
+    min-width: 0;
+    text-align: center;
   }
 }
