@@ -102,6 +102,10 @@ export function PedagogicalJourneys({ mode, networkId, schoolId, classroomId, sk
   const client = mode === 'student' ? studentSupabase : supabase;
   const api = client as unknown as Phase7Api;
   const [catalog, setCatalog] = useState<Journey[]>(preview ? demoJourneys : []);
+  const [catalogPage, setCatalogPage] = useState(1);
+  const [catalogTotal, setCatalogTotal] = useState(preview ? demoJourneys.length : 0);
+  const [catalogQuery, setCatalogQuery] = useState('');
+  const [catalogDifficulty, setCatalogDifficulty] = useState('');
   const [studentJourneys, setStudentJourneys] = useState<StudentJourney[]>(preview && mode === 'student' ? demoStudentJourneys : []);
   const [dashboard, setDashboard] = useState<Dashboard | null>(preview && mode !== 'student' ? demoDashboard : null);
   const [portfolio, setPortfolio] = useState<Portfolio | null>(preview && mode === 'student' ? { journeys: demoStudentJourneys, evidence: [], assessments: [{ id: 'demo' }], fluency: [] } : null);
@@ -124,16 +128,17 @@ export function PedagogicalJourneys({ mode, networkId, schoolId, classroomId, sk
     }
     if (!networkId) { setState('empty'); return; }
     const filters = Object.fromEntries(Object.entries({ network_id: networkId, school_id: schoolId || undefined, classroom_id: classroomId || undefined, skill_id: skillId || undefined }).filter(([, value]) => value));
+    const catalogFilters = Object.fromEntries(Object.entries({ skill_id: skillId || undefined, query: catalogQuery.trim() || undefined, difficulty: catalogDifficulty || undefined }).filter(([, value]) => value));
     const [catalogResult, dashboardResult] = await Promise.all([
-      api.rpc<{ journeys: Journey[] }>('list_pedagogical_catalog', { target_network: networkId, target_skill: skillId || null }),
+      api.rpc<{ journeys: Journey[]; total: number }>('search_pedagogical_catalog', { target_network: networkId, filters: catalogFilters, page: catalogPage, page_size: 24 }),
       api.rpc<Dashboard>('get_pedagogical_dashboard', { filters }),
     ]);
     if (catalogResult.error || dashboardResult.error) { setState('error'); setMessage(catalogResult.error?.message ?? dashboardResult.error?.message ?? 'Não foi possível carregar as jornadas.'); return; }
     const journeys = catalogResult.data?.journeys ?? [];
-    setCatalog(journeys); setDashboard(dashboardResult.data);
+    setCatalog(journeys); setCatalogTotal(catalogResult.data?.total ?? 0); setDashboard(dashboardResult.data);
     setSelectedJourney((current) => journeys.some((item) => item.id === current) ? current : journeys[0]?.id ?? '');
     setState(journeys.length || dashboardResult.data?.summary.assignments ? 'success' : 'empty');
-  }, [api, classroomId, mode, networkId, preview, schoolId, skillId]);
+  }, [api, catalogDifficulty, catalogPage, catalogQuery, classroomId, mode, networkId, preview, schoolId, skillId]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -196,7 +201,10 @@ export function PedagogicalJourneys({ mode, networkId, schoolId, classroomId, sk
     {state === 'success' && mode !== 'student' && <>
       <div className="pedagogy-kpis"><article><Users /><span>Estudantes</span><strong>{dashboard?.summary.students ?? 0}</strong></article><article><Route /><span>Em andamento</span><strong>{dashboard?.summary.in_progress ?? 0}</strong></article><article><CheckCircle2 /><span>Concluídas</span><strong>{dashboard?.summary.completed ?? 0}</strong></article><article><Target /><span>Progresso médio</span><strong>{dashboard?.summary.average_progress == null ? 'Sem dados' : `${Number(dashboard.summary.average_progress).toLocaleString('pt-BR')}%`}</strong></article></div>
       <div className="pedagogy-assign"><div><span>ATRIBUIR INTERVENÇÃO</span><h3>{skillId ? 'Jornadas da habilidade selecionada' : 'Catálogo publicado'}</h3><p>A atribuição usa a turma selecionada e é validada novamente pelo banco.</p></div><label>Jornada<select value={selectedJourney} onChange={(event) => setSelectedJourney(event.target.value)}><option value="">Selecione</option>{catalog.map((journey) => <option key={journey.id} value={journey.id}>{journey.title}</option>)}</select></label><button type="button" onClick={() => void assignJourney()} disabled={!selectedJourney || !classroomId}><BookOpenCheck /> Atribuir à turma</button></div>
-      <div className="pedagogy-catalog">{catalog.map((journey) => <article key={journey.id}><span>{journey.difficulty === 'introductory' ? 'Introdução' : 'Adaptativa'}</span><h3>{journey.title}</h3><p>{journey.description}</p><footer><small>{journey.step_count ?? 0} etapas</small><small>{journey.estimated_minutes ?? '—'} min</small><small>Domínio {journey.mastery_threshold ?? 70}%</small></footer></article>)}</div>
+      <div className="pedagogy-catalog-controls"><label>Buscar jornadas<input type="search" value={catalogQuery} onChange={(event) => { setCatalogPage(1); setCatalogQuery(event.target.value); }} placeholder="Título da jornada" /></label><label>Dificuldade<select value={catalogDifficulty} onChange={(event) => { setCatalogPage(1); setCatalogDifficulty(event.target.value); }}><option value="">Todas</option><option value="introductory">Introdução</option><option value="easy">Fácil</option><option value="medium">Média</option><option value="advanced">Avançada</option><option value="adaptive">Adaptativa</option></select></label></div>
+      {catalogTotal === 0 && <p className="pedagogy-catalog-empty">Nenhuma jornada publicada corresponde aos filtros.</p>}
+      <div className="pedagogy-catalog">{catalog.map((journey) => <article key={journey.id}><span>{journey.difficulty === 'introductory' ? 'Introdução' : journey.difficulty ?? 'Adaptativa'}</span><h3>{journey.title}</h3><p>{journey.description}</p><footer><small>{journey.step_count ?? 0} etapas</small><small>{journey.estimated_minutes ?? '—'} min</small><small>Domínio {journey.mastery_threshold ?? 70}%</small></footer></article>)}</div>
+      <nav className="pedagogy-catalog-pages" aria-label="Páginas do catálogo"><span>{catalogTotal} jornada(s) · página {catalogPage} de {Math.max(1, Math.ceil(catalogTotal / 24))}</span><button type="button" disabled={preview || catalogPage <= 1} onClick={() => setCatalogPage((page) => page - 1)}>Anterior</button><button type="button" disabled={preview || catalogPage * 24 >= catalogTotal} onClick={() => setCatalogPage((page) => page + 1)}>Próxima</button></nav>
       <div className="pedagogy-reports"><div><span>RELATÓRIOS PEDAGÓGICOS</span><strong>Atribuições, progresso, habilidades e evolução observada</strong></div><button type="button" onClick={() => void exportReport('pdf')}><Download /> PDF</button><button type="button" onClick={() => void exportReport('docx')}><FileText /> DOCX</button><button type="button" onClick={() => void exportReport('csv')}><Download /> CSV</button></div>
     </>}
   </section>;
