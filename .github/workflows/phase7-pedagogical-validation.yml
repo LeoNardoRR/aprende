@@ -88,7 +88,7 @@ jobs:
           mkdir -p artifacts/poc
           npx supabase db advisors --local --type all --level info --fail-on error | tee artifacts/poc/phase7-advisors.log
       - name: Review dependencies without forced upgrades
-        run: npm audit --audit-level=critical --json > artifacts/poc/npm-audit.json
+        run: npm audit --audit-level=high --json > artifacts/poc/npm-audit.json
       - name: Preserve diagnostics
         if: always()
         run: |
