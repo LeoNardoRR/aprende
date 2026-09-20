@@ -106,3 +106,21 @@ test('relatório, portfólio e busca paginada usam dados persistidos e isolament
   const denied = await otherStudent.rpc('get_student_pedagogical_portfolio', { target_student: f.base.user_ids.student1 });
   assert.ok(denied.error);
 });
+
+test('a versão atribuída mantém a validação e rejeita mutação ou chamada anônima', async (t) => {
+  const f = await fixtures(t); if (!f) return;
+  const [teacher, student] = await Promise.all([f.login(f.base.users.teacher1), f.login(f.base.users.student1)]);
+  const assignment = value(await teacher.from('learning_journey_assignments').select('journey_version_id').eq('id',f.phase7.assignment_id).single());
+  const before = value(await student.rpc('get_my_learning_journeys'));
+  assert.equal(before[0].steps[1].response_type,'single_choice');
+  assert.equal(before[0].steps[1].prompt,'Qual estratégia decompõe 27 + 15 corretamente?');
+  const tamper = await teacher.from('learning_journey_versions').update({ snapshot: { journey: { title: 'Adulterada' }, steps: [] } }).eq('id',assignment.journey_version_id);
+  assert.ok(tamper.error,'usuário autenticado não altera snapshot publicado');
+  const after = value(await student.rpc('get_my_learning_journeys'));
+  assert.equal(after[0].steps[1].prompt,before[0].steps[1].prompt);
+  const guest = createClient(url,anon,options);
+  const deniedCatalog = await guest.rpc('search_pedagogical_catalog',{ target_network:f.base.network_id,filters:{},page:1,page_size:24 });
+  const deniedReport = await guest.rpc('get_pedagogical_report_data',{ filters:{network_id:f.base.network_id} });
+  assert.ok(deniedCatalog.error);
+  assert.ok(deniedReport.error);
+});
