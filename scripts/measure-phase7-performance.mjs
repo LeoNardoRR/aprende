@@ -58,7 +58,10 @@ try {
   });
   for (let page=1;page<=63;page++) {
     const data = checked(await rpc(client,'search_pedagogical_catalog',{ target_network: manifest.network_id, filters, page, page_size: 24 }), `catálogo página ${page}`);
-    for (const journey of data.journeys) assert.equal(seen.has(journey.id),false,`duplicado na página ${page}`),seen.add(journey.id);
+    for (const journey of data.journeys) {
+      assert.equal(seen.has(journey.id),false,`duplicado na página ${page}`);
+      seen.add(journey.id);
+    }
   }
   assert.equal(seen.size,1500,'catálogo sem itens perdidos');
   await measure('dashboard pedagógico da rede', 5, async () => {
