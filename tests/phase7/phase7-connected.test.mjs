@@ -124,3 +124,32 @@ test('a versão atribuída mantém a validação e rejeita mutação ou chamada 
   assert.ok(deniedCatalog.error);
   assert.ok(deniedReport.error);
 });
+
+test('conteúdo editorial exige revisão independente antes de aprovação e publicação', async (t) => {
+  const f = await fixtures(t); if (!f) return;
+  const [author, reviewer, approver, student] = await Promise.all([
+    f.login(f.base.users.teacher1), f.login(f.base.users.reviewer),
+    f.login(f.base.users.approver), f.login(f.base.users.student1),
+  ]);
+  const resource = value(await author.rpc('create_pedagogical_resource', {
+    target_network:f.base.network_id,title:'Recurso editorial sintético DEMO',
+    description:'Material criado apenas para validar o fluxo editorial da Fase 7.',
+    resource_type:'text',target_skill:f.phase7.skill_id,
+  }));
+  assert.ok((await approver.rpc('transition_pedagogical_resource',{target_resource:resource,target_status:'published',change_summary:'Publicação prematura'})).error);
+  assert.equal(value(await student.from('pedagogical_resources').select('id').eq('id',resource)).length,0);
+  value(await author.rpc('transition_pedagogical_resource',{target_resource:resource,target_status:'review',change_summary:'Envio para revisão'}));
+  assert.ok((await reviewer.rpc('transition_pedagogical_resource',{target_resource:resource,target_status:'approved',change_summary:'Revisor não aprova'})).error);
+  value(await reviewer.rpc('transition_pedagogical_resource',{target_resource:resource,target_status:'review',change_summary:'Revisado'}));
+  assert.ok((await author.rpc('transition_pedagogical_resource',{target_resource:resource,target_status:'approved',change_summary:'Autor não aprova'})).error);
+  value(await approver.rpc('transition_pedagogical_resource',{target_resource:resource,target_status:'approved',change_summary:'Aprovado'}));
+  const published = value(await approver.rpc('transition_pedagogical_resource',{target_resource:resource,target_status:'published',change_summary:'Publicado'}));
+  assert.equal(published.status,'published');
+  const journey = value(await author.rpc('create_learning_journey',{target_network:f.base.network_id,title:'Jornada editorial sintética DEMO',description:'Jornada criada apenas para testar aprovação independente.',target_skill:f.phase7.skill_id,mastery_threshold:70}));
+  value(await author.rpc('add_learning_journey_step',{target_journey:journey,step_title:'Ler o recurso',step_instructions:'Leia o material sintético.',step_type:'content',target_position:1,target_resource:resource,target_assessment:null,pedagogical_points:0,gamification_points:0}));
+  assert.ok((await approver.rpc('transition_learning_journey',{target_journey:journey,target_status:'published'})).error);
+  value(await author.rpc('transition_learning_journey',{target_journey:journey,target_status:'review'}));
+  value(await reviewer.rpc('transition_learning_journey',{target_journey:journey,target_status:'review'}));
+  value(await approver.rpc('transition_learning_journey',{target_journey:journey,target_status:'approved'}));
+  assert.equal(value(await approver.rpc('transition_learning_journey',{target_journey:journey,target_status:'published'})).status,'published');
+});
