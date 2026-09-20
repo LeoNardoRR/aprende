@@ -25,7 +25,7 @@ test('analytics leva à jornada, aluno progride e professor acompanha', async ({
   await skillRow.getByRole('button', { name: 'Atribuir jornada' }).click();
   await expect(page.getByRole('heading', { name: 'Recomposição da turma' })).toBeVisible();
   await expect(page.getByRole('option', { name: /Reconstruindo estratégias/ })).toHaveCount(1);
-  await page.getByLabel('Jornada', { exact: true }).selectOption({ label: 'Reconstruindo estratégias de cálculo - DEMO' });
+  await page.getByRole('combobox', { name: 'Jornada', exact: true }).selectOption({ label: 'Reconstruindo estratégias de cálculo - DEMO' });
   await page.getByRole('button', { name: 'Atribuir à turma' }).click();
   await expect(page.getByText('Jornada atribuída. Os estudantes já podem iniciar.')).toBeVisible();
 
