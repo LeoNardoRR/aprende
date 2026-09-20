@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { FileSpreadsheet, MailPlus, Upload } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { institutionalRpc, operationError } from '@/lib/institutional-tools';
 import { parseImport } from '@/lib/import-data';
@@ -164,15 +165,27 @@ export function InstitutionalInvitations({
     await load();
   }
   return (
-    <section className="phase12-box">
-      <h3>Convites e acesso inicial</h3>
-      <p>
-        O destinatário confirma o e-mail e define a própria senha. Nenhuma senha
-        é gerada pela gestão. Convites expiram em sete dias.
-      </p>
-      {preview && <p>Modo DEMO: envio desabilitado.</p>}
+    <section className="phase12-box institutional-invitations">
+      <header>
+        <div className="institutional-invitation-icon">
+          <MailPlus />
+        </div>
+        <div>
+          <span>Entrada segura de usuários</span>
+          <h3>Convites e acesso inicial</h3>
+          <p>
+            O destinatário confirma o e-mail e define a própria senha. Convites
+            expiram em sete dias.
+          </p>
+        </div>
+      </header>
+      {preview && (
+        <p className="institutional-demo-note">
+          Modo DEMO: envio desabilitado.
+        </p>
+      )}
       <form
-        className="phase12-grid"
+        className="phase12-grid institutional-invitation-form"
         onSubmit={(e) => {
           e.preventDefault();
           void individual();
@@ -212,19 +225,35 @@ export function InstitutionalInvitations({
             ))}
           </select>
         </label>
-        <button disabled={busy || preview || !network}>Enviar convite</button>
+        <button
+          className="institutional-primary-action"
+          disabled={busy || preview || !network}
+        >
+          Enviar convite
+        </button>
       </form>
-      <label>
-        Convites em lote — CSV: email, papel, escola (ID)
-        <input
-          type="file"
-          accept=".csv"
-          disabled={busy || preview}
-          onChange={(e) => void file(e.target.files?.[0])}
-        />
-      </label>
+      <div className="institutional-batch-upload">
+        <FileSpreadsheet />
+        <div>
+          <strong>Convites em lote</strong>
+          <small>Use um CSV com as colunas: email, papel e escola (ID).</small>
+        </div>
+        <label className="institutional-file-button">
+          <Upload /> Selecionar CSV
+          <input
+            type="file"
+            accept=".csv"
+            disabled={busy || preview}
+            onChange={(e) => void file(e.target.files?.[0])}
+          />
+        </label>
+      </div>
       {!!batch.length && (
-        <>
+        <div className="institutional-batch-preview">
+          <header>
+            <strong>{batch.length} convites preparados</strong>
+            <small>Revise os destinatários antes de confirmar.</small>
+          </header>
           <ul>
             {batch.map((e) => (
               <li key={e.email}>
@@ -233,7 +262,7 @@ export function InstitutionalInvitations({
               </li>
             ))}
           </ul>
-          <label>
+          <label className="institutional-confirm-row">
             <input
               type="checkbox"
               checked={confirmed}
@@ -242,16 +271,21 @@ export function InstitutionalInvitations({
             Confirmo o envio de {batch.length} convites.
           </label>
           <button
+            className="institutional-primary-action"
             disabled={busy || !confirmed || preview}
             onClick={() => void sendBatch()}
           >
             Enviar lote confirmado
           </button>
-        </>
+        </div>
       )}
-      {results.map((r) => (
-        <p key={r}>{r}</p>
-      ))}
+      {!!results.length && (
+        <div className="institutional-invitation-results" role="status">
+          {results.map((r) => (
+            <p key={r}>{r}</p>
+          ))}
+        </div>
+      )}
       <div className="institutional-table-wrap">
         <table className="institutional-table">
           <thead>
@@ -296,8 +330,19 @@ export function InstitutionalInvitations({
           </tbody>
         </table>
       </div>
-      {!rows.length && <p>Nenhum convite neste escopo.</p>}
-      <div className="phase12-pager">
+      {!rows.length && (
+        <div className="institutional-expanded-empty compact">
+          <MailPlus />
+          <div>
+            <strong>Nenhum convite neste escopo</strong>
+            <p>Os convites enviados aparecerão aqui.</p>
+          </div>
+        </div>
+      )}
+      <nav
+        className="phase12-pager institutional-pagination"
+        aria-label="Paginação de convites"
+      >
         <button
           disabled={page === 0 || busy}
           onClick={() => setPage((p) => p - 1)}
@@ -311,9 +356,17 @@ export function InstitutionalInvitations({
         >
           Próxima
         </button>
-      </div>
-      {busy && <p role="status">Processando…</p>}
-      {notice && <p role="status">{notice}</p>}
+      </nav>
+      {busy && (
+        <p className="institutional-inline-notice" role="status">
+          Processando…
+        </p>
+      )}
+      {notice && (
+        <p className="institutional-inline-notice" role="status">
+          {notice}
+        </p>
+      )}
     </section>
   );
 }

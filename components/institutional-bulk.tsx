@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { Download, UsersRound } from 'lucide-react';
 import type { Tables } from '@/lib/database.types';
 import { institutionalRpc, operationError } from '@/lib/institutional-tools';
 import { downloadCsv } from '@/lib/import-data';
@@ -189,14 +190,28 @@ export function InstitutionalBulk({
       c.classroom_status === 'active',
   );
   return (
-    <section className="phase12-box" id="institutional-bulk">
-      <h3>Operações em lote e exportação</h3>
+    <section
+      className="phase12-box institutional-bulk-panel"
+      id="institutional-bulk"
+    >
+      <header className="institutional-section-card-head">
+        <span>
+          <UsersRound />
+        </span>
+        <div>
+          <small>Gestão de matrículas</small>
+          <h3>Operações em lote e exportação</h3>
+          <p>
+            Filtre, exporte e prepare movimentações com o histórico preservado.
+          </p>
+        </div>
+      </header>
       {preview && (
         <p className="phase12-notice">
           Modo DEMO — operações reais desabilitadas.
         </p>
       )}
-      <div className="phase12-grid">
+      <div className="phase12-grid institutional-bulk-filters">
         <label>
           Rede
           <select
@@ -310,8 +325,12 @@ export function InstitutionalBulk({
           </select>
         </label>
       </div>
-      <button disabled={busy || preview} onClick={() => void exportRows()}>
-        Exportar CSV com estes filtros
+      <button
+        className="institutional-export-action"
+        disabled={busy || preview}
+        onClick={() => void exportRows()}
+      >
+        <Download /> Exportar CSV com estes filtros
       </button>
       <div className="institutional-table-wrap">
         <table className="institutional-table">
@@ -359,8 +378,19 @@ export function InstitutionalBulk({
           </tbody>
         </table>
       </div>
-      {!rows.length && <p>Nenhuma matrícula neste filtro.</p>}
-      <div className="phase12-pager">
+      {!rows.length && (
+        <div className="institutional-expanded-empty compact">
+          <UsersRound />
+          <div>
+            <strong>Nenhuma matrícula neste filtro</strong>
+            <p>Ajuste os filtros para localizar estudantes.</p>
+          </div>
+        </div>
+      )}
+      <nav
+        className="phase12-pager institutional-pagination"
+        aria-label="Paginação de matrículas em lote"
+      >
         <button
           disabled={busy || page === 0}
           onClick={() => setPage((p) => p - 1)}
@@ -380,7 +410,7 @@ export function InstitutionalBulk({
         >
           Próxima
         </button>
-      </div>
+      </nav>
       {filters.school && (
         <InstitutionalImport
           key={`${network}-${filters.school}`}
