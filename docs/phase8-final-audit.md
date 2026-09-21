@@ -65,3 +65,42 @@ Esta auditoria não declara a Fase 8 concluída.
 - O parser CSV/XLSX, validação, prévia e decisões da importação offline existem, mas **a gravação transacional das respostas no runtime ainda não está integrada**. A Fase 8 não deve ser declarada concluída por esse item.
 - Axe, teclado, zoom e snapshots Desktop passaram localmente; a validação em Linux/CI e a verificação manual com leitor de tela ainda são evidências distintas e pendentes.
 - O CI no commit anterior passou por migrations e regressões conectadas; o resultado do HEAD final deve ser registrado separadamente, sem reutilizar indevidamente evidência de commits anteriores.
+
+## Auditoria de fechamento — 21/09/2026
+
+- Base remota auditada: `master` em `bbca91dd63c6e4fa29afb1b1dc6906bb1d4c34aa`.
+- A antiga branch `codex/fase8-produto-final-desktop` apontava para o mesmo SHA.
+- Fases 4, 5, 6 e 7 foram confirmadas como ancestrais de `master`; não houve
+  remerge nem reescrita de histórico.
+- Trabalho isolado em `codex/fase8-finalizacao-desktop`, PR #9 contra `master`.
+- GitHub Pages deixou de publicar em push; release exige ação manual explícita.
+
+| Requisito reavaliado | Evidência atual | Classificação |
+|---|---|---|
+| Importação offline | RPC transacional, runtime real, fingerprint persistente, lote/linhas/auditoria, UI e teste conectado | IMPLEMENTADO — aguarda CI verde do HEAD final |
+| Exportação do titular | RPC restrita ao titular autorizado, pacote estruturado sem URL pública, conclusão e auditoria | IMPLEMENTADO — aguarda CI verde do HEAD final |
+| Correção LGPD | solicitação e máquina de estados; escrita arbitrária em histórico/notas não existe | IMPLEMENTADO no escopo técnico governado |
+| Exclusão LGPD | exclusão direta bloqueada, solicitação idempotente e retenção explícita | IMPLEMENTADO no limite técnico; decisão jurídica é externa |
+| Help Desk | banco/RLS/UI/histórico/notas internas/busca/filtros/paginação/teste negativo | IMPLEMENTADO |
+| Impressão | cinco documentos PDF/DOCX, payload congelado e teste de escopo | IMPLEMENTADO |
+| Acessibilidade automática | axe ampliado, label corrigida e matriz Desktop/zoom | IMPLEMENTADO — CI final pendente |
+| Leitor de tela | roteiro NVDA/VoiceOver criado; nenhuma execução humana alegada | VALIDAÇÃO HUMANA PENDENTE |
+| Backup/restore | etapa de dump/restore/contagens adicionada ao CI descartável | PENDENTE DE EXECUÇÃO NO HEAD FINAL |
+| Performance | baseline documentado; primeiro run final teve timeout legado | PARCIAL até benchmark verde no HEAD final |
+| Mobile | preservado na matriz e fora do escopo desta fase | DEPENDÊNCIA EXTERNA / FORA DO ESCOPO |
+
+A classificação final e a matriz PoC somente podem ser consolidadas depois do CI
+verde do SHA final. Nenhuma execução desta retomada acessou produção.
+
+## Encerramento solicitado
+
+Em 21/09/2026, após migrations, seed duplo e restore lógico passarem no run
+`35602880414`, o solicitante orientou a não repetir toda a verificação de migrations
+e a finalizar a entrega. A matriz foi então recalculada em **63,9%**, mantendo os
+gaps externos e Mobile. O restore foi reposicionado para o fim do workflow porque
+ele altera deliberadamente o banco descartável; assim, futuras execuções não usam
+um estado restaurado para rodar regressões conectadas.
+
+O PR permanece aberto, sem merge e sem deploy. Como não há CI integral verde no
+commit final, esta auditoria não transforma a implementação entregue em declaração
+de “Fase 8 Desktop 100% tecnicamente concluída”.

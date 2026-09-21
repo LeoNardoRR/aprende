@@ -13,8 +13,6 @@
 | POC-1.13 | IA pedagógica | Fila, privacidade básica e revisão humana existem; nenhuma IA real foi integrada. | Faltam provedor aprovado e fluxos ponta a ponta de insight, geração e correção. | Homologar provedor/política e integrar sem decisão automatizada. | L + externa |
 | POC-1.14 | Mobile nativo | PWA responsiva não prova apps em lojas. | Fase 8 e contas de distribuição. | Criar wrappers, validar dispositivos e publicar. | XL + externa |
 | POC-1.16 | LGPD operacional | RLS existe; retenção e direitos do titular não fecham o requisito. | Decisões jurídica/administrativa e Fase 8. | Aprovar política e implementar fluxos auditáveis. | L + externa |
-| POC-1.17 | Aplicação impressa | Prova/folha/importação não demonstráveis. | Fase 8. | Definir layout, identificação e ingestão idempotente. | XL |
-| POC-2.3 | Help Desk | SLA e rastreabilidade inexistentes. | Fase 8/serviço externo. | Implantar solução de chamados e homologar SLA. | L + externa |
 | POC-3.1 | Implantação | Disponibilidade contratual não foi provada. | Ambiente e SLA externos; deploy proibido nesta fase. | Preparar homologação separada. | Externa |
 
 ## P1 — requisito importante incompleto
@@ -23,6 +21,7 @@
 - **POC-1.8:** formalizar se alguma forma de ranking é exigida e permitida pela metodologia e privacidade.
 - **POC-1.15:** executar auditoria WCAG completa com leitor de tela, zoom e contraste.
 - **POC-2.1/2.2:** aprovar equipe operacional e plano de capacitação.
+- **POC-2.3:** o Help Desk e sua rastreabilidade estão implementados; homologar SLA e operação da equipe de suporte.
 
 ## P2 e P3
 
@@ -30,4 +29,4 @@ Os requisitos já atendidos permanecem P2 para regressão contínua. Melhorias v
 
 ## Decisão
 
-Há P0 em requisitos expressamente demonstráveis e pertencentes às Fases 7/8. Portanto, a conclusão técnica da Fase 6 não torna o produto pronto para a PoC integral.
+Há P0 ligados a conteúdo, método, mobile e decisões externas. A conclusão técnica Desktop da Fase 8 não torna o produto pronto para a PoC integral.

@@ -20,12 +20,12 @@ Fonte canônica: [`matriz-conformidade.json`](matriz-conformidade.json). Execute
 | POC-1.14 | Mobile | 8 | PARCIAL | P0 | `/` (PWA web) |
 | POC-1.15 | Acessibilidade | 5/8 | PARCIAL | P1 | `/` |
 | POC-1.16 | LGPD e segurança | 1–6/8 | PARCIAL | P0 | `#access` |
-| POC-1.17 | Aplicação impressa | 8 | NÃO ATENDIDO | P0 | — |
+| POC-1.17 | Aplicação impressa | 8 | ATENDIDO | P2 | `#assessments` |
 | POC-2.1 | Operação | Externa | DEPENDÊNCIA EXTERNA | P1 | — |
 | POC-2.2 | Capacitação | Externa | DEPENDÊNCIA EXTERNA | P1 | — |
-| POC-2.3 | Suporte | 8 | NÃO ATENDIDO | P0 | — |
+| POC-2.3 | Suporte | 8 | PARCIAL | P1 | `#support` |
 | POC-3.1 | Implantação | Externa | DEPENDÊNCIA EXTERNA | P0 | — |
 
 Cada linha completa no JSON registra descrição, referência do edital, implementação, rota, perfil, dados, testes, evidências, gap e observações. O validador rejeita IDs duplicados, enums desconhecidos, caminhos inexistentes e qualquer item `ATENDIDO` sem implementação, teste ou evidência.
 
-A classificação foi confrontada novamente com o PDF retificado, páginas 67–76. A [auditoria final da Fase 7](../phase7-final-audit.md), a [medição de escala](../phase7-performance.md) e a [revisão de segurança](../phase7-security-review.md) registram capacidades e limites. A implementação técnica reforçada não fornece os 180 títulos homologados, a fórmula VAAR oficial, um provedor de IA ou a aplicação impressa; por isso a conformidade permanece em **55,6%** e os P0 não foram rebaixados.
+A classificação foi confrontada novamente com o PDF retificado, páginas 67–76. A [auditoria final da Fase 8](../phase8-final-audit.md), a [medição](../phase8-performance.md) e a [revisão de segurança](../phase8-security-review.md) registram capacidades e limites. Impressão e importação offline agora possuem fluxo e testes reais; o Help Desk técnico existe, mas SLA e operação contratual continuam externos. A matriz permanece honesta quanto a mobile, acervo, VAAR, IA, fluência e conteúdo homologado.

@@ -8,7 +8,7 @@
     "scoring": "ATENDIDO=1, PARCIAL=0.5, NAO_ATENDIDO=0; NAO_APLICAVEL e DEPENDENCIA_EXTERNA ficam fora do denominador",
     "source_document": "93578c201e504a12a59cfb9149717ea8Edital+Retificado+PregAo+EletrOnico+n++402026.pdf",
     "source_pages": "67-76",
-    "implementation_branch": "codex/fase7-recursos-pedagogicos"
+    "implementation_branch": "codex/fase8-finalizacao-desktop"
   },
   "requirements": [
     {
@@ -501,9 +501,10 @@
       "status": "PARCIAL",
       "implementation": [
         "supabase/migrations/20260912153902_add_institutional_rbac_foundation.sql",
-        "tests/security-regression.test.mjs"
+        "supabase/migrations/20260921010000_add_subject_privacy_export.sql",
+        "components/privacy-center.tsx"
       ],
-      "route": "/?access=institutional#access",
+      "route": "/?qa=institution-admin#privacy",
       "required_profile": [
         "network_admin",
         "manager"
@@ -511,14 +512,17 @@
       "required_data": [],
       "test": [
         "tests/security-regression.test.mjs",
-        "tests/phase5-integration.test.mjs"
+        "tests/phase8/privacy/privacy-export-connected.test.mjs",
+        "tests/phase8/privacy/deletion-connected.test.mjs"
       ],
       "evidence": [
-        "docs/poc/evidencias.md"
+        "docs/privacy/lgpd-operational.md",
+        "docs/privacy/data-subject-rights.md",
+        "docs/phase8-security-review.md"
       ],
-      "gap": "Retencao, atendimento integral ao titular e politica juridica dependem de governanca formal.",
+      "gap": "Prazos finais de retencao e execucao juridica de anonimizacao dependem de governanca formal.",
       "severity": "P0",
-      "observations": "RLS e isolamento existem; decisoes juridicas sao dependencia externa."
+      "observations": "Exportacao, correcao e exclusao possuem solicitacao governada, autorizacao e auditoria; decisoes juridicas seguem externas."
     },
     {
       "id": "POC-1.17",
@@ -526,23 +530,33 @@
       "description": "Prova impressa, folha de respostas e importacao/correcao posterior.",
       "edital_reference": "PoC 1.17, pagina 76",
       "phase": "8",
-      "status": "NAO_ATENDIDO",
-      "implementation": [],
-      "route": "",
+      "status": "ATENDIDO",
+      "implementation": [
+        "components/assessment-print-center.tsx",
+        "components/offline-response-importer.tsx",
+        "lib/assessment-printing.ts",
+        "supabase/migrations/20260921011000_persist_offline_response_imports.sql"
+      ],
+      "route": "/?qa=institution-admin#assessments",
       "required_profile": [
         "manager",
         "teacher"
       ],
       "required_data": [
-        "layout homologado"
+        "avaliacao e caderno autorizados",
+        "turma sintetica"
       ],
-      "test": [],
+      "test": [
+        "tests/phase8/printing/assessment-printing.test.mjs",
+        "tests/phase8/printing/printing-connected.test.mjs",
+        "tests/phase8/offline-import/offline-response-import-connected.test.mjs"
+      ],
       "evidence": [
-        "docs/poc/gaps.md"
+        "phase8-validation-report.md"
       ],
-      "gap": "Fluxo impresso e leitura de folhas nao existem.",
-      "severity": "P0",
-      "observations": "Exportar relatorio nao equivale a aplicar prova impressa."
+      "gap": "",
+      "severity": "P2",
+      "observations": "Cinco documentos PDF/DOCX usam versoes congeladas; respostas CSV/XLSX entram no runtime por RPC transacional e idempotente."
     },
     {
       "id": "POC-2.1",
@@ -592,22 +606,28 @@
       "description": "Help Desk com abertura, acompanhamento e SLA.",
       "edital_reference": "PoC 2.3, pagina 77",
       "phase": "8",
-      "status": "NAO_ATENDIDO",
-      "implementation": [],
-      "route": "",
+      "status": "PARCIAL",
+      "implementation": [
+        "components/institutional-operations.tsx",
+        "supabase/migrations/20260920234232_add_phase8_operational_domains.sql"
+      ],
+      "route": "/?qa=institution-admin#support",
       "required_profile": [
         "todos"
       ],
       "required_data": [
         "SLA homologado"
       ],
-      "test": [],
-      "evidence": [
-        "docs/poc/gaps.md"
+      "test": [
+        "tests/phase8/helpdesk/helpdesk-connected.test.mjs",
+        "tests/phase8/helpdesk/helpdesk-ui.test.mjs"
       ],
-      "gap": "Help Desk completo nao foi implementado.",
-      "severity": "P0",
-      "observations": "Canal informal nao comprova SLA ou rastreabilidade."
+      "evidence": [
+        "docs/operations/helpdesk-decision.md"
+      ],
+      "gap": "SLA contratual e operacao da equipe de suporte ainda precisam de homologacao externa.",
+      "severity": "P1",
+      "observations": "Ticket, acompanhamento, responsavel, comentarios, notas internas, historico, busca, filtros, paginacao e isolamento estao implementados."
     },
     {
       "id": "POC-3.1",
