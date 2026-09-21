@@ -11,7 +11,9 @@ import { supabase } from '@/lib/supabase';
 import type { InstitutionalProfile } from '@/components/institutional-admin';
 import { AssessmentApplicationMonitor } from '@/components/assessment-application-monitor';
 import { AssessmentPrintCenter } from '@/components/assessment-print-center';
+import { OfflineResponseImporter } from '@/components/offline-response-importer';
 import type { AssessmentPrintPayload } from '@/lib/assessment-printing';
+import type { OfflineImportCatalog, OfflineImportPreview } from '@/lib/offline-response-import';
 
 type View = 'cycles' | 'assessments' | 'booklets' | 'calendar' | 'applications' | 'print';
 type CalendarMode = 'month' | 'week' | 'day';
@@ -83,6 +85,11 @@ const previewMap: CurriculumMapRow[] = [{ skill_code: 'DEMO-EF06MA07', thematic_
 const previewScheduled: ScheduledStudentRow[] = [
   { schedule_id: 'schedule-demo', assessment_id: 'assessment-demo', assessment_title: 'Matemática - 6º ano - DEMO', school_id: 'school-1', school_name: 'EM Prof. Miguel Jalbut', classroom_id: 'class-1', classroom_name: '6º A', student_id: 'student-1', student_name: 'Mariana Silva', starts_at: '2026-09-16T11:00:00Z', ends_at: '2026-09-16T13:00:00Z', schedule_status: 'scheduled' },
 ];
+const previewOfflineCatalog: OfflineImportCatalog = {
+  assessmentId: 'assessment-demo',
+  studentIds: ['student-1'],
+  questions: [{ id: 'item-1', type: 'multiple_choice', optionIds: ['a', 'b'], optionLabels: ['A', 'B'] }],
+};
 
 export function InstitutionalAssessments({ profile, networks, schools, classrooms, preview = false }: { profile: InstitutionalProfile; networks: Network[]; schools: School[]; classrooms: Classroom[]; preview?: boolean }) {
   const [view, setView] = useState<View>('cycles');
@@ -110,6 +117,7 @@ export function InstitutionalAssessments({ profile, networks, schools, classroom
   const [printClassroom, setPrintClassroom] = useState('');
   const [printPayload, setPrintPayload] = useState<AssessmentPrintPayload | null>(null);
   const [printLoading, setPrintLoading] = useState(false);
+  const [offlineCatalog, setOfflineCatalog] = useState<OfflineImportCatalog | null>(preview ? previewOfflineCatalog : null);
 
   useEffect(() => { if (!networkId && networks[0]?.id) setNetworkId(networks[0].id); }, [networkId, networks]);
 
@@ -220,6 +228,39 @@ export function InstitutionalAssessments({ profile, networks, schools, classroom
   useEffect(() => {
     if (view === 'applications') void loadScheduledStudents();
   }, [loadScheduledStudents, view]);
+
+  useEffect(() => {
+    if (preview || view !== 'applications' || !selectedAssessment) return;
+    setOfflineCatalog(null);
+    void phase3Supabase.rpc<OfflineImportCatalog>('get_offline_import_catalog', {
+      target_assessment: selectedAssessment,
+    }).then((result) => {
+      if (result.error) setNotice(`Não foi possível preparar a importação: ${result.error.message}`);
+      else setOfflineCatalog(result.data);
+    });
+  }, [preview, selectedAssessment, view]);
+
+  const commitOfflineImport = useCallback(async (importPreview: OfflineImportPreview) => {
+    if (preview) return {
+      status: 'imported' as const,
+      audit: { batchId: 'preview-batch', fingerprint: importPreview.fingerprint, filename: importPreview.filename,
+        assessmentId: importPreview.assessmentId, actorId: profile.id, importedAt: new Date().toISOString(),
+        created: importPreview.valid, updated: 0, skipped: 0, rejected: importPreview.invalid },
+    };
+    const result = await phase3Supabase.rpc<{ status: 'imported' | 'already_imported'; batchId: string; created: number; updated: number; skipped: number; rejected: number }>('commit_offline_response_import', {
+      target_network: networkId,
+      target_assessment: selectedAssessment,
+      source_filename: importPreview.filename,
+      source_fingerprint: importPreview.fingerprint,
+      preview_rows: importPreview.rows,
+    });
+    if (result.error || !result.data) throw new Error(result.error?.message ?? 'Importação sem retorno.');
+    return { status: result.data.status, audit: {
+      batchId: result.data.batchId, fingerprint: importPreview.fingerprint, filename: importPreview.filename,
+      assessmentId: selectedAssessment, actorId: profile.id, importedAt: new Date().toISOString(),
+      created: result.data.created, updated: result.data.updated, skipped: result.data.skipped, rejected: result.data.rejected,
+    } };
+  }, [networkId, preview, profile.id, selectedAssessment]);
 
   const mapSummary = useMemo(() => ({
     booklets: selectedBooklets.length,
@@ -349,7 +390,7 @@ export function InstitutionalAssessments({ profile, networks, schools, classroom
 
     {view === 'calendar' && <CalendarWorkspace schedules={schedules} assessments={assessments} schools={schools} mode={calendarMode} anchor={calendarAnchor} onMode={setCalendarMode} onAnchor={setCalendarAnchor} />}
 
-    {view === 'applications' && <section className="phase3-applications"><div className="phase3-application-summary"><article><School2 /><span>Turmas programadas</span><strong>{applicationSummary.classrooms}</strong></article><article><Users /><span>Alunos programados</span><strong>{applicationSummary.students}</strong></article><article><Clock3 /><span>Janelas</span><strong>{applicationSummary.schedules}</strong></article></div><label className="phase3-search"><Search /><input value={applicationSearch} onChange={(event) => setApplicationSearch(event.target.value)} placeholder="Buscar aluno, turma ou escola" aria-label="Buscar alunos programados" /></label><div className="institutional-table-wrap"><table className="institutional-table"><thead><tr><th>Aluno</th><th>Escola / Turma</th><th>Avaliação</th><th>Janela</th><th>Status</th></tr></thead><tbody>{filteredScheduledStudents.map((row) => <tr key={`${row.schedule_id}-${row.classroom_id}-${row.student_id ?? 'empty'}`}><td><strong>{row.student_name ?? 'Nenhum aluno matriculado'}</strong></td><td>{row.school_name}<small>{row.classroom_name}</small></td><td>{row.assessment_title}</td><td>{formatWindow(row.starts_at, row.ends_at)}</td><td><span className={`institutional-status-pill ${scheduleVisualStatus(row)}`}>{scheduleStatusLabel(row)}</span></td></tr>)}</tbody></table>{!filteredScheduledStudents.length && <div className="institutional-table-empty"><Users /><p>Nenhum aluno programado para a avaliação selecionada.</p></div>}</div><AssessmentApplicationMonitor assessmentId={selectedAssessment} preview={preview} onNotice={setNotice} /></section>}
+    {view === 'applications' && <section className="phase3-applications"><div className="phase3-application-summary"><article><School2 /><span>Turmas programadas</span><strong>{applicationSummary.classrooms}</strong></article><article><Users /><span>Alunos programados</span><strong>{applicationSummary.students}</strong></article><article><Clock3 /><span>Janelas</span><strong>{applicationSummary.schedules}</strong></article></div><label className="phase3-search"><Search /><input value={applicationSearch} onChange={(event) => setApplicationSearch(event.target.value)} placeholder="Buscar aluno, turma ou escola" aria-label="Buscar alunos programados" /></label><div className="institutional-table-wrap"><table className="institutional-table"><thead><tr><th>Aluno</th><th>Escola / Turma</th><th>Avaliação</th><th>Janela</th><th>Status</th></tr></thead><tbody>{filteredScheduledStudents.map((row) => <tr key={`${row.schedule_id}-${row.classroom_id}-${row.student_id ?? 'empty'}`}><td><strong>{row.student_name ?? 'Nenhum aluno matriculado'}</strong></td><td>{row.school_name}<small>{row.classroom_name}</small></td><td>{row.assessment_title}</td><td>{formatWindow(row.starts_at, row.ends_at)}</td><td><span className={`institutional-status-pill ${scheduleVisualStatus(row)}`}>{scheduleStatusLabel(row)}</span></td></tr>)}</tbody></table>{!filteredScheduledStudents.length && <div className="institutional-table-empty"><Users /><p>Nenhum aluno programado para a avaliação selecionada.</p></div>}</div><AssessmentApplicationMonitor assessmentId={selectedAssessment} preview={preview} onNotice={setNotice} />{offlineCatalog ? <OfflineResponseImporter catalog={offlineCatalog} commit={commitOfflineImport} /> : <p role="status">Preparando importação offline…</p>}</section>}
 
     {view === 'print' && <section className="phase3-applications"><div className="pedagogy-toolbar"><label className="institutional-field compact"><span>Avaliação</span><select value={selectedAssessment} onChange={(event) => setSelectedAssessment(event.target.value)}>{assessments.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label><label className="institutional-field compact"><span>Caderno</span><select value={selectedBooklet} onChange={(event) => setSelectedBooklet(event.target.value)}>{selectedBooklets.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label><label className="institutional-field compact"><span>Turma</span><select value={printClassroom} onChange={(event) => setPrintClassroom(event.target.value)}>{printClassrooms.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>{printLoading && <p role="status">Preparando documentos…</p>}{!printLoading && printPayload && (profile.role === 'network_admin' || profile.role === 'manager') && <AssessmentPrintCenter payload={printPayload} authorization={{ actorId: profile.id, role: profile.role, schoolIds: schools.map((item) => item.id), canViewPedagogy: true }} />}{!selectedBooklet && <p>Selecione uma avaliação com caderno para imprimir.</p>}</section>}
 
