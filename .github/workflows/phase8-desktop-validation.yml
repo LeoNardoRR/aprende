@@ -63,9 +63,9 @@ jobs:
           docker exec "$DB_CONTAINER" pg_dump -U postgres -d postgres --data-only --schema=public \
             --exclude-table=public.spatial_ref_sys --format=custom --no-owner --no-privileges \
             > /tmp/phase8-backup.dump
-          docker exec "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+          docker exec "$DB_CONTAINER" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 \
             -c "do \$\$ declare statement text; begin select 'truncate table '||string_agg(format('%I.%I',schemaname,tablename),', ')||' cascade' into statement from pg_tables where schemaname='public' and tablename<>'spatial_ref_sys'; execute statement; end \$\$;"
-          docker exec -i "$DB_CONTAINER" pg_restore -U postgres -d postgres --data-only \
+          docker exec -i "$DB_CONTAINER" pg_restore -U supabase_admin -d postgres --data-only \
             --disable-triggers --no-owner --no-privileges < /tmp/phase8-backup.dump
           docker exec "$DB_CONTAINER" psql -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
             -c "select (select count(*) from public.profiles)||','||(select count(*) from public.networks)||','||(select count(*) from public.institutional_memberships)" \
