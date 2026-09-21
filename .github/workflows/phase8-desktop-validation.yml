@@ -50,21 +50,27 @@ jobs:
             done
             SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:phase7
           done | tee /tmp/phase8-seed.log
-      - name: Restore synthetic backup in a disposable database
+      - name: Restore synthetic application data in the disposable database
         run: |
           set -o pipefail
           eval "$(npx supabase status -o env)"
           case "$DB_URL" in *127.0.0.1*|*localhost*) ;; *) echo "Refusing non-local restore"; exit 1;; esac
           DB_CONTAINER="$(docker ps --filter 'name=^supabase_db_aprende$' --format '{{.Names}}')"
           test "$DB_CONTAINER" = "supabase_db_aprende"
-          docker exec "$DB_CONTAINER" pg_dump -U postgres -d postgres --format=custom --no-owner --no-privileges > /tmp/phase8-backup.dump
-          docker exec "$DB_CONTAINER" createdb -U postgres phase8_restore
-          docker exec -i "$DB_CONTAINER" pg_restore -U postgres -d phase8_restore --no-owner --no-privileges < /tmp/phase8-backup.dump
-          docker exec "$DB_CONTAINER" psql -U postgres -d phase8_restore -v ON_ERROR_STOP=1 \
-            -c "select count(*) from public.profiles" \
-            -c "select count(*) from public.networks" \
-            -c "select count(*) from public.institutional_memberships" | tee /tmp/phase8-restore.log
-          docker exec "$DB_CONTAINER" dropdb -U postgres phase8_restore
+          docker exec "$DB_CONTAINER" psql -U postgres -d postgres -At \
+            -c "select (select count(*) from public.profiles)||','||(select count(*) from public.networks)||','||(select count(*) from public.institutional_memberships)" \
+            > /tmp/phase8-counts-before.txt
+          docker exec "$DB_CONTAINER" pg_dump -U postgres -d postgres --data-only --schema=public \
+            --exclude-table=public.spatial_ref_sys --format=custom --no-owner --no-privileges \
+            > /tmp/phase8-backup.dump
+          docker exec "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "do \$\$ declare statement text; begin select 'truncate table '||string_agg(format('%I.%I',schemaname,tablename),', ')||' cascade' into statement from pg_tables where schemaname='public' and tablename<>'spatial_ref_sys'; execute statement; end \$\$;"
+          docker exec -i "$DB_CONTAINER" pg_restore -U postgres -d postgres --data-only \
+            --disable-triggers --no-owner --no-privileges < /tmp/phase8-backup.dump
+          docker exec "$DB_CONTAINER" psql -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+            -c "select (select count(*) from public.profiles)||','||(select count(*) from public.networks)||','||(select count(*) from public.institutional_memberships)" \
+            | tee /tmp/phase8-counts-after.txt
+          diff -u /tmp/phase8-counts-before.txt /tmp/phase8-counts-after.txt | tee /tmp/phase8-restore.log
       - name: Serve Edge Functions
         run: npx supabase functions serve > /tmp/phase8-functions.log 2>&1 &
       - name: Run all connected regressions
