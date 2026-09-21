@@ -49,7 +49,8 @@ jobs:
           test "$(awk '/# skipped / { print $3 }' /tmp/phase8-regression.log | tail -1)" = "0"
           SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run test:poc
           SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" npm run test:phase7
-          npm run test:phase8
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run test:phase8 | tee /tmp/phase8-tests.log
+          test "$(awk '/# skipped / { print $3 }' /tmp/phase8-tests.log | tail -1)" = "0"
       - name: Validate PoC and smoke
         run: |
           set -o pipefail
