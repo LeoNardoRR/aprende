@@ -336,6 +336,7 @@ export function AccountSettings({
                       <input
                         ref={fileInputRef}
                         className="account-avatar-input"
+                        aria-label="Selecionar foto de perfil"
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
                         disabled={avatarBusy}

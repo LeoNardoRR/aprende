@@ -12,6 +12,16 @@ Ticket, solicitante, prioridade, status, tipo, departamento, responsável, descr
 
 RLS por usuário e escopo, RPCs protegidas para transições, grants explícitos, testes negativos entre tenants, anexos privados e auditoria sem corpo textual desnecessário. A implementação não deve transformar `TO authenticated` em autorização genérica.
 
+## SLA e operação
+
+Prioridade e status são dados operacionais; prazo de primeira resposta ou solução
+não é codificado como promessa contratual. Metas de atendimento devem ser
+configuradas e aprovadas pelo responsável do contrato antes da produção. Até lá,
+painéis podem medir tempos observados, mas não exibir um “SLA oficial”.
+
 ## Estado
 
-Decisão registrada; implementação de banco, interface e testes conectados ainda é requisito de fechamento e não deve ser marcada como atendida antes das quatro evidências: implementação, teste, evidência e demonstração.
+Banco, RLS, interface Desktop, histórico, notas internas, filtros, paginação e
+testes conectados de isolamento existem. Anexos e integração com fornecedor
+externo não fazem parte do mínimo interno atual. A operação contratual e seus SLAs
+continuam como dependência externa.

@@ -34,6 +34,7 @@ type Ticket = Tables<'support_tickets'>;
 type Message = Tables<'support_messages'>;
 type TicketHistory = Tables<'support_ticket_history'>;
 type PrivacyRequest = Tables<'privacy_requests'>;
+const SUPPORT_PAGE_SIZE = 25;
 
 const previewTicket: Ticket = {
   id: 'ticket-preview',
@@ -79,6 +80,7 @@ export function InstitutionalOperations({
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
+  const [ticketPage, setTicketPage] = useState(1);
   const [loading, setLoading] = useState(!preview);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
@@ -190,6 +192,15 @@ export function InstitutionalOperations({
       }),
     [priorityFilter, search, statusFilter, tickets],
   );
+  const ticketPages = Math.max(1, Math.ceil(filteredTickets.length / SUPPORT_PAGE_SIZE));
+  const pagedTickets = filteredTickets.slice(
+    (ticketPage - 1) * SUPPORT_PAGE_SIZE,
+    ticketPage * SUPPORT_PAGE_SIZE,
+  );
+  useEffect(() => setTicketPage(1), [priorityFilter, search, statusFilter]);
+  useEffect(() => {
+    if (ticketPage > ticketPages) setTicketPage(ticketPages);
+  }, [ticketPage, ticketPages]);
   const selectedTicket =
     tickets.find((ticket) => ticket.id === selectedTicketId) ?? null;
 
@@ -526,7 +537,7 @@ export function InstitutionalOperations({
         ) : (
           <div className="operations-workspace">
             <div className="ticket-list" role="list" aria-label="Chamados">
-              {filteredTickets.map((ticket) => (
+              {pagedTickets.map((ticket) => (
                 <button
                   type="button"
                   role="listitem"
@@ -549,6 +560,13 @@ export function InstitutionalOperations({
                 <p className="operations-empty">
                   Nenhum chamado corresponde aos filtros.
                 </p>
+              )}
+              {filteredTickets.length > SUPPORT_PAGE_SIZE && (
+                <nav className="ticket-pagination" aria-label="Paginação de chamados">
+                  <button type="button" disabled={ticketPage === 1} onClick={() => setTicketPage((page) => page - 1)}>Anterior</button>
+                  <span>Página {ticketPage} de {ticketPages}</span>
+                  <button type="button" disabled={ticketPage === ticketPages} onClick={() => setTicketPage((page) => page + 1)}>Próxima</button>
+                </nav>
               )}
             </div>
             <div className="ticket-detail">

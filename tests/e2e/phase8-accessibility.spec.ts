@@ -127,6 +127,26 @@ test('aluno autenticado: zero violações críticas', async ({ page }, testInfo)
   ).toEqual([]);
 });
 
+test('impressão e importação: zero violações críticas', async ({ page }, testInfo) => {
+  await page.goto('/?qa=institution-admin#assessments');
+  await page.getByRole('tab', { name: 'Impressão' }).click();
+  await expect(page.getByRole('heading', { name: 'Aplicação impressa' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Aplicações' }).click();
+  await expect(page.getByRole('heading', { name: 'Importar respostas offline' })).toBeVisible();
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+  await attachViolations(testInfo, results.violations);
+  expect(results.violations.filter((violation) => violation.impact === 'critical')).toEqual([]);
+});
+
+test('privacidade do professor: zero violações críticas', async ({ page }, testInfo) => {
+  await page.goto('/?qa=teacher-dashboard');
+  await page.getByRole('button', { name: 'Configurações' }).click();
+  await expect(page.getByRole('heading', { name: 'Privacidade e meus dados' })).toBeVisible();
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+  await attachViolations(testInfo, results.violations);
+  expect(results.violations.filter((violation) => violation.impact === 'critical')).toEqual([]);
+});
+
 test('gestão: skip link, teclado e foco chegam ao conteúdo', async ({ page }) => {
   await page.goto('/?qa=institution-admin#overview');
   const skip = page.getByRole('link', { name: 'Pular para o conteúdo principal' });
@@ -136,13 +156,15 @@ test('gestão: skip link, teclado e foco chegam ao conteúdo', async ({ page }) 
   await expect(page).toHaveURL(/#institutional-main-content$/);
 });
 
-test('login: zoom de 200% não cria overflow horizontal na viewport desktop mínima', async ({ page }) => {
-  await page.setViewportSize({ width: 1024, height: 768 });
-  await page.goto('/?mode=student');
-  await expect(page.getByRole('heading', { name: 'Entre na sua conta' })).toBeVisible();
-  await page.evaluate(() => {
-    document.documentElement.style.zoom = '2';
-  });
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(1);
+test('login: matriz de zoom Desktop não cria overflow horizontal', async ({ page }) => {
+  for (const width of [1024, 1280, 1366, 1440, 1600, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/?mode=student');
+    await expect(page.getByRole('heading', { name: 'Entre na sua conta' })).toBeVisible();
+    for (const zoom of [1, 1.25, 1.5, 2]) {
+      await page.evaluate((value) => { document.documentElement.style.zoom = String(value); }, zoom);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `${width}px em ${zoom * 100}%`).toBeLessThanOrEqual(1);
+    }
+  }
 });

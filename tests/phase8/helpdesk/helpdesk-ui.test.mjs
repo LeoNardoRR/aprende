@@ -52,6 +52,8 @@ test('institutional help desk exposes the complete operational workflow', async 
     'filterSupportTickets',
     'updateTicket',
     'createTicket',
+    'SUPPORT_PAGE_SIZE',
+    'aria-label="Paginação de chamados"',
   ])
     assert.match(source, new RegExp(contract.replace(/[()]/g, '\\$&')));
 });

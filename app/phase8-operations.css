@@ -153,6 +153,24 @@
   font-style: normal;
   font-weight: 850;
 }
+.ticket-pagination {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 2px;
+  color: #637b8d;
+  font-size: 9px;
+}
+.ticket-pagination button {
+  min-height: 32px;
+  border: 1px solid #d7e3eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #31536a;
+  font-weight: 800;
+}
+.ticket-pagination button:disabled { opacity: .45; }
 .ticket-priority {
   justify-self: start;
   padding: 3px 6px;
