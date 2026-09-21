@@ -53,16 +53,18 @@ jobs:
       - name: Restore synthetic backup in a disposable database
         run: |
           set -o pipefail
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client-17
           eval "$(npx supabase status -o env)"
           case "$DB_URL" in *127.0.0.1*|*localhost*) ;; *) echo "Refusing non-local restore"; exit 1;; esac
-          pg_dump "$DB_URL" --format=custom --no-owner --no-privileges --file=/tmp/phase8-backup.dump
-          createdb --maintenance-db="$DB_URL" phase8_restore
-          RESTORE_URL="${DB_URL%/*}/phase8_restore"
-          pg_restore --dbname="$RESTORE_URL" --no-owner --no-privileges /tmp/phase8-backup.dump
-          psql "$RESTORE_URL" -v ON_ERROR_STOP=1 -c "select count(*) from public.profiles" -c "select count(*) from public.networks" | tee /tmp/phase8-restore.log
-          dropdb --maintenance-db="$DB_URL" phase8_restore
+          DB_CONTAINER="$(docker ps --filter 'name=^supabase_db_aprende$' --format '{{.Names}}')"
+          test "$DB_CONTAINER" = "supabase_db_aprende"
+          docker exec "$DB_CONTAINER" pg_dump -U postgres -d postgres --format=custom --no-owner --no-privileges > /tmp/phase8-backup.dump
+          docker exec "$DB_CONTAINER" createdb -U postgres phase8_restore
+          docker exec -i "$DB_CONTAINER" pg_restore -U postgres -d phase8_restore --no-owner --no-privileges < /tmp/phase8-backup.dump
+          docker exec "$DB_CONTAINER" psql -U postgres -d phase8_restore -v ON_ERROR_STOP=1 \
+            -c "select count(*) from public.profiles" \
+            -c "select count(*) from public.networks" \
+            -c "select count(*) from public.institutional_memberships" | tee /tmp/phase8-restore.log
+          docker exec "$DB_CONTAINER" dropdb -U postgres phase8_restore
       - name: Serve Edge Functions
         run: npx supabase functions serve > /tmp/phase8-functions.log 2>&1 &
       - name: Run all connected regressions
