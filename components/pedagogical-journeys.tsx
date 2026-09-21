@@ -185,7 +185,7 @@ export function PedagogicalJourneys({ mode, networkId, schoolId, classroomId, sk
   const title = mode === 'student' ? 'Minha jornada de aprendizagem' : mode === 'teacher' ? 'Recomposição da turma' : 'Jornadas e intervenções';
 
   return <section id="remediation" className={`pedagogy-hub pedagogy-${mode}`} aria-labelledby={`pedagogy-title-${mode}`}>
-    <header className="pedagogy-head"><div><span><Route /> FASE 7 · INTERVENÇÃO PEDAGÓGICA</span><h2 id={`pedagogy-title-${mode}`}>{title}</h2><p>{mode === 'student' ? 'Avance no seu ritmo. A jornada registra progresso sem rotular seu desempenho.' : 'Conecte diagnóstico, habilidade, intervenção e evolução observada.'}</p></div><button type="button" onClick={() => void load()} aria-label="Atualizar jornadas"><RefreshCw /> Atualizar</button></header>
+    <header className="pedagogy-head"><div><span><Route /> RECOMPOSIÇÃO DA APRENDIZAGEM</span><h2 id={`pedagogy-title-${mode}`}>{title}</h2><p>{mode === 'student' ? 'Avance no seu ritmo. A jornada registra progresso sem rotular seu desempenho.' : 'Conecte diagnóstico, habilidade, intervenção e evolução observada.'}</p></div><button type="button" onClick={() => void load()} aria-label="Atualizar jornadas"><RefreshCw /> Atualizar</button></header>
     {preview && <output className="pedagogy-demo">DEMO visual · dados sintéticos identificados.</output>}
     {message && <output className="pedagogy-message" aria-live="polite">{message}</output>}
     {state === 'loading' && <div className="pedagogy-state"><LoaderCircle className="spin" /> Carregando intervenções autorizadas…</div>}

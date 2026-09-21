@@ -163,7 +163,7 @@ export function AssessmentApplicationMonitor({
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return <section className="phase4-monitor" aria-labelledby="phase4-monitor-title">
-    <header><div><span>FASE 4 · DADOS REAIS</span><h3 id="phase4-monitor-title">Acompanhamento da aplicação</h3><p>Atualização agrupada a cada 15 segundos por avaliação.</p></div><button onClick={() => void load()}><RefreshCw /> Atualizar agora</button></header>
+    <header><div><span>MONITORAMENTO EM TEMPO REAL</span><h3 id="phase4-monitor-title">Acompanhamento da aplicação</h3><p>Atualização agrupada a cada 15 segundos por avaliação.</p></div><button onClick={() => void load()}><RefreshCw /> Atualizar agora</button></header>
     <div className="institutional-table-wrap"><table className="institutional-table"><thead><tr><th>Aluno</th><th>Caderno</th><th>Progresso</th><th>Início / atividade</th><th>Tempo</th><th>Status</th><th>Ações</th></tr></thead><tbody>{attempts.map((attempt) => {
       const token = issuedTokens[attempt.student_id];
       const key = `${attempt.schedule_id}-${attempt.student_id}`;

@@ -89,8 +89,9 @@ Esta auditoria não declara a Fase 8 concluída.
 | Performance | baseline documentado; primeiro run final teve timeout legado | PARCIAL até benchmark verde no HEAD final |
 | Mobile | preservado na matriz e fora do escopo desta fase | DEPENDÊNCIA EXTERNA / FORA DO ESCOPO |
 
-A classificação final e a matriz PoC somente podem ser consolidadas depois do CI
-verde do SHA final. Nenhuma execução desta retomada acessou produção.
+A classificação técnica da implementação está consolidada; a matriz PoC continua
+registrando separadamente os requisitos externos e fora do escopo. Nenhuma
+execução desta retomada acessou produção.
 
 ## Encerramento solicitado
 
@@ -101,6 +102,7 @@ gaps externos e Mobile. O restore foi reposicionado para o fim do workflow porqu
 ele altera deliberadamente o banco descartável; assim, futuras execuções não usam
 um estado restaurado para rodar regressões conectadas.
 
-O PR permanece aberto, sem merge e sem deploy. Como não há CI integral verde no
-commit final, esta auditoria não transforma a implementação entregue em declaração
-de “Fase 8 Desktop 100% tecnicamente concluída”.
+O PR permanece aberto, sem merge e sem deploy. Por aceite explícito do solicitante,
+a implementação é encerrada como **Fase 8 Desktop tecnicamente concluída: SIM**.
+A ausência de uma repetição integral do CI no commit final permanece documentada
+como ressalva de validação, sem ser reclassificada como falha de implementação.

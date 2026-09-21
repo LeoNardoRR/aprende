@@ -13,7 +13,6 @@ import {
   LogOut,
   LibraryBig,
   Headphones,
-  BookOpenCheck,
   Network,
   Plus,
   Route,
@@ -206,6 +205,7 @@ export function InstitutionalAdmin({
   const [loading, setLoading] = useState(!preview);
   const [notice, setNotice] = useState('');
   const [form, setForm] = useState<InstitutionalForm | null>(null);
+  const [activeSection, setActiveSection] = useState('overview');
 
   const canConfigure =
     profile.role === 'network_admin' || profile.role === 'manager';
@@ -251,6 +251,45 @@ export function InstitutionalAdmin({
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    const sectionIds = [
+      'overview',
+      'schools',
+      'years',
+      'classrooms',
+      'enrollments',
+      'access',
+      'curricula',
+      'assessments',
+      'analytics',
+      'support',
+      'remediation',
+      'poc',
+    ];
+    let frame = 0;
+    const updateActiveSection = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const visible = sectionIds
+          .map((id) => document.getElementById(id))
+          .filter((element): element is HTMLElement => Boolean(element))
+          .map((element) => ({ id: element.id, top: element.getBoundingClientRect().top }))
+          .filter((item) => item.top <= 180)
+          .at(-1);
+        const hash = window.location.hash.slice(1);
+        setActiveSection(visible?.id ?? (sectionIds.includes(hash) ? hash : 'overview'));
+      });
+    };
+    updateActiveSection();
+    window.addEventListener('scroll', updateActiveSection, { passive: true });
+    window.addEventListener('hashchange', updateActiveSection);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', updateActiveSection);
+      window.removeEventListener('hashchange', updateActiveSection);
+    };
+  }, []);
 
   const openYear = academicYears.find((year) => year.status === 'open');
   const summary = useMemo(
@@ -379,50 +418,47 @@ export function InstitutionalAdmin({
           <strong>Aprendê</strong>
         </div>
         <nav aria-label="Administração institucional">
-          <a href="#overview" className="active">
+          <a href="#overview" className={activeSection === 'overview' ? 'active' : undefined} aria-current={activeSection === 'overview' ? 'location' : undefined}>
             <Building2 /> Visão geral
           </a>
-          <a href="#schools">
+          <a href="#schools" className={activeSection === 'schools' ? 'active' : undefined} aria-current={activeSection === 'schools' ? 'location' : undefined}>
             <School /> Escolas
           </a>
-          <a href="#years">
+          <a href="#years" className={activeSection === 'years' ? 'active' : undefined} aria-current={activeSection === 'years' ? 'location' : undefined}>
             <CalendarRange /> Anos e séries
           </a>
-          <a href="#classrooms">
+          <a href="#classrooms" className={activeSection === 'classrooms' ? 'active' : undefined} aria-current={activeSection === 'classrooms' ? 'location' : undefined}>
             <GraduationCap /> Turmas
           </a>
-          <a href="#enrollments">
+          <a href="#enrollments" className={activeSection === 'enrollments' ? 'active' : undefined} aria-current={activeSection === 'enrollments' ? 'location' : undefined}>
             <Users /> Matrículas
           </a>
-          <a href="#access">
+          <a href="#access" className={activeSection === 'access' ? 'active' : undefined} aria-current={activeSection === 'access' ? 'location' : undefined}>
             <ShieldCheck /> Acessos
           </a>
-          <a href="#curricula">
+          <a href="#curricula" className={activeSection === 'curricula' ? 'active' : undefined} aria-current={activeSection === 'curricula' ? 'location' : undefined}>
             <LibraryBig /> Currículos
           </a>
-          <a href="#item-bank">
-            <BookOpenCheck /> Banco de Itens
-          </a>
-          <a href="#assessments">
+          <a href="#assessments" className={activeSection === 'assessments' ? 'active' : undefined} aria-current={activeSection === 'assessments' ? 'location' : undefined}>
             <ClipboardList /> Avaliações
           </a>
-          <a href="#analytics">
+          <a href="#analytics" className={activeSection === 'analytics' ? 'active' : undefined} aria-current={activeSection === 'analytics' ? 'location' : undefined}>
             <ChartNoAxesCombined /> Analytics
           </a>
-          <a href="#support">
+          <a href="#support" className={activeSection === 'support' ? 'active' : undefined} aria-current={activeSection === 'support' ? 'location' : undefined}>
             <Headphones /> Help Desk
           </a>
-          <a href="#remediation">
+          <a href="#remediation" className={activeSection === 'remediation' ? 'active' : undefined} aria-current={activeSection === 'remediation' ? 'location' : undefined}>
             <Route /> Recomposição
           </a>
           {canAuditPoc && (
-            <a href="#poc">
-              <ClipboardCheck /> Control Center PoC
+            <a href="#poc" className={activeSection === 'poc' ? 'active' : undefined} aria-current={activeSection === 'poc' ? 'location' : undefined}>
+              <ClipboardCheck /> Conformidade
             </a>
           )}
         </nav>
         <small className="institutional-version">
-          Aprendê v0.1.0 · Fase 8 Desktop
+          Aprendê · Gestão educacional
         </small>
         <button
           type="button"
@@ -628,12 +664,6 @@ export function InstitutionalAdmin({
               schools={schools}
               preview={preview}
             />
-            <InstitutionalOperations
-              profile={profile}
-              networks={networks}
-              schools={schools}
-              preview={preview}
-            />
             <InstitutionalPedagogy
               profile={profile}
               networks={networks}
@@ -657,6 +687,12 @@ export function InstitutionalAdmin({
                 preview={preview}
               />
             </div>
+            <InstitutionalOperations
+              profile={profile}
+              networks={networks}
+              schools={schools}
+              preview={preview}
+            />
             <PedagogicalJourneys
               mode="institutional"
               networkId={networks[0]?.id}

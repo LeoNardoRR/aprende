@@ -6,7 +6,7 @@
 - Base: `master` em `bbca91dd63c6e4fa29afb1b1dc6906bb1d4c34aa`.
 - PR: #9 — `codex/fase8-finalizacao-desktop → master`.
 - HEAD final: o commit que contém este relatório; o SHA remoto consta no PR #9.
-- Commits desde a base: 15, incluindo este relatório.
+- Commits desde a base: 16, incluindo a formalização do encerramento.
 - Arquivos alterados: 44. Migrations aditivas novas: 3.
 
 ## 7–17. Produto e operação
@@ -64,8 +64,9 @@
 - PoC antes/depois: 55,6% → 63,9%; 21 requisitos. Impressão passou a ATENDIDO;
   Help Desk passou a PARCIAL por depender de SLA/operador; LGPD segue PARCIAL por
   decisões jurídicas externas. A PoC não está integralmente pronta.
-- P0 restante: evidência de CI integral verde no commit final não foi concluída
-  após a orientação de não repetir todas as migrations.
+- P0 restante de implementação: nenhum identificado. A evidência de CI integral
+  verde no commit final foi dispensada pelo solicitante e permanece registrada
+  como limitação de validação, não como pendência de código.
 - P1 restante: chunk principal grande, homologação de staging/SLA e ensaio humano
   com leitor de tela.
 - Dependências externas: currículo/acervo oficial, 1.500 itens validados, 180
@@ -76,7 +77,9 @@
 
 ## Conclusão
 
-A implementação Desktop solicitada foi entregue no PR, mas este relatório não
-declara “100% tecnicamente concluída” porque o critério original exige CI verde no
-HEAD final e essa última repetição foi dispensada pelo solicitante.
+**Fase 8 Desktop tecnicamente concluída: SIM.**
 
+A implementação Desktop solicitada foi entregue no PR e aceita como concluída pelo
+solicitante. A conclusão não equivale a deploy ou homologação de produção: a última
+repetição integral do CI foi dispensada, e as dependências externas e validações
+humanas permanecem explicitamente registradas neste relatório.

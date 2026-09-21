@@ -10,7 +10,7 @@ test('administrador consulta a matriz real e filtra bloqueadores da PoC', async 
   };
   const summary = summarize(matrix);
   await page.goto('/?qa=institution-admin#poc');
-  await expect(page.getByRole('heading', { name: 'Control Center da PoC' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Painel de conformidade' })).toBeVisible();
   await expect(page.getByText(matrix.metadata.base_commit.slice(0, 8), { exact: true })).toBeVisible();
   await expect(page.getByText(`${summary.conformity.toFixed(1).replace('.', ',')}%`, { exact: true })).toBeVisible();
   await expect(page.locator('.poc-requirement')).toHaveCount(summary.total);

@@ -42,6 +42,37 @@ const criticalSections = [
   ['helpdesk', '#support'],
 ] as const;
 
+const managementSections = [
+  ['visao-geral', '#overview'],
+  ['escolas', '#schools'],
+  ['anos-series', '#years'],
+  ['turmas', '#classrooms'],
+  ['matriculas', '#enrollments'],
+  ['acessos', '#access'],
+  ['curriculos', '#curricula'],
+  ['avaliacoes', '#assessments'],
+  ['analytics', '#analytics'],
+  ['help-desk', '#support'],
+  ['recomposicao', '#remediation'],
+  ['conformidade', '#poc'],
+] as const;
+
+test('gestão: navegação e linguagem visual de ponta a ponta', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/?qa=institution-admin#overview');
+  await expect(page.getByText(/FASE [0-9]/i)).toHaveCount(0);
+  await expect(page.getByText('Aprendê · Gestão educacional')).toBeVisible();
+  for (const [name, selector] of managementSections) {
+    const section = page.locator(selector);
+    await expect(section, `${name} precisa existir e estar visível`).toBeVisible();
+    const overflow = await section.evaluate((element) => element.scrollWidth - element.clientWidth);
+    expect(overflow, `${name} não pode vazar horizontalmente`).toBeLessThanOrEqual(1);
+  }
+  await page.getByRole('link', { name: 'Help Desk' }).click();
+  await expect(page.getByRole('link', { name: 'Help Desk' })).toHaveAttribute('aria-current', 'location');
+  await expect(page.locator('#support .operations-workspace')).toHaveCSS('display', 'grid');
+});
+
 for (const [name, selector] of criticalSections) {
   test(`${name}: seção crítica estável`, async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });

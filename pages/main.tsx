@@ -7,6 +7,7 @@ import '../app/phase3-finalization.css';
 import '../app/phase12-finalization.css';
 import '../app/phase4-runtime.css';
 import '../app/phase7-pedagogy.css';
+import '../app/phase8-operations.css';
 createRoot(document.getElementById('root')!).render(
   <>
     <AnimatedFavicon />

@@ -28,7 +28,7 @@ export function PocControlCenter() {
 
   return <section id="poc" className="institutional-panel poc-control" aria-labelledby="poc-title">
     <header className="poc-head">
-      <div><span><ClipboardCheck /> FASE 6 · FONTE ÚNICA</span><h2 id="poc-title">Control Center da PoC</h2><p>A classificação vem da matriz validada no repositório. Itens parciais e futuros permanecem visíveis.</p></div>
+      <div><span><ClipboardCheck /> GOVERNANÇA E CONFORMIDADE</span><h2 id="poc-title">Painel de conformidade</h2><p>A classificação vem da matriz validada no repositório. Itens parciais e futuros permanecem visíveis.</p></div>
       <div className="poc-version"><ShieldAlert /><span>Base auditada</span><strong>{matrix.metadata.base_commit.slice(0, 8)}</strong></div>
     </header>
     <div className="poc-kpis">
