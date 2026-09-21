@@ -56,3 +56,12 @@
 5. Regressão visual, CI completo, evidências e atualização da PoC.
 
 Esta auditoria não declara a Fase 8 concluída.
+
+## Evolução verificada nesta retomada
+
+- O domínio operacional ganhou tabelas com RLS para termos, privacidade, Help Desk e lotes de importação; as interfaces de atendimento e solicitações estão ligadas ao cliente autenticado. Isso não equivale a execução de exportação ou anonimização LGPD.
+- A exclusão direta legada foi desabilitada. O botão de conta abre uma solicitação idempotente e preserva a conta até análise; a execução final ainda requer política de retenção aprovada e fluxo auditado.
+- Os cinco documentos de aplicação impressa têm geradores PDF/DOCX e uma tela ligada a um pacote de caderno/turma construído por RPC com autorização no banco. Foi adicionado um teste conectado para verificar conteúdo real e bloqueio entre escolas na próxima execução descartável.
+- O parser CSV/XLSX, validação, prévia e decisões da importação offline existem, mas **a gravação transacional das respostas no runtime ainda não está integrada**. A Fase 8 não deve ser declarada concluída por esse item.
+- Axe, teclado, zoom e snapshots Desktop passaram localmente; a validação em Linux/CI e a verificação manual com leitor de tela ainda são evidências distintas e pendentes.
+- O CI no commit anterior passou por migrations e regressões conectadas; o resultado do HEAD final deve ser registrado separadamente, sem reutilizar indevidamente evidência de commits anteriores.

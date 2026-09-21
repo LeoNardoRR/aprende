@@ -35,11 +35,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { BrandLogo } from '@/components/brand-logo';
 import { StudentHome } from '@/components/student-home';
-import { StudentTaskRoute } from '@/components/student-task-route';
-import {
-  StudentResourcePage,
-  type ResourceKey,
-} from '@/components/student-resource-page';
+import type { ResourceKey } from '@/components/student-resource-page';
 import type { LearningPathStep } from '@/components/student-learning-path';
 import {
   Dialog,
@@ -85,6 +81,16 @@ const RoomEditor = lazy(() =>
 const TeacherPortal = lazy(() =>
   import('@/components/teacher-portal').then((module) => ({
     default: module.TeacherPortal,
+  })),
+);
+const StudentTaskRoute = lazy(() =>
+  import('@/components/student-task-route').then((module) => ({
+    default: module.StudentTaskRoute,
+  })),
+);
+const StudentResourcePage = lazy(() =>
+  import('@/components/student-resource-page').then((module) => ({
+    default: module.StudentResourcePage,
   })),
 );
 
@@ -1312,8 +1318,8 @@ function Home() {
               onActivity={openConnectedActivity}
             />
           )}
-          {view === 'tasks' && <StudentTaskRoute name={studentName} preferences={p} work={teacherAssignments} results={teacherSubmissions} onOpen={openConnectedActivity}/>}
-          {view === 'resource' && resourceView === 'exams' && <StudentTaskRoute exams name={studentName} preferences={p} work={teacherAssignments} results={teacherSubmissions} onOpen={openConnectedActivity}/>}
+          {view === 'tasks' && <Suspense fallback={<LoadingArea text="Abrindo tarefas…" />}><StudentTaskRoute name={studentName} preferences={p} work={teacherAssignments} results={teacherSubmissions} onOpen={openConnectedActivity}/></Suspense>}
+          {view === 'resource' && resourceView === 'exams' && <Suspense fallback={<LoadingArea text="Abrindo provas…" />}><StudentTaskRoute exams name={studentName} preferences={p} work={teacherAssignments} results={teacherSubmissions} onOpen={openConnectedActivity}/></Suspense>}
           {view === 'materials' && (
             <div className="materials-page">
               <div className="page-intro">
@@ -1642,12 +1648,12 @@ function Home() {
             </>
           )}
           {view === 'resource' && resourceView && resourceView !== 'exams' && (
-            <StudentResourcePage
+            <Suspense fallback={<LoadingArea text="Abrindo recursos…" />}><StudentResourcePage
               resource={resourceView}
               hasConnectedClass={!!studentSummary}
               onBack={() => changeView('home')}
               onTasks={() => changeView('tasks')}
-            />
+            /></Suspense>
           )}
           <footer className="workspace-footer">
             <span>
