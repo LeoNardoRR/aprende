@@ -18,6 +18,6 @@ export default defineConfig({
     command: 'npm run dev -- --hostname 127.0.0.1 --port 4179',
     url: 'http://127.0.0.1:4179',
     timeout: 120_000,
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
   },
 });

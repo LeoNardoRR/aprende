@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { AnimatedFavicon } from '@/components/animated-favicon';
 import 'katex/dist/katex.min.css';
 import './globals.css';
 import './design-tokens.css';
@@ -7,7 +6,6 @@ import './phase3-finalization.css';
 import './phase12-finalization.css';
 import './phase4-runtime.css';
 import './phase7-pedagogy.css';
-import './phase8-operations.css';
 export const metadata: Metadata = {
   title: 'Aprendê',
   description:
@@ -38,7 +36,6 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <AnimatedFavicon />
         {children}
       </body>
     </html>

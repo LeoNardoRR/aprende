@@ -1,5 +1,7 @@
 'use client';
 
+import '@/app/phase8-operations.css';
+
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Clock3,

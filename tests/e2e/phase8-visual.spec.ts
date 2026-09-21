@@ -48,6 +48,10 @@ for (const [name, selector] of criticalSections) {
     await page.goto(`/?qa=institution-admin${selector}`);
     const section = page.locator(selector);
     await expect(section).toBeVisible();
+    if (name === 'helpdesk') {
+      await expect(section.locator('.operations-workspace')).toHaveCSS('display', 'grid');
+      await expect(section.locator('.operations-primary')).toHaveCSS('display', 'flex');
+    }
     await expectNoPageOverflow(page);
     await stableScreenshot(section, `${name}-1440.png`);
   });
