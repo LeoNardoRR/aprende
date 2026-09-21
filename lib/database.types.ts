@@ -889,6 +889,7 @@ export type Database = {
         Returns: string
       }
       delete_my_account: { Args: { confirmation: string }; Returns: undefined }
+      request_my_account_deletion: { Args: { confirmation: string }; Returns: string }
       find_profile_for_institution: {
         Args: {
           target_email: string

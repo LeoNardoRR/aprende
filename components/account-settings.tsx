@@ -87,6 +87,7 @@ export function AccountSettings({
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [deletionNotice, setDeletionNotice] = useState('');
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarNotice, setAvatarNotice] = useState('');
   const [name, setName] = useState(displayName);
@@ -207,7 +208,7 @@ export function AccountSettings({
     setAvatarBusy(false);
   }
 
-  async function deleteAccount() {
+  async function requestAccountDeletion() {
     if (confirmation !== 'EXCLUIR' || !password) return;
     setBusy(true);
     setError('');
@@ -215,7 +216,7 @@ export function AccountSettings({
       data: { user },
     } = await authClient.auth.getUser();
     if (!user?.email) {
-      setError('Sua sessão expirou. Entre novamente para excluir a conta.');
+      setError('Sua sessão expirou. Entre novamente para solicitar a exclusão.');
       setBusy(false);
       return;
     }
@@ -228,7 +229,7 @@ export function AccountSettings({
       setBusy(false);
       return;
     }
-    const { error: deleteError } = await authClient.rpc('delete_my_account', {
+    const { data: requestId, error: deleteError } = await authClient.rpc('request_my_account_deletion', {
       confirmation,
     });
     if (deleteError) {
@@ -236,8 +237,10 @@ export function AccountSettings({
       setBusy(false);
       return;
     }
-    await authClient.auth.signOut();
-    window.location.reload();
+    setDeletionNotice(`Solicitação ${requestId} registrada para análise. Sua conta e os registros acadêmicos permanecem disponíveis até a decisão formal.`);
+    setConfirmation('');
+    setPassword('');
+    setBusy(false);
   }
 
   return (
@@ -379,11 +382,9 @@ export function AccountSettings({
                   <ShieldAlert size={20} />
                 </div>
                 <div>
-                  <h3>Excluir minha conta</h3>
+                  <h3>Solicitar exclusão da conta</h3>
                   <p>
-                    {role === 'teacher'
-                      ? 'Sua conta, turmas, atividades, recados e entregas vinculadas serão excluídos permanentemente.'
-                      : 'Sua conta, participação nas turmas e atividades enviadas serão excluídas permanentemente.'}
+                    Sua solicitação será analisada conforme a política de retenção. Nenhum registro acadêmico será apagado imediatamente.
                   </p>
                 </div>
               </section>
@@ -411,7 +412,8 @@ export function AccountSettings({
                   autoComplete="current-password"
                 />
               </label>
-              {error && <p className="teacher-notice">{error}</p>}
+              {error && <p className="teacher-notice" role="alert">{error}</p>}
+              {deletionNotice && <p className="teacher-notice" role="status">{deletionNotice}</p>}
               <div className="account-settings-actions">
                 <button
                   type="button"
@@ -425,14 +427,14 @@ export function AccountSettings({
                   type="button"
                   className="account-delete-button"
                   disabled={busy || confirmation !== 'EXCLUIR' || !password}
-                  onClick={() => void deleteAccount()}
+                  onClick={() => void requestAccountDeletion()}
                 >
                   {busy ? (
                     <LoaderCircle className="spin" size={17} />
                   ) : (
                     <Trash2 size={17} />
                   )}
-                  Excluir conta
+                  Enviar solicitação
                 </button>
               </div>
             </section>
