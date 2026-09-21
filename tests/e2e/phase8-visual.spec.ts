@@ -66,6 +66,27 @@ test('professor: shell desktop estável em 1440px', async ({ page }) => {
   await stablePageScreenshot(page, 'professor-1440.png');
 });
 
+test('avaliações: impressão e importação offline estáveis', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/?qa=institution-admin#assessments');
+  const assessments = page.locator('#assessments');
+  await assessments.getByRole('tab', { name: 'Impressão' }).click();
+  await expect(assessments.getByRole('heading', { name: 'Aplicação impressa' })).toBeVisible();
+  await stableScreenshot(assessments, 'impressao-1440.png');
+  await assessments.getByRole('tab', { name: 'Aplicações' }).click();
+  await expect(assessments.getByRole('heading', { name: 'Importar respostas offline' })).toBeVisible();
+  await stableScreenshot(assessments, 'importacao-offline-1440.png');
+});
+
+test('professor: privacidade estável', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/?qa=teacher-dashboard');
+  await page.getByRole('button', { name: 'Configurações' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Configurações da conta' });
+  await expect(dialog.getByRole('heading', { name: 'Privacidade e meus dados' })).toBeVisible();
+  await stableScreenshot(dialog, 'privacidade-professor-1440.png');
+});
+
 for (const [name, path, heading] of [
   ['login-aluno', '/?mode=student', 'Entre na sua conta'],
   ['login-professor', '/?mode=teacher', 'Entrar como professor'],
