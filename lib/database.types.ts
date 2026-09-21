@@ -6,6 +6,23 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+type OperationalTable<Row, Required extends keyof Row> = {
+  Row: Row
+  Insert: Pick<Row, Required> & Partial<Omit<Row, Required>>
+  Update: Partial<Row>
+  Relationships: []
+}
+
+type LegalDocumentRow = { id: string; document_type: string; version: string; title: string; content: string; content_hash: string; effective_at: string; published_at: string; published_by: string }
+type LegalAcceptanceRow = { id: string; document_id: string; user_id: string; context: string; result: string; accepted_at: string }
+type PrivacyRequestRow = { id: string; requester_id: string; network_id: string | null; request_type: string; status: string; details: string | null; resolution: string | null; handled_by: string | null; correlation_id: string; created_at: string; updated_at: string; completed_at: string | null }
+type SupportDepartmentRow = { id: string; network_id: string; name: string; active: boolean; created_at: string }
+type SupportTicketRow = { id: string; network_id: string; school_id: string | null; requester_id: string; subject: string; description: string; priority: string; status: string; ticket_type: string; department_id: string | null; assignee_id: string | null; correlation_id: string; created_at: string; updated_at: string; closed_at: string | null }
+type SupportMessageRow = { id: string; ticket_id: string; author_id: string; visibility: string; body: string; created_at: string }
+type SupportTicketHistoryRow = { id: number; ticket_id: string; actor_id: string | null; field_name: string; old_value: string | null; new_value: string | null; created_at: string }
+type OfflineResponseImportRow = { id: string; network_id: string; assessment_id: string; file_name: string; content_hash: string; status: string; row_count: number; valid_count: number; conflict_count: number; error_count: number; validation_errors: Json; created_by: string; created_at: string; committed_at: string | null }
+type OfflineResponseImportItemRow = { id: number; import_id: string; row_number: number; student_id: string | null; assessment_item_id: string | null; answer: Json; row_status: string; error_code: string | null; created_at: string }
+
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -14,6 +31,15 @@ export type Database = {
   }
   public: {
     Tables: {
+      legal_documents: OperationalTable<LegalDocumentRow, 'document_type' | 'version' | 'title' | 'content' | 'content_hash' | 'effective_at' | 'published_by'>
+      legal_acceptances: OperationalTable<LegalAcceptanceRow, 'document_id' | 'user_id' | 'result'>
+      privacy_requests: OperationalTable<PrivacyRequestRow, 'requester_id' | 'request_type'>
+      support_departments: OperationalTable<SupportDepartmentRow, 'network_id' | 'name'>
+      support_tickets: OperationalTable<SupportTicketRow, 'network_id' | 'requester_id' | 'subject' | 'description'>
+      support_messages: OperationalTable<SupportMessageRow, 'ticket_id' | 'author_id' | 'visibility' | 'body'>
+      support_ticket_history: OperationalTable<SupportTicketHistoryRow, 'ticket_id' | 'field_name'>
+      offline_response_imports: OperationalTable<OfflineResponseImportRow, 'network_id' | 'assessment_id' | 'file_name' | 'content_hash' | 'created_by'>
+      offline_response_import_rows: OperationalTable<OfflineResponseImportItemRow, 'import_id' | 'row_number' | 'row_status'>
       announcements: {
         Row: {
           author_id: string

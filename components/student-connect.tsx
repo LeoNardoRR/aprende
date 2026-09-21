@@ -443,7 +443,8 @@ export function StudentConnect({
             }
           : undefined
       }
-      role="presentation"
+      role={pageMode ? 'main' : 'presentation'}
+      aria-label={pageMode ? 'Acesso do aluno' : undefined}
       onMouseDown={(event) => {
         if (!pageMode && allowClose && event.target === event.currentTarget)
           onClose();

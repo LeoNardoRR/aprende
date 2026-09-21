@@ -1037,6 +1037,9 @@ function TeacherDashboard({
         showAppearanceForm ? appearanceDraft.density : appearance.density
       }
     >
+      <a className="skip-link" href="#teacher-main-content">
+        Pular para o conteúdo principal
+      </a>
       <aside className="teacher-sidebar">
         <button
           type="button"
@@ -1127,7 +1130,7 @@ function TeacherDashboard({
           <span>Sair</span>
         </button>
       </aside>
-      <main className="teacher-main">
+      <main id="teacher-main-content" className="teacher-main">
         <header className="teacher-topbar">
           <div className="teacher-greeting">
             <h1>Olá, {displayName.replace(/^Professor(a)?\s+/i, '')}!</h1>

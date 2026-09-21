@@ -12,6 +12,7 @@ import {
   LoaderCircle,
   LogOut,
   LibraryBig,
+  Headphones,
   BookOpenCheck,
   Network,
   Plus,
@@ -27,6 +28,7 @@ import { InstitutionalEnrollments } from '@/components/institutional-enrollments
 import { InstitutionalPedagogy } from '@/components/institutional-pedagogy';
 import { InstitutionalBulk } from '@/components/institutional-bulk';
 import { InstitutionalUsers } from '@/components/institutional-users';
+import { InstitutionalOperations } from '@/components/institutional-operations';
 import { AnalyticsDashboard } from '@/components/analytics-dashboard';
 import { PocControlCenter } from '@/components/poc-control-center';
 import { PedagogicalJourneys } from '@/components/pedagogical-journeys';
@@ -407,6 +409,9 @@ export function InstitutionalAdmin({
           <a href="#analytics">
             <ChartNoAxesCombined /> Analytics
           </a>
+          <a href="#support">
+            <Headphones /> Help Desk
+          </a>
           <a href="#remediation">
             <Route /> Recomposição
           </a>
@@ -618,6 +623,12 @@ export function InstitutionalAdmin({
               preview={preview}
             />
             <InstitutionalUsers
+              profile={profile}
+              networks={networks}
+              schools={schools}
+              preview={preview}
+            />
+            <InstitutionalOperations
               profile={profile}
               networks={networks}
               schools={schools}

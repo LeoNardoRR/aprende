@@ -20,3 +20,10 @@ Botões possuem ação primária, secundária, neutra, perigosa e desabilitada. 
 ## Acessibilidade
 
 A aplicação inclui skip link, landmarks, HTML semântico, foco global, alvos operáveis por teclado e redução de movimento. Gráficos mantêm tabela textual. ARIA complementa sem substituir labels e elementos nativos.
+
+## Contrato de validação
+
+- `npm run test:a11y` executa axe nas superfícies críticas demonstráveis e bloqueia violações `critical`.
+- `npm run test:visual` compara screenshots dos shells desktop em 1024, 1280, 1366, 1440, 1600 e 1920 px e recortes das telas críticas em 1440 px.
+- Cada teste visual também verifica overflow horizontal no documento; tabelas podem rolar apenas dentro de seus contêineres.
+- A homologação manual fica registrada em `docs/accessibility/phase8-manual-checklist.md`; itens não executados permanecem explicitamente pendentes.

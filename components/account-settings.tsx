@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { studentSupabase, supabase } from '@/lib/supabase';
 import { friendlySupabaseError } from '@/lib/connected-flow';
+import { PrivacyCenter } from '@/components/privacy-center';
 
 type AccountSettingsProps = {
   role: 'student' | 'teacher';
@@ -372,6 +373,7 @@ export function AccountSettings({
                   </div>
                 </section>
               )}
+              <PrivacyCenter role={role} preview={preview} />
               <section className="account-delete-card">
                 <div className="account-delete-icon">
                   <ShieldAlert size={20} />

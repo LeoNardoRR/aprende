@@ -10,8 +10,10 @@ import type { Database, Tables } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { InstitutionalProfile } from '@/components/institutional-admin';
 import { AssessmentApplicationMonitor } from '@/components/assessment-application-monitor';
+import { AssessmentPrintCenter } from '@/components/assessment-print-center';
+import type { AssessmentPrintPayload } from '@/lib/assessment-printing';
 
-type View = 'cycles' | 'assessments' | 'booklets' | 'calendar' | 'applications';
+type View = 'cycles' | 'assessments' | 'booklets' | 'calendar' | 'applications' | 'print';
 type CalendarMode = 'month' | 'week' | 'day';
 type Cycle = Tables<'assessment_cycles'>;
 type Assessment = Tables<'diagnostic_assessments'>;
@@ -105,6 +107,9 @@ export function InstitutionalAssessments({ profile, networks, schools, classroom
   const [form, setForm] = useState<'cycle' | 'assessment' | 'schedule' | null>(null);
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [printClassroom, setPrintClassroom] = useState('');
+  const [printPayload, setPrintPayload] = useState<AssessmentPrintPayload | null>(null);
+  const [printLoading, setPrintLoading] = useState(false);
 
   useEffect(() => { if (!networkId && networks[0]?.id) setNetworkId(networks[0].id); }, [networkId, networks]);
 
@@ -139,6 +144,41 @@ export function InstitutionalAssessments({ profile, networks, schools, classroom
 
   const selected = assessments.find((assessment) => assessment.id === selectedAssessment);
   const selectedBooklets = useMemo(() => booklets.filter((booklet) => booklet.assessment_id === selectedAssessment), [booklets, selectedAssessment]);
+  const printClassrooms = useMemo(() => classrooms.filter((classroom) => classroom.network_id === networkId), [classrooms, networkId]);
+
+  useEffect(() => {
+    if (!printClassrooms.some((classroom) => classroom.id === printClassroom))
+      setPrintClassroom(printClassrooms[0]?.id ?? '');
+  }, [printClassroom, printClassrooms]);
+
+  useEffect(() => {
+    setPrintPayload(null);
+    if (view !== 'print' || !selectedBooklet || !printClassroom) return;
+    if (preview) {
+      const classroom = printClassrooms.find((item) => item.id === printClassroom);
+      const school = schools.find((item) => item.id === classroom?.school_id);
+      setPrintPayload({
+        assessmentId: selectedAssessment, assessmentTitle: selected?.title ?? 'Avaliação DEMO',
+        component: 'Matemática', instructions: selected?.instructions ?? '',
+        schoolId: school?.id ?? 'school-1', schoolName: school?.name ?? 'Escola demonstrativa',
+        classroomId: printClassroom, classroomName: classroom?.name ?? '6º A', bookletCode: 'A',
+        questions: [{ id: 'item-1', position: 1, statement: 'Qual fração é equivalente a 1/2?', type: 'multiple_choice', options: [{ id: 'a', label: 'A', text: '2/4', correct: true }, { id: 'b', label: 'B', text: '1/4' }], correctAnswer: 'A' }],
+        students: [{ id: 'student-1', name: 'Mariana Silva' }],
+      });
+      return;
+    }
+    let active = true;
+    setPrintLoading(true);
+    void phase3Supabase.rpc<AssessmentPrintPayload>('get_assessment_print_payload', {
+      target_booklet: selectedBooklet, target_classroom: printClassroom,
+    }).then((result) => {
+      if (!active) return;
+      setPrintLoading(false);
+      if (result.error) setNotice(`Não foi possível preparar a impressão: ${result.error.message}`);
+      else setPrintPayload(result.data);
+    });
+    return () => { active = false; };
+  }, [view, selectedBooklet, printClassroom, preview, printClassrooms, schools, selectedAssessment, selected?.title, selected?.instructions]);
 
   useEffect(() => {
     if (!selectedBooklets.some((booklet) => booklet.id === selectedBooklet)) setSelectedBooklet(selectedBooklets[0]?.id ?? '');
@@ -289,7 +329,7 @@ export function InstitutionalAssessments({ profile, networks, schools, classroom
 
   return <section id="assessments" className="institutional-pedagogy institutional-assessments">
     <div className="institutional-panel-head"><div><span>AVALIAÇÃO DIAGNÓSTICA</span><h2>Ciclos, provas e aplicações</h2><p>Banco de Itens → Avaliação → Cadernos → Validação → Programação → Aplicação → Resultados</p></div><ShieldCheck /></div>
-    <div className="pedagogy-tabs" role="tablist" aria-label="Avaliações">{([['cycles','Ciclos'],['assessments','Provas'],['booklets','Cadernos'],['calendar','Calendário'],['applications','Aplicações']] as const).map(([id,label]) => <button key={id} className={view === id ? 'active' : ''} onClick={() => setView(id)}>{label}</button>)}</div>
+    <div className="pedagogy-tabs" role="tablist" aria-label="Avaliações">{([['cycles','Ciclos'],['assessments','Provas'],['booklets','Cadernos'],['calendar','Calendário'],['applications','Aplicações'],['print','Impressão']] as const).map(([id,label]) => <button key={id} type="button" role="tab" aria-selected={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}>{label}</button>)}</div>
     <div className="pedagogy-toolbar"><label className="institutional-field compact"><span>Rede</span><select value={networkId} onChange={(event) => setNetworkId(event.target.value)}>{networks.map((network) => <option key={network.id} value={network.id}>{network.name}</option>)}</select></label><div className="assessment-actions">{view === 'cycles' && <button onClick={() => setForm('cycle')}><Plus /> Novo ciclo</button>}{view === 'assessments' && <button onClick={() => setForm('assessment')}><Plus /> Nova avaliação</button>}{view === 'booklets' && <button disabled={!selectedAssessment || selectedBooklets.length >= 5 || busy || selected?.status !== 'draft'} onClick={() => void createBooklet()}><BookCopy /> Novo caderno</button>}{view === 'calendar' && <button disabled={!selectedAssessment || !['ready','scheduled'].includes(selected?.status ?? '')} onClick={() => setForm('schedule')}><CalendarDays /> Programar</button>}{view === 'applications' && <button disabled={busy} onClick={() => void loadScheduledStudents()}><RefreshCw /> Atualizar</button>}</div></div>
     {notice && <output className="institutional-notice">{notice}</output>}
 
@@ -299,7 +339,7 @@ export function InstitutionalAssessments({ profile, networks, schools, classroom
 
     {view === 'booklets' && <div className="phase3-booklet-workspace">
       <div className="assessment-map-summary"><article><Layers3 /><span>Cadernos</span><strong>{mapSummary.booklets}/5</strong></article><article><BarChart3 /><span>Pontuação</span><strong>{mapSummary.points}</strong></article><article><Table2 /><span>Habilidades</span><strong>{mapSummary.skills}</strong></article><article><CheckCircle2 /><span>Validação</span><strong>{selected?.status === 'ready' ? 'Pronta' : selected?.status === 'draft' ? 'Rascunho' : selected?.status ?? 'Pendente'}</strong></article><button disabled={!selectedAssessment || busy || selected?.status !== 'draft'} onClick={() => void markReady()}><Rocket /> Validar prova</button></div>
-      <div className="phase3-booklet-tabs" role="tablist" aria-label="Cadernos da avaliação">{selectedBooklets.map((booklet) => <button key={booklet.id} className={selectedBooklet === booklet.id ? 'active' : ''} onClick={() => setSelectedBooklet(booklet.id)}><strong>{booklet.title}</strong><small>{booklet.generation_strategy === 'manual' ? 'Ordem manual' : 'Ordem determinística'}</small></button>)}{!selectedBooklets.length && <div className="institutional-empty"><BookCopy /><h3>Nenhum caderno</h3><p>Crie o Caderno A para começar a montagem.</p></div>}</div>
+      <div className="phase3-booklet-tabs" aria-label="Cadernos da avaliação">{selectedBooklets.map((booklet) => <button key={booklet.id} type="button" aria-pressed={selectedBooklet === booklet.id} className={selectedBooklet === booklet.id ? 'active' : ''} onClick={() => setSelectedBooklet(booklet.id)}><strong>{booklet.title}</strong><small>{booklet.generation_strategy === 'manual' ? 'Ordem manual' : 'Ordem determinística'}</small></button>)}{!selectedBooklets.length && <div className="institutional-empty"><BookCopy /><h3>Nenhum caderno</h3><p>Crie o Caderno A para começar a montagem.</p></div>}</div>
       {selectedBooklet && <div className="phase3-builder-grid">
         <section className="phase3-builder-panel"><header><div><span>ITENS DO CADERNO</span><h3>Ordem de aplicação</h3></div><strong>{bookletItems.length} itens</strong></header>{bookletItems.length ? <ol className="phase3-booklet-items">{bookletItems.map((item, index) => <li key={item.link_id}><div className="phase3-item-order"><strong>{index + 1}</strong><div><button aria-label={`Mover ${item.internal_title} para cima`} disabled={busy || index === 0 || selected?.status !== 'draft'} onClick={() => void moveItem(item.link_id, -1)}><ArrowUp /></button><button aria-label={`Mover ${item.internal_title} para baixo`} disabled={busy || index === bookletItems.length - 1 || selected?.status !== 'draft'} onClick={() => void moveItem(item.link_id, 1)}><ArrowDown /></button></div></div><div className="phase3-item-copy"><span>{item.skill_code} · {difficultyLabel(item.difficulty)} · v{item.version_number}</span><strong>{item.internal_title}</strong><p>{item.statement}</p><small>{Number(item.points)} pontos</small></div><button className="phase3-danger-button" aria-label={`Remover ${item.internal_title}`} disabled={busy || selected?.status !== 'draft'} onClick={() => void removeItem(item.link_id)}><Trash2 /> Remover</button></li>)}</ol> : <div className="institutional-empty compact"><BookCopy /><h3>Caderno vazio</h3><p>Adicione itens aprovados do painel ao lado.</p></div>}</section>
         <section className="phase3-builder-panel"><header><div><span>BANCO APROVADO</span><h3>Selecionar itens</h3></div></header><label className="phase3-search"><Search /><input value={candidateSearch} onChange={(event) => setCandidateSearch(event.target.value)} placeholder="Buscar item aprovado" aria-label="Buscar itens aprovados" /></label><div className="phase3-candidate-list">{candidateItems.map((item) => { const added = bookletItems.some((current) => current.item_id === item.item_id); return <article key={item.item_id}><div><span>{item.skill_code} · {difficultyLabel(item.difficulty)}</span><strong>{item.internal_title}</strong><p>{item.statement}</p><small>{item.skill_description}</small></div><button disabled={busy || added || selected?.status !== 'draft'} onClick={() => void addItem(item.item_id)}>{added ? <><CheckCircle2 /> Adicionado</> : <><Plus /> Adicionar</>}</button></article>; })}{!candidateItems.length && <div className="institutional-empty compact"><Search /><h3>Nenhum item elegível</h3><p>Apenas itens aprovados do mesmo currículo, componente e série aparecem aqui.</p></div>}</div></section>
@@ -310,6 +350,8 @@ export function InstitutionalAssessments({ profile, networks, schools, classroom
     {view === 'calendar' && <CalendarWorkspace schedules={schedules} assessments={assessments} schools={schools} mode={calendarMode} anchor={calendarAnchor} onMode={setCalendarMode} onAnchor={setCalendarAnchor} />}
 
     {view === 'applications' && <section className="phase3-applications"><div className="phase3-application-summary"><article><School2 /><span>Turmas programadas</span><strong>{applicationSummary.classrooms}</strong></article><article><Users /><span>Alunos programados</span><strong>{applicationSummary.students}</strong></article><article><Clock3 /><span>Janelas</span><strong>{applicationSummary.schedules}</strong></article></div><label className="phase3-search"><Search /><input value={applicationSearch} onChange={(event) => setApplicationSearch(event.target.value)} placeholder="Buscar aluno, turma ou escola" aria-label="Buscar alunos programados" /></label><div className="institutional-table-wrap"><table className="institutional-table"><thead><tr><th>Aluno</th><th>Escola / Turma</th><th>Avaliação</th><th>Janela</th><th>Status</th></tr></thead><tbody>{filteredScheduledStudents.map((row) => <tr key={`${row.schedule_id}-${row.classroom_id}-${row.student_id ?? 'empty'}`}><td><strong>{row.student_name ?? 'Nenhum aluno matriculado'}</strong></td><td>{row.school_name}<small>{row.classroom_name}</small></td><td>{row.assessment_title}</td><td>{formatWindow(row.starts_at, row.ends_at)}</td><td><span className={`institutional-status-pill ${scheduleVisualStatus(row)}`}>{scheduleStatusLabel(row)}</span></td></tr>)}</tbody></table>{!filteredScheduledStudents.length && <div className="institutional-table-empty"><Users /><p>Nenhum aluno programado para a avaliação selecionada.</p></div>}</div><AssessmentApplicationMonitor assessmentId={selectedAssessment} preview={preview} onNotice={setNotice} /></section>}
+
+    {view === 'print' && <section className="phase3-applications"><div className="pedagogy-toolbar"><label className="institutional-field compact"><span>Avaliação</span><select value={selectedAssessment} onChange={(event) => setSelectedAssessment(event.target.value)}>{assessments.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label><label className="institutional-field compact"><span>Caderno</span><select value={selectedBooklet} onChange={(event) => setSelectedBooklet(event.target.value)}>{selectedBooklets.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label><label className="institutional-field compact"><span>Turma</span><select value={printClassroom} onChange={(event) => setPrintClassroom(event.target.value)}>{printClassrooms.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>{printLoading && <p role="status">Preparando documentos…</p>}{!printLoading && printPayload && (profile.role === 'network_admin' || profile.role === 'manager') && <AssessmentPrintCenter payload={printPayload} authorization={{ actorId: profile.id, role: profile.role, schoolIds: schools.map((item) => item.id), canViewPedagogy: true }} />}{!selectedBooklet && <p>Selecione uma avaliação com caderno para imprimir.</p>}</section>}
 
     {form && <div className="institutional-modal-backdrop"><section className="institutional-modal" role="dialog" aria-modal="true"><div><span>AVALIAÇÕES</span><h2>{form === 'cycle' ? 'Novo ciclo avaliativo' : form === 'assessment' ? 'Nova avaliação' : 'Programar aplicação'}</h2></div>{form === 'cycle' && <form onSubmit={createCycle}><Field name="name" label="Nome" /><Field name="description" label="Descrição" required={false} /><Field name="starts_at" label="Início" type="datetime-local" /><Field name="ends_at" label="Fim" type="datetime-local" /><Actions onCancel={() => setForm(null)} busy={busy} /></form>}{form === 'assessment' && <form onSubmit={createAssessment}><Select name="cycle_id" label="Ciclo" options={cycles.map((item) => [item.id,item.name])} /><Select name="curriculum_id" label="Currículo" options={curricula.map((item) => [item.id,item.name])} /><Select name="subject_id" label="Componente" options={subjects.map((item) => [item.id,item.name])} /><Select name="year_id" label="Série" options={years.map((item) => [item.id,item.name])} /><Field name="title" label="Título" /><Field name="description" label="Descrição" required={false} /><Field name="instructions" label="Instruções" /><Field name="duration" label="Duração em minutos" type="number" /><label className="check-row"><input name="randomize_questions" type="checkbox" /> Randomizar questões</label><label className="check-row"><input name="randomize_options" type="checkbox" /> Randomizar alternativas</label><label className="check-row"><input name="allow_back_navigation" type="checkbox" defaultChecked /> Permitir voltar às questões anteriores</label><Actions onCancel={() => setForm(null)} busy={busy} /></form>}{form === 'schedule' && <form onSubmit={createSchedule}><Select name="school_id" label="Escola" options={schools.filter((school) => school.network_id === networkId).map((item) => [item.id,item.name])} /><fieldset><legend>Turmas</legend>{classrooms.filter((item) => item.network_id === networkId).map((item) => <label className="check-row" key={item.id}><input name="classrooms" value={item.id} type="checkbox" /> {item.name}</label>)}</fieldset><Field name="starts_at" label="Abertura" type="datetime-local" /><Field name="ends_at" label="Encerramento" type="datetime-local" /><Actions onCancel={() => setForm(null)} busy={busy} /></form>}</section></div>}
   </section>;

@@ -1154,6 +1154,9 @@ function Home() {
     <div
       className={`school student-experience ${view === 'home' ? 'student-home' : 'student-inner'} ${editing ? 'is-editing' : ''}`}
     >
+      <a className="skip-link" href="#student-main-content">
+        Pular para o conteúdo principal
+      </a>
       <PwaInstall />
       <SidebarProvider>
         <Sidebar collapsible="none" className="school-sidebar">
@@ -1222,7 +1225,7 @@ function Home() {
             </button>
           </div>
         </Sidebar>
-        <main className="workspace">
+        <main id="student-main-content" className="workspace">
           {view !== 'home' && (
             <header className="topbar">
               <div>

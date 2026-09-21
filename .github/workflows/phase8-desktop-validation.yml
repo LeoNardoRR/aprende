@@ -2,7 +2,7 @@ name: Validate Phase 8 desktop
 
 on:
   pull_request:
-    branches: [codex/fase7-recursos-pedagogicos]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
