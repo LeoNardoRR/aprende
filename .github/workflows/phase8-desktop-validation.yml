@@ -31,19 +31,23 @@ jobs:
           npx supabase db reset --local
           npx supabase migration list --local | tee /tmp/phase8-migrations.log
           npx supabase db push --dry-run --local
-      - name: Serve Edge Functions
-        run: npx supabase functions serve > /tmp/phase8-functions.log 2>&1 &
       - name: Seed synthetic data twice
         run: |
           set -o pipefail
           eval "$(npx supabase status -o env)"
           for attempt in {1..30}; do
-            if curl --fail --silent "$API_URL/auth/v1/health" >/dev/null; then break; fi
+            if curl --fail --silent "$API_URL/auth/v1/health" >/dev/null \
+              && curl --fail --silent --header "apikey: $ANON_KEY" "$API_URL/rest/v1/" >/dev/null; then break; fi
             sleep 1
           done
           curl --fail --silent "$API_URL/auth/v1/health" >/dev/null
+          curl --fail --silent --header "apikey: $ANON_KEY" "$API_URL/rest/v1/" >/dev/null
           for run in 1 2; do
-            SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:poc
+            for attempt in 1 2 3; do
+              if SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:poc; then break; fi
+              if [ "$attempt" = 3 ]; then exit 1; fi
+              sleep 3
+            done
             SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:phase7
           done | tee /tmp/phase8-seed.log
       - name: Restore synthetic backup in a disposable database
@@ -59,6 +63,8 @@ jobs:
           pg_restore --dbname="$RESTORE_URL" --no-owner --no-privileges /tmp/phase8-backup.dump
           psql "$RESTORE_URL" -v ON_ERROR_STOP=1 -c "select count(*) from public.profiles" -c "select count(*) from public.networks" | tee /tmp/phase8-restore.log
           dropdb --maintenance-db="$DB_URL" phase8_restore
+      - name: Serve Edge Functions
+        run: npx supabase functions serve > /tmp/phase8-functions.log 2>&1 &
       - name: Run all connected regressions
         run: |
           set -o pipefail
