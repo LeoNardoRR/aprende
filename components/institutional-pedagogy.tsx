@@ -631,6 +631,10 @@ export function InstitutionalPedagogy({
                 <div>
                   <span>ESTRUTURA SELECIONADA</span>
                   <h3>{selected.name}</h3>
+                  <p>
+                    Visão hierárquica das áreas, componentes, anos e habilidades
+                    deste currículo.
+                  </p>
                 </div>
                 {selected.curriculum_type === 'custom' && (
                   <button onClick={() => setShowStructureForm((open) => !open)}>
@@ -639,24 +643,30 @@ export function InstitutionalPedagogy({
                 )}
               </div>
               <div className="curriculum-metrics">
-                <span>
-                  <strong>{areas.length}</strong> áreas
-                </span>
-                <span>
-                  <strong>{subjects.length}</strong> componentes
-                </span>
-                <span>
-                  <strong>{years.length}</strong> anos/séries
-                </span>
-                <span>
-                  <strong>{units.length}</strong> unidades
-                </span>
-                <span>
-                  <strong>{objects.length}</strong> objetos
-                </span>
-                <span>
-                  <strong>{skills.length}</strong> habilidades
-                </span>
+                <article>
+                  <strong>{areas.length}</strong>
+                  <span>Áreas</span>
+                </article>
+                <article>
+                  <strong>{subjects.length}</strong>
+                  <span>Componentes</span>
+                </article>
+                <article>
+                  <strong>{years.length}</strong>
+                  <span>Anos e séries</span>
+                </article>
+                <article>
+                  <strong>{units.length}</strong>
+                  <span>Unidades temáticas</span>
+                </article>
+                <article>
+                  <strong>{objects.length}</strong>
+                  <span>Objetos do conhecimento</span>
+                </article>
+                <article>
+                  <strong>{skills.length}</strong>
+                  <span>Habilidades</span>
+                </article>
               </div>
               {showStructureForm && (
                 <StructureForm

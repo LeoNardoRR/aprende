@@ -2,6 +2,19 @@
 
 import { useState } from 'react';
 import {
+  BookOpenCheck,
+  CheckSquare2,
+  ClipboardCheck,
+  Download,
+  FileCheck2,
+  FileText,
+  GraduationCap,
+  ListChecks,
+  Printer,
+  School2,
+  UsersRound,
+} from 'lucide-react';
+import {
   createAssessmentPrintArtifact,
   downloadAssessmentPrintArtifact,
   type AssessmentPrintAuthorization,
@@ -10,7 +23,11 @@ import {
   type AssessmentPrintPayload,
 } from '@/lib/assessment-printing';
 
-const documents: Array<{ kind: AssessmentPrintKind; label: string; description: string }> = [
+const documents: Array<{
+  kind: AssessmentPrintKind;
+  label: string;
+  description: string;
+}> = [
   {
     kind: 'student_exam',
     label: 'Prova do aluno',
@@ -38,6 +55,14 @@ const documents: Array<{ kind: AssessmentPrintKind; label: string; description: 
   },
 ];
 
+const documentIcons: Record<AssessmentPrintKind, typeof FileText> = {
+  student_exam: GraduationCap,
+  teacher_version: BookOpenCheck,
+  answer_key: ListChecks,
+  answer_sheet: CheckSquare2,
+  attendance_list: UsersRound,
+};
+
 export function AssessmentPrintCenter({
   payload,
   authorization,
@@ -53,62 +78,127 @@ export function AssessmentPrintCenter({
     setBusy(kind);
     setNotice('');
     try {
-      const artifact = await createAssessmentPrintArtifact(payload, kind, format, authorization);
+      const artifact = await createAssessmentPrintArtifact(
+        payload,
+        kind,
+        format,
+        authorization,
+      );
       downloadAssessmentPrintArtifact(artifact);
       setNotice(`${artifact.filename} gerado com sucesso.`);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Não foi possível gerar o documento.');
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível gerar o documento.',
+      );
     } finally {
       setBusy(null);
     }
   }
 
   return (
-    <section className="phase12-box" aria-labelledby="assessment-print-title">
-      <h3 id="assessment-print-title">Aplicação impressa</h3>
-      <p>
-        Gere documentos a partir do caderno atual. Confira avaliação, turma e versão antes de
-        imprimir.
-      </p>
-      <fieldset disabled={busy !== null}>
-        <legend>Formato do arquivo</legend>
-        <label>
-          <input
-            type="radio"
-            name="assessment-print-format"
-            value="pdf"
-            checked={format === 'pdf'}
-            onChange={() => setFormat('pdf')}
-          />{' '}
-          PDF
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="assessment-print-format"
-            value="docx"
-            checked={format === 'docx'}
-            onChange={() => setFormat('docx')}
-          />{' '}
-          DOCX
-        </label>
-      </fieldset>
-      <div className="phase8-operation-grid">
-        {documents.map((document) => (
-          <article className="phase8-operation-card" key={document.kind}>
-            <h4>{document.label}</h4>
-            <p>{document.description}</p>
-            <button
-              type="button"
-              disabled={busy !== null}
-              onClick={() => void generate(document.kind)}
-            >
-              {busy === document.kind ? 'Gerando…' : `Gerar ${format.toUpperCase()}`}
-            </button>
-          </article>
-        ))}
+    <section
+      className="assessment-print-center"
+      aria-labelledby="assessment-print-title"
+    >
+      <header className="assessment-print-center__head">
+        <div className="assessment-print-center__title">
+          <span className="assessment-print-center__icon" aria-hidden="true">
+            <Printer />
+          </span>
+          <div>
+            <span className="assessment-print-center__eyebrow">
+              DOCUMENTOS DA APLICAÇÃO
+            </span>
+            <h3 id="assessment-print-title">Aplicação impressa</h3>
+            <p>
+              Escolha o formato e gere somente os documentos necessários para a
+              aplicação.
+            </p>
+          </div>
+        </div>
+        <fieldset className="assessment-print-format" disabled={busy !== null}>
+          <legend>Formato do arquivo</legend>
+          <div>
+            {(['pdf', 'docx'] as const).map((option) => (
+              <label
+                key={option}
+                className={format === option ? 'selected' : ''}
+              >
+                <input
+                  type="radio"
+                  name="assessment-print-format"
+                  value={option}
+                  checked={format === option}
+                  onChange={() => setFormat(option)}
+                />
+                <FileText aria-hidden="true" />
+                {option.toUpperCase()}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </header>
+
+      <div
+        className="assessment-print-scope"
+        aria-label="Resumo da aplicação selecionada"
+      >
+        <div>
+          <School2 aria-hidden="true" />
+          <span>Escola</span>
+          <strong>{payload.schoolName}</strong>
+        </div>
+        <div>
+          <UsersRound aria-hidden="true" />
+          <span>Turma</span>
+          <strong>{payload.classroomName}</strong>
+        </div>
+        <div>
+          <ClipboardCheck aria-hidden="true" />
+          <span>Caderno</span>
+          <strong>{payload.bookletCode}</strong>
+        </div>
       </div>
-      {notice && <p role="status">{notice}</p>}
+
+      <div className="assessment-print-documents">
+        {documents.map((document) => {
+          const DocumentIcon = documentIcons[document.kind];
+          return (
+            <article className="assessment-print-document" key={document.kind}>
+              <span
+                className="assessment-print-document__icon"
+                aria-hidden="true"
+              >
+                <DocumentIcon />
+              </span>
+              <div>
+                <h4>{document.label}</h4>
+                <p>{document.description}</p>
+              </div>
+              <footer>
+                <span>
+                  <FileCheck2 aria-hidden="true" /> {format.toUpperCase()}
+                </span>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void generate(document.kind)}
+                >
+                  <Download aria-hidden="true" />
+                  {busy === document.kind ? 'Gerando…' : 'Gerar arquivo'}
+                </button>
+              </footer>
+            </article>
+          );
+        })}
+      </div>
+      {notice && (
+        <p className="assessment-print-notice" role="status">
+          {notice}
+        </p>
+      )}
     </section>
   );
 }

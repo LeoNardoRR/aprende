@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, SearchX } from 'lucide-react';
 import { institutionalRpc, operationError } from '@/lib/institutional-tools';
 import { InstitutionalImport, type ImportReport } from './institutional-import';
 type Reference = { id: string; name: string };
@@ -87,9 +87,15 @@ export function CurriculumExplorer({
   };
   const keys = ['area', 'subject', 'year', 'unit', 'object'];
   return (
-    <section className="phase12-box">
-      <h3>Navegar pela estrutura curricular</h3>
-      <div className="phase12-grid">
+    <section className="phase12-box curriculum-explorer">
+      <header>
+        <div>
+          <small>Consulta curricular</small>
+          <h3>Navegar pela estrutura</h3>
+          <p>Refine os níveis até encontrar a habilidade desejada.</p>
+        </div>
+      </header>
+      <div className="phase12-grid curriculum-explorer-grid">
         {keys.map((key) => (
           <label key={key}>
             {
@@ -135,7 +141,11 @@ export function CurriculumExplorer({
           />
         </label>
       </div>
-      {busy && <p role="status">Carregando habilidades…</p>}
+      {busy && (
+        <p className="curriculum-explorer-status" role="status">
+          Carregando habilidades…
+        </p>
+      )}
       {rows.map((row) => (
         <article key={row.id}>
           <h4>{row.code}</h4>
@@ -148,10 +158,16 @@ export function CurriculumExplorer({
         </article>
       ))}
       {!rows.length && !busy && (
-        <p>
-          Nenhuma habilidade neste filtro. Conteúdo oficial não carregado deve
-          ser fornecido por fonte validada.
-        </p>
+        <div className="curriculum-explorer-empty">
+          <SearchX />
+          <div>
+            <strong>Nenhuma habilidade encontrada</strong>
+            <p>
+              Ajuste os filtros ou carregue o conteúdo oficial a partir de uma
+              fonte validada.
+            </p>
+          </div>
+        </div>
       )}
       <nav
         className="phase12-pager institutional-pagination"
@@ -203,7 +219,7 @@ export function CurriculumExplorer({
           }}
         />
       ) : (
-        <p>
+        <p className="curriculum-explorer-readonly">
           BNCC/SAEB oficiais são somente leitura para a rede. A carga oficial
           usa o importador administrativo documentado, com fonte e versão
           verificadas.
