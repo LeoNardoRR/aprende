@@ -40,6 +40,7 @@ jobs:
           SUPABASE_URL="$API_URL" \
           SUPABASE_ANON_KEY="$ANON_KEY" \
           SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          PHASE5_LOAD_TEST=1 \
           npm test | tee /tmp/aprende-test.log
           test "$(awk '/# skipped / { print $3 }' /tmp/aprende-test.log | tail -1)" = "0"
       - uses: denoland/setup-deno@v2

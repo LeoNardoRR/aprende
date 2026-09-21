@@ -37,6 +37,11 @@ jobs:
         run: |
           set -o pipefail
           eval "$(npx supabase status -o env)"
+          for attempt in {1..30}; do
+            if curl --fail --silent "$API_URL/auth/v1/health" >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent "$API_URL/auth/v1/health" >/dev/null
           for run in 1 2; do
             SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:poc
             SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed:phase7
