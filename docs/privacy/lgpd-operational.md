@@ -24,7 +24,7 @@ O fluxo existente de exclusão deve ser tratado como solicitação, não como au
 
 ## Exportação, correção e anonimização
 
-Exportações devem ser geradas sob demanda, com expiração, autorização por escopo e trilha de auditoria. Correções preservam histórico quando o dado acadêmico exigir rastreabilidade. Anonimização só é declarada quando irreversibilidade e impacto relacional forem verificados; pseudonimização não é anonimização.
+Exportações são geradas sob demanda depois da autorização. O pacote estruturado é entregue diretamente ao titular autenticado, sem URL pública ou cópia persistente que exija expiração, e a entrega é auditada. Correções preservam histórico quando o dado acadêmico exigir rastreabilidade. Anonimização só é declarada quando irreversibilidade e impacto relacional forem verificados; pseudonimização não é anonimização. Os detalhes operacionais estão em `data-subject-rights.md` e `retention-policy.md`.
 
 ## Incidentes
 

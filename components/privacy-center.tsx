@@ -198,6 +198,33 @@ export function PrivacyCenter({
     setBusy(false);
   }
 
+  async function exportRequest(request: PrivacyRequest) {
+    setBusy(true);
+    setNotice('');
+    try {
+      let data: unknown = { schema_version: 1, request_id: request.id, subject_id: userId, preview: true };
+      if (!preview) {
+        const result = await client.rpc('export_my_privacy_request', { target_request: request.id });
+        if (result.error) throw result.error;
+        data = result.data;
+      }
+      if (!data) throw new Error('O servidor não retornou o pacote autorizado.');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `aprende-dados-${request.correlation_id}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setNotice('Pacote estruturado entregue neste dispositivo.');
+      if (!preview) await load();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Não foi possível exportar seus dados.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="privacy-center" aria-labelledby="privacy-center-title">
       <header>
@@ -316,6 +343,11 @@ export function PrivacyCenter({
                   {privacyStatusLabels[request.status] ?? request.status}
                 </span>
                 {request.resolution && <p>{request.resolution}</p>}
+                {request.request_type === 'export' && request.status === 'authorized' && (
+                  <button type="button" disabled={busy} onClick={() => void exportRequest(request)}>
+                    <Download size={14} /> Baixar meus dados
+                  </button>
+                )}
               </article>
             ))}
             {!requests.length && <p>Você ainda não abriu solicitações.</p>}

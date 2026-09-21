@@ -741,7 +741,9 @@ export function InstitutionalOperations({
                 <label>
                   Status
                   <select name="status" defaultValue={request.status}>
-                    {Object.entries(privacyStatusLabels).map(
+                    {Object.entries(privacyStatusLabels).filter(([value]) =>
+                      value === request.status || nextPrivacyStatuses(request.status).includes(value),
+                    ).map(
                       ([value, label]) => (
                         <option key={value} value={value}>
                           {label}
@@ -782,6 +784,16 @@ export function InstitutionalOperations({
       )}
     </div>
   );
+}
+
+function nextPrivacyStatuses(status: string) {
+  const transitions: Record<string, string[]> = {
+    requested: ['validating', 'cancelled'],
+    validating: ['authorized', 'rejected', 'cancelled'],
+    authorized: ['executing'],
+    executing: ['completed', 'rejected'],
+  };
+  return transitions[status] ?? [];
 }
 
 function formatDate(value: string) {

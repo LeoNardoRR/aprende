@@ -890,6 +890,7 @@ export type Database = {
       }
       delete_my_account: { Args: { confirmation: string }; Returns: undefined }
       request_my_account_deletion: { Args: { confirmation: string }; Returns: string }
+      export_my_privacy_request: { Args: { target_request: string }; Returns: Json }
       find_profile_for_institution: {
         Args: {
           target_email: string
