@@ -1,5 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 type CriticalSurface = {
   name: string;
@@ -34,6 +36,20 @@ const surfaces: CriticalSurface[] = [
     path: '/?qa=institution-admin#overview',
     ready: async (page) => {
       await expect(page.getByRole('heading', { name: /Olá,/ })).toBeVisible();
+    },
+  },
+  {
+    name: 'professor',
+    path: '/?qa=teacher-dashboard',
+    ready: async (page) => {
+      await expect(page.getByRole('heading', { name: /Olá, Gabriel/i })).toBeVisible();
+    },
+  },
+  {
+    name: 'helpdesk',
+    path: '/?qa=institution-admin#support',
+    ready: async (page) => {
+      await expect(page.locator('#support')).toBeVisible();
     },
   },
   {
@@ -87,6 +103,29 @@ for (const surface of surfaces) {
     ).toEqual([]);
   });
 }
+
+test('aluno autenticado: zero violações críticas', async ({ page }, testInfo) => {
+  const url = process.env.SUPABASE_URL;
+  if (!url || !['localhost', '127.0.0.1'].includes(new URL(url).hostname)) {
+    test.skip(true, 'Exige Supabase local descartável.');
+    return;
+  }
+  const fixture = JSON.parse(await readFile(path.resolve('artifacts/poc/seed-manifest.json'), 'utf8'));
+  expect(fixture.synthetic).toBe(true);
+  await page.goto('/?mode=student');
+  await page.getByLabel('E-mail').fill(fixture.users.student1);
+  await page.getByLabel('Senha').fill(process.env.POC_DEMO_PASSWORD || 'AprendePocLocal!2026');
+  await page.locator('form').getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page.locator('#student-main-content')).toBeVisible();
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  await attachViolations(testInfo, results.violations);
+  expect(
+    results.violations.filter((violation) => violation.impact === 'critical'),
+    JSON.stringify(results.violations, null, 2),
+  ).toEqual([]);
+});
 
 test('gestão: skip link, teclado e foco chegam ao conteúdo', async ({ page }) => {
   await page.goto('/?qa=institution-admin#overview');
