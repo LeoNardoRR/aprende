@@ -39,6 +39,7 @@ const criticalSections = [
   ['avaliacao', '#assessments'],
   ['analytics', '#analytics'],
   ['jornadas', '#remediation'],
+  ['helpdesk', '#support'],
 ] as const;
 
 for (const [name, selector] of criticalSections) {
@@ -51,6 +52,15 @@ for (const [name, selector] of criticalSections) {
     await stableScreenshot(section, `${name}-1440.png`);
   });
 }
+
+test('professor: shell desktop estável em 1440px', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.clock.setFixedTime(new Date('2026-09-20T12:00:00-03:00'));
+  await page.goto('/?qa=teacher-dashboard');
+  await expect(page.getByRole('heading', { name: /Olá, Gabriel/i })).toBeVisible();
+  await expectNoPageOverflow(page);
+  await stablePageScreenshot(page, 'professor-1440.png');
+});
 
 for (const [name, path, heading] of [
   ['login-aluno', '/?mode=student', 'Entre na sua conta'],
