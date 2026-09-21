@@ -50,7 +50,7 @@ jobs:
         run: |
           set -o pipefail
           sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          sudo apt-get install -y postgresql-client-17
           eval "$(npx supabase status -o env)"
           case "$DB_URL" in *127.0.0.1*|*localhost*) ;; *) echo "Refusing non-local restore"; exit 1;; esac
           pg_dump "$DB_URL" --format=custom --no-owner --no-privileges --file=/tmp/phase8-backup.dump
