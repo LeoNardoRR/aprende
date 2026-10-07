@@ -45,3 +45,107 @@ next-env.d.ts
 /dist-pages/
 
 /supabase/.temp/
+
+# Local copies preserved in docs/local-backups/2026-10-07-local-copies.zip
+/.github/workflows/phase4-application-validation 2.yml
+/.github/workflows/phase5-analytics-validation 2.yml
+/.github/workflows/phase6-poc-validation 2.yml
+/.github/workflows/phase7-pedagogical-validation 2.yml
+/.github/workflows/pre-phase4-validation 2.yml
+/app/design-tokens 2.css
+/app/phase4-runtime 2.css
+/app/phase7-pedagogy 2.css
+/artifacts/phase8-run-35545872443/artifacts/phase8/advisors.log
+/artifacts/phase8-run-35545872443/artifacts/phase8/logs/phase8-functions.log
+/artifacts/phase8-run-35545872443/artifacts/phase8/logs/phase8-migrations.log
+/artifacts/phase8-run-35545872443/artifacts/phase8/logs/phase8-regression.log
+/artifacts/phase8-run-35545872443/artifacts/phase8/logs/phase8-seed.log
+/artifacts/phase8-run-35545872443/artifacts/phase8/npm-audit.json
+/components/analytics-dashboard 2.tsx
+/components/assessment-application-monitor 2.tsx
+/components/pedagogical-journeys 2.tsx
+/components/poc-control-center 2.tsx
+/components/student-assessment-runtime 2.tsx
+/docs/design/design-system 2.md
+/docs/design/screen-inventory 2.md
+/docs/design/ux-audit 2.md
+/docs/manuals/admin 2.md
+/docs/manuals/network-manager 2.md
+/docs/manuals/school-manager 2.md
+/docs/manuals/student 2.md
+/docs/manuals/teacher 2.md
+/docs/phase4-assessment-runtime 2.md
+/docs/phase5-analytics-reporting 2.md
+/docs/phase7-final-audit 2.md
+/docs/phase7-pedagogical-resources 2.md
+/docs/phase7-performance 2.md
+/docs/phase7-security-review 2.md
+/docs/poc/README 2.md
+/docs/poc/checklist-pre-poc 2.md
+/docs/poc/evidencias 2.md
+/docs/poc/gaps 2.md
+/docs/poc/matriz-conformidade 2.json
+/docs/poc/matriz-conformidade 2.md
+/docs/poc/performance 2.md
+/docs/poc/roteiro-demonstracao 2.md
+/docs/poc/security-lgpd 2.md
+/docs/pre-phase4-stabilization 2.md
+/env.d 2.ts
+/lib/analytics-report-export 2.ts
+/lib/analytics-statistics 2.ts
+/lib/assessment-offline-queue 2.ts
+/lib/assessment-runtime 2.ts
+/lib/database.types 2.ts
+/lib/pedagogy-report-export 2.ts
+/lib/pedagogy-rules 2.ts
+/phase8-validation-report 2.md
+/playwright.config 2.ts
+/public/icons/aprende-apple-touch-icon 2.png
+/public/icons/aprende-favicon-64 2.png
+/public/icons/aprende-icon-192 2.png
+/public/icons/aprende-icon-512 2.png
+/public/icons/aprende-icon-maskable-512 2.png
+/public/icons/aprende-teacher-icon-192 2.png
+/public/icons/icon-192 2.png
+/public/icons/icon-512 2.png
+/public/icons/icon-maskable-512 2.png
+/scripts/generate-poc-report 2.mjs
+/scripts/measure-phase7-performance 2.mjs
+/scripts/measure-poc-performance 2.mjs
+/scripts/phase7-scale-fixture 2.sql
+/scripts/poc-explain 2.sql
+/scripts/poc-matrix 2.mjs
+/scripts/poc-smoke 2.mjs
+/scripts/seed-phase7 2.mjs
+/scripts/seed-poc 2.mjs
+/scripts/summarize-poc-evidence 2.mjs
+/scripts/validate-poc-matrix 2.mjs
+/supabase/functions/analytics-report-worker/index 2.ts
+/supabase/migrations/20260913080728_stabilize_item_storage_and_snapshots 2.sql
+/supabase/migrations/20260913111359_add_assessment_application_runtime 2.sql
+/supabase/migrations/20260913153000_complete_phase4_application_monitor 2.sql
+/supabase/migrations/20260913160000_fix_phase4_policy_helper_execution 2.sql
+/supabase/migrations/20260913170100_harden_phase4_response_concurrency 2.sql
+/supabase/migrations/20260913180000_add_phase5_analytics_reporting 2.sql
+/supabase/migrations/20260913213000_add_phase7_pedagogical_resources 2.sql
+/supabase/migrations/20260913214500_add_phase7_catalog_rpc 2.sql
+/supabase/migrations/20260913220000_add_phase7_reports_and_portfolio 2.sql
+/supabase/migrations/20260913221500_harden_phase7_table_grants 2.sql
+/supabase/migrations/20260915213512_harden_phase7_activity_runtime 2.sql
+/supabase/migrations/20260920120000_freeze_phase7_step_validation 2.sql
+/supabase/migrations/20260920123000_align_phase7_snapshot_cleanup 2.sql
+/supabase/migrations/20260920130000_enforce_phase7_editorial_transitions 2.sql
+/tests/analytics-statistics.test 2.mjs
+/tests/assessment-offline-queue.test 2.mjs
+/tests/assessment-runtime.test 2.mjs
+/tests/e2e/phase4-runtime.spec 2.ts
+/tests/e2e/phase6-poc.spec 2.ts
+/tests/e2e/phase7-pedagogy.spec 2.ts
+/tests/phase4-integration.test 2.mjs
+/tests/phase5-integration.test 2.mjs
+/tests/phase7/pedagogy-report.test 2.mjs
+/tests/phase7/pedagogy-rules.test 2.mjs
+/tests/phase7/phase7-connected.test 2.mjs
+/tests/poc/connected-flow.test 2.mjs
+/tests/poc/matrix.test 2.mjs
+/tests/poc/seed-safety.test 2.mjs

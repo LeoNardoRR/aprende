@@ -1,0 +1,512 @@
+[
+  {
+    "path": ".github/workflows/phase4-application-validation 2.yml",
+    "sha256": "83d1514f4c5c8fa43fb973ac05e675fbb5677d585def76b53a2e673935095baa",
+    "bytes": 2568
+  },
+  {
+    "path": ".github/workflows/phase5-analytics-validation 2.yml",
+    "sha256": "201ad5fbfb898b68041e96e3cb8975e333258afe2b93f5ef5d68ad2835b7495e",
+    "bytes": 2976
+  },
+  {
+    "path": ".github/workflows/phase6-poc-validation 2.yml",
+    "sha256": "269ca649ccfbdd5d9342da5655c7aa0e39f53f6a8f3b4d1e60d9caa25572b01c",
+    "bytes": 5106
+  },
+  {
+    "path": ".github/workflows/phase7-pedagogical-validation 2.yml",
+    "sha256": "35ed2aee485a17a2155dd484849ea101eb32d7711d88f0d47235c1ce08dd0e7d",
+    "bytes": 4646
+  },
+  {
+    "path": ".github/workflows/pre-phase4-validation 2.yml",
+    "sha256": "258a0ea32ad72f2afc5da56b88be9656279fbf2f6da62258568b689f015ef8db",
+    "bytes": 1998
+  },
+  {
+    "path": "app/design-tokens 2.css",
+    "sha256": "4d6434ef8fc0499be10c5f249a93c6e97c1cd0be3088254033b6b55c7b9fae89",
+    "bytes": 1923
+  },
+  {
+    "path": "app/phase4-runtime 2.css",
+    "sha256": "ffd66e1a3d833f4dd2b519c98e7b97b7e51c1aa91f9e04f9addbec843da561c3",
+    "bytes": 17606
+  },
+  {
+    "path": "app/phase7-pedagogy 2.css",
+    "sha256": "beb085b29c1908609ea681c68d799ab90d1f3f078776d1a222ffd88aa970e9be",
+    "bytes": 27105
+  },
+  {
+    "path": "artifacts/phase8-run-35545872443/artifacts/phase8/advisors.log",
+    "sha256": "1201d674ff43f9ebf32be262bfa4b3b619a0f92a61655f5a8e72a5e0496c147c",
+    "bytes": 162201
+  },
+  {
+    "path": "artifacts/phase8-run-35545872443/artifacts/phase8/logs/phase8-functions.log",
+    "sha256": "3a9ae7792e45d4d7da7d62b5de2b67dddeb306267c8685937eb6c867b77fdede",
+    "bytes": 614
+  },
+  {
+    "path": "artifacts/phase8-run-35545872443/artifacts/phase8/logs/phase8-migrations.log",
+    "sha256": "3ca21492ced0dadd3dbb4a71348b03a200965ebc3e15c2a88c7bf543621cf41e",
+    "bytes": 3269
+  },
+  {
+    "path": "artifacts/phase8-run-35545872443/artifacts/phase8/logs/phase8-regression.log",
+    "sha256": "69ff17ed64e45a4458305867c2ac6a5dfcbe63a9530734204a142d08925a5923",
+    "bytes": 20623
+  },
+  {
+    "path": "artifacts/phase8-run-35545872443/artifacts/phase8/logs/phase8-seed.log",
+    "sha256": "e9e63fdcf89f8a7703f17b8e40818f111d66945b750e40aa1fd0b3a5abca6cff",
+    "bytes": 696
+  },
+  {
+    "path": "artifacts/phase8-run-35545872443/artifacts/phase8/npm-audit.json",
+    "sha256": "88042f25c25f11de80e0abe654eadfd4fb41b4018f0d83286ea594a5641294e7",
+    "bytes": 367
+  },
+  {
+    "path": "components/analytics-dashboard 2.tsx",
+    "sha256": "013cee3e8a3f13730ba01c4e79ca49493127ea59b69ebcfaf5b32aaa5d1cf6da",
+    "bytes": 23419
+  },
+  {
+    "path": "components/assessment-application-monitor 2.tsx",
+    "sha256": "c14a775de1213916474ac199320336dd9d725179467574c0de2132b1b6f40d9e",
+    "bytes": 14019
+  },
+  {
+    "path": "components/pedagogical-journeys 2.tsx",
+    "sha256": "52d8039afc78a99f3cfda3296f6bbb7a63361012725dbb341c1ef55cbc53436b",
+    "bytes": 18984
+  },
+  {
+    "path": "components/poc-control-center 2.tsx",
+    "sha256": "b4be4af6556fabaed34c4fd19c647525850a9f2c68b23da2dd4bf676db694e1f",
+    "bytes": 4580
+  },
+  {
+    "path": "components/student-assessment-runtime 2.tsx",
+    "sha256": "ce06507a1694db6e814b05564804c0e5f4a9884af39a48c3eae5c006c2755327",
+    "bytes": 22790
+  },
+  {
+    "path": "docs/design/design-system 2.md",
+    "sha256": "55fbaa2047a76d24dd46ab459008096f21b05f81b844d6d72501dd08ebd1b09d",
+    "bytes": 1915
+  },
+  {
+    "path": "docs/design/screen-inventory 2.md",
+    "sha256": "5d3de2d85f1359a511672bdfe0e745ac9258561ad984090c495538caf9b44778",
+    "bytes": 2823
+  },
+  {
+    "path": "docs/design/ux-audit 2.md",
+    "sha256": "7ce920ef79e4d07f2606f9ded226a7f599f3a0c2eaf1250de733c72efeee3766",
+    "bytes": 1140
+  },
+  {
+    "path": "docs/manuals/admin 2.md",
+    "sha256": "f908fea0174efa2744b781237e33b51237d158ef912ea5e9d2b7df5ff7a85103",
+    "bytes": 370
+  },
+  {
+    "path": "docs/manuals/network-manager 2.md",
+    "sha256": "8555394fcfbe3e384304d3fc9589791a8b05937f0433024d36444b116e6c3cf5",
+    "bytes": 378
+  },
+  {
+    "path": "docs/manuals/school-manager 2.md",
+    "sha256": "49d985191f8fadfce240ced1201b6d4903b3d0badd8959528c1c9ad49aff5728",
+    "bytes": 377
+  },
+  {
+    "path": "docs/manuals/student 2.md",
+    "sha256": "828181c8b841a96be40344b4a21441b7eaf3f47d25f4ec812eddab4dd74d6e4e",
+    "bytes": 510
+  },
+  {
+    "path": "docs/manuals/teacher 2.md",
+    "sha256": "5f10c13cc800c9a93861ef50b0ee11dd195b5c496dca2e5866400eb41d753260",
+    "bytes": 446
+  },
+  {
+    "path": "docs/phase4-assessment-runtime 2.md",
+    "sha256": "8d8b38fbd5555f09f27caeba423588af90e700ae971a8005edf9af0e30bdc23c",
+    "bytes": 9824
+  },
+  {
+    "path": "docs/phase5-analytics-reporting 2.md",
+    "sha256": "2cd45c48d743485804c9de8f29ee6b25d8a7d0f16535dd4b9f23da6dd82d581d",
+    "bytes": 10252
+  },
+  {
+    "path": "docs/phase7-final-audit 2.md",
+    "sha256": "3bd250fa8177e8ac9873dd3296c7a1ac328ca33bb60e0ab004cc02d6ef20551e",
+    "bytes": 6415
+  },
+  {
+    "path": "docs/phase7-pedagogical-resources 2.md",
+    "sha256": "6890c418418a26a7f5fb089d2055e79d05b5583b7d720cf65b628c7d83432c3e",
+    "bytes": 4286
+  },
+  {
+    "path": "docs/phase7-performance 2.md",
+    "sha256": "352ec50fb0664fe587595a9e9ff6ec999ff1e8709a58fa088f80786ea10af640",
+    "bytes": 3442
+  },
+  {
+    "path": "docs/phase7-security-review 2.md",
+    "sha256": "57c82cba17d174c15bc383f7805cde02c067e562d5f2258897b80bfbebe74f0e",
+    "bytes": 6444
+  },
+  {
+    "path": "docs/poc/README 2.md",
+    "sha256": "d9a0ac9d75aeb25f2705c59024085d575fa4d3caf8ddb27e2186b344bd06827f",
+    "bytes": 2396
+  },
+  {
+    "path": "docs/poc/checklist-pre-poc 2.md",
+    "sha256": "6a6834338cd10c4cb8a083d514ff111b34382107ac5a8aa54e679be6c23e8bdb",
+    "bytes": 1627
+  },
+  {
+    "path": "docs/poc/evidencias 2.md",
+    "sha256": "faab63af4562fd38c9deb05b67249a724c5920a9a0d7fb07cfa7369f90a0313d",
+    "bytes": 2654
+  },
+  {
+    "path": "docs/poc/gaps 2.md",
+    "sha256": "2de6645420f81e0a247c3735d6185c7e685587867f8c13a71a9e5cb5ff627eb3",
+    "bytes": 3822
+  },
+  {
+    "path": "docs/poc/matriz-conformidade 2.json",
+    "sha256": "951d445fafd6912328b6ab6d1952faf8e2d5a5a2fd26711099042a5f6ff736c4",
+    "bytes": 22092
+  },
+  {
+    "path": "docs/poc/matriz-conformidade 2.md",
+    "sha256": "695d4ad21dcbaa6f26c51e69cc011c18ea24681830ca74168779733d4452a53a",
+    "bytes": 2480
+  },
+  {
+    "path": "docs/poc/performance 2.md",
+    "sha256": "17aa1ac95e6327f621192cd69a5c38dca43c9c564d7b319d9de77c1fa11bfb5c",
+    "bytes": 2064
+  },
+  {
+    "path": "docs/poc/roteiro-demonstracao 2.md",
+    "sha256": "e110715e4fe79f91807e25a4d222859f2fcf6135cf06dc739f56eb897237209c",
+    "bytes": 5811
+  },
+  {
+    "path": "docs/poc/security-lgpd 2.md",
+    "sha256": "e4f588af3d5c640c7f5b0637f6110b343717bfb7d16b944590276fc324af8f04",
+    "bytes": 3375
+  },
+  {
+    "path": "docs/pre-phase4-stabilization 2.md",
+    "sha256": "025b4696f9549a35d80d5cf830a63493cf4c21f9998326704f13986677cd0868",
+    "bytes": 7921
+  },
+  {
+    "path": "env.d 2.ts",
+    "sha256": "28c324213afd2b23bde020bee3322e3bde27349f104a8cb6c4cc95c5222c0ecd",
+    "bytes": 168
+  },
+  {
+    "path": "lib/analytics-report-export 2.ts",
+    "sha256": "309d524b4525ba7aeaf5cc00e4aa16729d83ff9ddf5f59686c7dac76be765401",
+    "bytes": 8289
+  },
+  {
+    "path": "lib/analytics-statistics 2.ts",
+    "sha256": "8721afb84e03dfd5ee4c7dadbfadf03123eaeaea3962da4679ca5eeb4902af19",
+    "bytes": 4949
+  },
+  {
+    "path": "lib/assessment-offline-queue 2.ts",
+    "sha256": "54b8529f43e71c7f3a670da0452fc6c8681e20498eb1de0fbe4f236d2b4711db",
+    "bytes": 7646
+  },
+  {
+    "path": "lib/assessment-runtime 2.ts",
+    "sha256": "be9c2ed63a019c6a7171f350031fb266feb004504d79c3b44378cff93d3bed93",
+    "bytes": 4879
+  },
+  {
+    "path": "lib/database.types 2.ts",
+    "sha256": "102900b73ff21cd8cb608473d547c660ef3381f3e0947eb807b7d5ac0c2f068f",
+    "bytes": 43960
+  },
+  {
+    "path": "lib/pedagogy-report-export 2.ts",
+    "sha256": "8c8059a600719e5195962b6d987d1a263ae50f2f51e898bc2da18eb98c4ae25d",
+    "bytes": 5046
+  },
+  {
+    "path": "lib/pedagogy-rules 2.ts",
+    "sha256": "55be1838a2399f39263600f0e3892fc55310d198f4bfdb89b29c6bc5d0dbf40a",
+    "bytes": 2363
+  },
+  {
+    "path": "phase8-validation-report 2.md",
+    "sha256": "3b6cab6831e6beb20edb77c32ed0bc92b27ea35bf63f8290529b8fe3290a6568",
+    "bytes": 2653
+  },
+  {
+    "path": "playwright.config 2.ts",
+    "sha256": "479cc382b5a89a38bb6103e28cacb92deda5ce3c1978ed7b75562a3442ad4dea",
+    "bytes": 556
+  },
+  {
+    "path": "public/icons/aprende-apple-touch-icon 2.png",
+    "sha256": "8e575e117b2f6bfca682e9089bba44ad5509b3aa7cd4cd34904e25fafd6878f0",
+    "bytes": 6762
+  },
+  {
+    "path": "public/icons/aprende-favicon-64 2.png",
+    "sha256": "b70ef8b133ec4b5e7d4f21647d9d1d26dd5ff84026ebf1395edb40f84de16220",
+    "bytes": 4879
+  },
+  {
+    "path": "public/icons/aprende-icon-192 2.png",
+    "sha256": "863018cc6ad4f85fc59b722e5bdc145dfecc96610c3200ecdb855c33fb04d798",
+    "bytes": 14251
+  },
+  {
+    "path": "public/icons/aprende-icon-512 2.png",
+    "sha256": "fc050f4f366ba1c29570d4328150ce577a060596350dc565676ae96ac252cff6",
+    "bytes": 27475
+  },
+  {
+    "path": "public/icons/aprende-icon-maskable-512 2.png",
+    "sha256": "16ac81785f9dcc415ac7653dc33641165c96ef2ef9bc6fe2a5edf26c73772131",
+    "bytes": 10255
+  },
+  {
+    "path": "public/icons/aprende-teacher-icon-192 2.png",
+    "sha256": "06d0d81cfb548553fc8c62bffcf9f955895e9d1160cb4b3c87afab6a54ac44c7",
+    "bytes": 15081
+  },
+  {
+    "path": "public/icons/icon-192 2.png",
+    "sha256": "21ac4e2bdc6e9e34793a56d46670b49af92e7dede366361d06db5b4fa51440e5",
+    "bytes": 3926
+  },
+  {
+    "path": "public/icons/icon-512 2.png",
+    "sha256": "b2a3a4df6c8462148a7bf0105239926a56b57fc60ca87beea86615975b16981c",
+    "bytes": 14896
+  },
+  {
+    "path": "public/icons/icon-maskable-512 2.png",
+    "sha256": "a22ad72121286b6d741453b13793028d52a2ccc792300e051ae15e3ee89c3d05",
+    "bytes": 11639
+  },
+  {
+    "path": "scripts/generate-poc-report 2.mjs",
+    "sha256": "eb8feb07ad62810a0944d6330a1abb5b456e040ee73c932e1b9b4127f78d8abf",
+    "bytes": 2993
+  },
+  {
+    "path": "scripts/measure-phase7-performance 2.mjs",
+    "sha256": "933d0bb6629aec45a02902f4f88ea1abcd5d1e5c58dccc95414c7ad9669d9b0e",
+    "bytes": 5594
+  },
+  {
+    "path": "scripts/measure-poc-performance 2.mjs",
+    "sha256": "30e451645b1dd563936c96f19e85fa3873b31d5e241a99cac6acc023921a573e",
+    "bytes": 2858
+  },
+  {
+    "path": "scripts/phase7-scale-fixture 2.sql",
+    "sha256": "cc1b9413bf3ab85a087438ffabceff622ca33b01114c0eaae0d7c9ec243f28ff",
+    "bytes": 8898
+  },
+  {
+    "path": "scripts/poc-explain 2.sql",
+    "sha256": "a3508f92f82fc63e434eccd007f036a022a65d698b4b6a5752a2095993b4c21a",
+    "bytes": 448
+  },
+  {
+    "path": "scripts/poc-matrix 2.mjs",
+    "sha256": "69a8f83231a1fafde32637fbf06b10508668c936123dbcd72ad2009cbf3eaae1",
+    "bytes": 3008
+  },
+  {
+    "path": "scripts/poc-smoke 2.mjs",
+    "sha256": "d234fd753495654f11ec9e81ea3fd4e855028625915bcea8b7a4b0a6369efbc6",
+    "bytes": 2322
+  },
+  {
+    "path": "scripts/seed-phase7 2.mjs",
+    "sha256": "bae6a6e8ce1e2d7ae3f611ccbfdce8447976df8e466517a6ff1e99c3ff0480c5",
+    "bytes": 10583
+  },
+  {
+    "path": "scripts/seed-poc 2.mjs",
+    "sha256": "720e8a573217b51457c316b874861dbfd1375762d203c874b03609c0805a4cda",
+    "bytes": 16445
+  },
+  {
+    "path": "scripts/summarize-poc-evidence 2.mjs",
+    "sha256": "9ed5d4b8c92912fcfa876205ccd3ad748c3b542c7ae38c81347edc099f382af5",
+    "bytes": 3655
+  },
+  {
+    "path": "scripts/validate-poc-matrix 2.mjs",
+    "sha256": "f53b1e270d36af59ea108b53fb45eaf0cd4c44d3eec90fcacbdced1ca2b9c2aa",
+    "bytes": 393
+  },
+  {
+    "path": "supabase/functions/analytics-report-worker/index 2.ts",
+    "sha256": "238a4da85417230aff96dede04284cb068cbdd112042a6de266de33efb75131a",
+    "bytes": 7961
+  },
+  {
+    "path": "supabase/migrations/20260913080728_stabilize_item_storage_and_snapshots 2.sql",
+    "sha256": "85231c485753e97b728a8f9cff8364fd309624bf038aae67f7c6671bc992ecf6",
+    "bytes": 4713
+  },
+  {
+    "path": "supabase/migrations/20260913111359_add_assessment_application_runtime 2.sql",
+    "sha256": "cf4fecac69f9aac17d01a50a83ec2fa10b6ca562dba0317cad9cf25b2f103241",
+    "bytes": 57126
+  },
+  {
+    "path": "supabase/migrations/20260913153000_complete_phase4_application_monitor 2.sql",
+    "sha256": "01a2fd75edfcd3a38af9891b717e23c97205b9a05d5f2897876c10c84b9ac5d4",
+    "bytes": 3545
+  },
+  {
+    "path": "supabase/migrations/20260913160000_fix_phase4_policy_helper_execution 2.sql",
+    "sha256": "dfea88f9de2c61bc8e4dca4e7d0ddc80629f61e4d69fee7fe002120635ac7d43",
+    "bytes": 1038
+  },
+  {
+    "path": "supabase/migrations/20260913170100_harden_phase4_response_concurrency 2.sql",
+    "sha256": "b7dd15fbf0f106c7c5153193082674fca18b20eed088cb8f90790b444bfbfb72",
+    "bytes": 2703
+  },
+  {
+    "path": "supabase/migrations/20260913180000_add_phase5_analytics_reporting 2.sql",
+    "sha256": "7ccd6b812517b9b767f37f4cb6251ed16c85f2ecee29222cb6b43754e97d6024",
+    "bytes": 42053
+  },
+  {
+    "path": "supabase/migrations/20260913213000_add_phase7_pedagogical_resources 2.sql",
+    "sha256": "9bdea6e22fcafe95edea63143691ca15459269026c7102e5f1001a95c81c924a",
+    "bytes": 55363
+  },
+  {
+    "path": "supabase/migrations/20260913214500_add_phase7_catalog_rpc 2.sql",
+    "sha256": "661baf80da66bf8abacd613fd7ff7278e4c18d125165d0ccffb12c241aebf8a2",
+    "bytes": 4518
+  },
+  {
+    "path": "supabase/migrations/20260913220000_add_phase7_reports_and_portfolio 2.sql",
+    "sha256": "3634b834338ab7418f5b16f18b8e331a20cbcf3966a7e4fe1142c873768ea833",
+    "bytes": 9454
+  },
+  {
+    "path": "supabase/migrations/20260913221500_harden_phase7_table_grants 2.sql",
+    "sha256": "4b801a2189936b1f0424c4484e09bfcae5004d05cfa07c5d82955f11bae07635",
+    "bytes": 1527
+  },
+  {
+    "path": "supabase/migrations/20260915213512_harden_phase7_activity_runtime 2.sql",
+    "sha256": "875489c9d8120bb1331693fecb771bde731bcc26ae69c701557a872e054ec78e",
+    "bytes": 15373
+  },
+  {
+    "path": "supabase/migrations/20260920120000_freeze_phase7_step_validation 2.sql",
+    "sha256": "1094dd2e1e35882d7dbf49a5d57944217278bba50158b8b2b18a09e5c33ae445",
+    "bytes": 12069
+  },
+  {
+    "path": "supabase/migrations/20260920123000_align_phase7_snapshot_cleanup 2.sql",
+    "sha256": "6c89045fd4681d87eb3acd5ac7c7d1747b54fa11af01e9e0978678aae45db1a9",
+    "bytes": 788
+  },
+  {
+    "path": "supabase/migrations/20260920130000_enforce_phase7_editorial_transitions 2.sql",
+    "sha256": "0c05d01407a69190313a922d914e8f5e5aa402084924a336905c2cc89507fc27",
+    "bytes": 5005
+  },
+  {
+    "path": "tests/analytics-statistics.test 2.mjs",
+    "sha256": "5adb1ed8694f756610193b50906a69527afe78beae6f194ff55357523ebfda64",
+    "bytes": 4819
+  },
+  {
+    "path": "tests/assessment-offline-queue.test 2.mjs",
+    "sha256": "cc2f2463c46869c26f93853815919da4f20ad8ba5d5c1c3cd9f1da4abca8e3f7",
+    "bytes": 2468
+  },
+  {
+    "path": "tests/assessment-runtime.test 2.mjs",
+    "sha256": "d6cf04cfea4ad7aa3c065a8dc28168f50fa2e2519545dfa51cd296c915059a55",
+    "bytes": 3280
+  },
+  {
+    "path": "tests/e2e/phase4-runtime.spec 2.ts",
+    "sha256": "c9d418553a21b78cf6a9c1331ba2d25ed1d796f5a1851c7355dc0990b70a6556",
+    "bytes": 15168
+  },
+  {
+    "path": "tests/e2e/phase6-poc.spec 2.ts",
+    "sha256": "85b9e67a158b4dbdde33286f6b89297b6652feebf104e13c6bf0c9d0f9180872",
+    "bytes": 1947
+  },
+  {
+    "path": "tests/e2e/phase7-pedagogy.spec 2.ts",
+    "sha256": "f282f93f728964298c0777485f9f1c1e4923f32cb2c3aa0cad2378420fb7de32",
+    "bytes": 4413
+  },
+  {
+    "path": "tests/phase4-integration.test 2.mjs",
+    "sha256": "3936128d6c7646a4e7ea728f9c8cac375fb3c736c5c1f367c505d03fdcae7a88",
+    "bytes": 32219
+  },
+  {
+    "path": "tests/phase5-integration.test 2.mjs",
+    "sha256": "4b1f2435286c00c2c591813d2327481a0f3fb3fa507b7b584716b4817ebe5481",
+    "bytes": 18267
+  },
+  {
+    "path": "tests/phase7/pedagogy-report.test 2.mjs",
+    "sha256": "211ff4b296ca32e7e557258fdebb69257a36cfc8741d8d9a8509590f41a00efd",
+    "bytes": 1524
+  },
+  {
+    "path": "tests/phase7/pedagogy-rules.test 2.mjs",
+    "sha256": "e8630e17c45ea772f21423c3711c3008eae3819c2e43c49f44ee0792ffbe11c1",
+    "bytes": 1976
+  },
+  {
+    "path": "tests/phase7/phase7-connected.test 2.mjs",
+    "sha256": "23d9e569480011d44734f86b2842b24fea5d979bb8a7846e5b2dbb72fb1fc5cd",
+    "bytes": 13204
+  },
+  {
+    "path": "tests/poc/connected-flow.test 2.mjs",
+    "sha256": "061a67564a340e2d7ea59176b12dbcb8301bfc4530193a30d82171c03277a6b7",
+    "bytes": 3105
+  },
+  {
+    "path": "tests/poc/matrix.test 2.mjs",
+    "sha256": "604fcb3ae048400379d68966808afcb2905f3eaffe5a7a865bfd3ee036ddf783",
+    "bytes": 1568
+  },
+  {
+    "path": "tests/poc/seed-safety.test 2.mjs",
+    "sha256": "65f6d4c5654777253626e58e128d097099e87b16bbf3f32c8d7c1a1cadb3a9a0",
+    "bytes": 586
+  }
+]

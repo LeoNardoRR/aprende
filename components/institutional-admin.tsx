@@ -274,11 +274,16 @@ export function InstitutionalAdmin({
         const visible = sectionIds
           .map((id) => document.getElementById(id))
           .filter((element): element is HTMLElement => Boolean(element))
-          .map((element) => ({ id: element.id, top: element.getBoundingClientRect().top }))
+          .map((element) => ({
+            id: element.id,
+            top: element.getBoundingClientRect().top,
+          }))
           .filter((item) => item.top <= 180)
           .at(-1);
         const hash = window.location.hash.slice(1);
-        setActiveSection(visible?.id ?? (sectionIds.includes(hash) ? hash : 'overview'));
+        setActiveSection(
+          visible?.id ?? (sectionIds.includes(hash) ? hash : 'overview'),
+        );
       });
     };
     updateActiveSection();
@@ -415,51 +420,112 @@ export function InstitutionalAdmin({
           <span>
             <BrandLogo variant="teacher" />
           </span>
-          <strong>Aprendê</strong>
+          <div>
+            <strong>Aprendê</strong>
+            <small>Gestão educacional</small>
+          </div>
         </div>
         <nav aria-label="Administração institucional">
-          <a href="#overview" className={activeSection === 'overview' ? 'active' : undefined} aria-current={activeSection === 'overview' ? 'location' : undefined}>
+          <a
+            href="#overview"
+            className={activeSection === 'overview' ? 'active' : undefined}
+            aria-current={activeSection === 'overview' ? 'location' : undefined}
+          >
             <Building2 /> Visão geral
           </a>
-          <a href="#schools" className={activeSection === 'schools' ? 'active' : undefined} aria-current={activeSection === 'schools' ? 'location' : undefined}>
+          <a
+            href="#schools"
+            className={activeSection === 'schools' ? 'active' : undefined}
+            aria-current={activeSection === 'schools' ? 'location' : undefined}
+          >
             <School /> Escolas
           </a>
-          <a href="#years" className={activeSection === 'years' ? 'active' : undefined} aria-current={activeSection === 'years' ? 'location' : undefined}>
+          <a
+            href="#years"
+            className={activeSection === 'years' ? 'active' : undefined}
+            aria-current={activeSection === 'years' ? 'location' : undefined}
+          >
             <CalendarRange /> Anos e séries
           </a>
-          <a href="#classrooms" className={activeSection === 'classrooms' ? 'active' : undefined} aria-current={activeSection === 'classrooms' ? 'location' : undefined}>
+          <a
+            href="#classrooms"
+            className={activeSection === 'classrooms' ? 'active' : undefined}
+            aria-current={
+              activeSection === 'classrooms' ? 'location' : undefined
+            }
+          >
             <GraduationCap /> Turmas
           </a>
-          <a href="#enrollments" className={activeSection === 'enrollments' ? 'active' : undefined} aria-current={activeSection === 'enrollments' ? 'location' : undefined}>
+          <a
+            href="#enrollments"
+            className={activeSection === 'enrollments' ? 'active' : undefined}
+            aria-current={
+              activeSection === 'enrollments' ? 'location' : undefined
+            }
+          >
             <Users /> Matrículas
           </a>
-          <a href="#access" className={activeSection === 'access' ? 'active' : undefined} aria-current={activeSection === 'access' ? 'location' : undefined}>
+          <a
+            href="#access"
+            className={activeSection === 'access' ? 'active' : undefined}
+            aria-current={activeSection === 'access' ? 'location' : undefined}
+          >
             <ShieldCheck /> Acessos
           </a>
-          <a href="#curricula" className={activeSection === 'curricula' ? 'active' : undefined} aria-current={activeSection === 'curricula' ? 'location' : undefined}>
+          <a
+            href="#curricula"
+            className={activeSection === 'curricula' ? 'active' : undefined}
+            aria-current={
+              activeSection === 'curricula' ? 'location' : undefined
+            }
+          >
             <LibraryBig /> Currículos
           </a>
-          <a href="#assessments" className={activeSection === 'assessments' ? 'active' : undefined} aria-current={activeSection === 'assessments' ? 'location' : undefined}>
+          <a
+            href="#assessments"
+            className={activeSection === 'assessments' ? 'active' : undefined}
+            aria-current={
+              activeSection === 'assessments' ? 'location' : undefined
+            }
+          >
             <ClipboardList /> Avaliações
           </a>
-          <a href="#analytics" className={activeSection === 'analytics' ? 'active' : undefined} aria-current={activeSection === 'analytics' ? 'location' : undefined}>
+          <a
+            href="#analytics"
+            className={activeSection === 'analytics' ? 'active' : undefined}
+            aria-current={
+              activeSection === 'analytics' ? 'location' : undefined
+            }
+          >
             <ChartNoAxesCombined /> Analytics
           </a>
-          <a href="#support" className={activeSection === 'support' ? 'active' : undefined} aria-current={activeSection === 'support' ? 'location' : undefined}>
+          <a
+            href="#support"
+            className={activeSection === 'support' ? 'active' : undefined}
+            aria-current={activeSection === 'support' ? 'location' : undefined}
+          >
             <Headphones /> Help Desk
           </a>
-          <a href="#remediation" className={activeSection === 'remediation' ? 'active' : undefined} aria-current={activeSection === 'remediation' ? 'location' : undefined}>
+          <a
+            href="#remediation"
+            className={activeSection === 'remediation' ? 'active' : undefined}
+            aria-current={
+              activeSection === 'remediation' ? 'location' : undefined
+            }
+          >
             <Route /> Recomposição
           </a>
           {canAuditPoc && (
-            <a href="#poc" className={activeSection === 'poc' ? 'active' : undefined} aria-current={activeSection === 'poc' ? 'location' : undefined}>
+            <a
+              href="#poc"
+              className={activeSection === 'poc' ? 'active' : undefined}
+              aria-current={activeSection === 'poc' ? 'location' : undefined}
+            >
               <ClipboardCheck /> Conformidade
             </a>
           )}
         </nav>
-        <small className="institutional-version">
-          Aprendê · Gestão educacional
-        </small>
+        <small className="institutional-version">Aprendê · Gestão educacional</small>
         <button
           type="button"
           disabled={signingOut}
